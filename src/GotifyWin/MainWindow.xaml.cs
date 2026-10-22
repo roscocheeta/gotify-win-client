@@ -48,7 +48,8 @@ public partial class MainWindow : Window
             if (streamInfo != null)
             {
                 using var stream = streamInfo.Stream;
-                trayIcon = new System.Drawing.Icon(stream);
+                var iconSize = System.Windows.Forms.SystemInformation.SmallIconSize;
+                trayIcon = new System.Drawing.Icon(stream, iconSize.Width, iconSize.Height);
             }
         }
         catch (Exception ex)
@@ -156,10 +157,36 @@ public partial class MainWindow : Window
 
     private void DndButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.Button btn && btn.ContextMenu != null)
-        {
-            btn.ContextMenu.PlacementTarget = btn;
-            btn.ContextMenu.IsOpen = true;
-        }
+        DndFlyout.IsOpen = !DndFlyout.IsOpen;
+    }
+
+    private void DndDisable_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.DisableDnd();
+        DndFlyout.IsOpen = false;
+    }
+
+    private void DndSnooze30m_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SetDnd(TimeSpan.FromMinutes(30));
+        DndFlyout.IsOpen = false;
+    }
+
+    private void DndSnooze1h_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SetDnd(TimeSpan.FromHours(1));
+        DndFlyout.IsOpen = false;
+    }
+
+    private void DndSnooze4h_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SetDnd(TimeSpan.FromHours(4));
+        DndFlyout.IsOpen = false;
+    }
+
+    private void DndSnoozeTomorrow_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SetDndUntilTomorrow();
+        DndFlyout.IsOpen = false;
     }
 }

@@ -14,11 +14,24 @@ public interface IHudManager
 
 public class HudManager : IHudManager
 {
-    private const int MaxStackedHuds = 4;
-    private const double HudSpacing = 12.0;
+    public const int MaxConcurrentVisible = 3;
+    private const double HudSpacing = 10.0;
     private const double Margin = 20.0;
+    private const double StandardSlotHeight = 125.0;
+
     private readonly List<NotificationHudWindow> _activeWindows = new();
+    private readonly Queue<(GotifyMessage Message, PresentationSettings Settings, Action<string>? OnUrlOpen)> _pendingQueue = new();
     private readonly object _lock = new();
+
+    public int ActiveCount
+    {
+        get { lock (_lock) { return _activeWindows.Count; } }
+    }
+
+    public int QueuedCount
+    {
+        get { lock (_lock) { return _pendingQueue.Count; } }
+    }
 
     public void ShowNotification(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
     {
@@ -26,78 +39,97 @@ public class HudManager : IHudManager
         {
             lock (_lock)
             {
-                // If max stacked reached, close the oldest window to make room
-                if (_activeWindows.Count >= MaxStackedHuds)
+                if (_activeWindows.Count < MaxConcurrentVisible)
                 {
-                    var oldest = _activeWindows[0];
-                    _activeWindows.RemoveAt(0);
-                    try { oldest.Close(); } catch { }
+                    SpawnHudWindow(message, settings, onUrlOpen);
                 }
-
-                var hud = new NotificationHudWindow();
-                hud.Setup(message, settings, onUrlOpen);
-
-                _activeWindows.Add(hud);
-
-                // Position the new window
-                PositionHudWindow(hud, _activeWindows.Count - 1, settings.Position);
-
-                hud.Closed += (s, e) =>
+                else
                 {
-                    lock (_lock)
+                    // Queue excess alerts so active notifications are not instantly destroyed
+                    if (_pendingQueue.Count < 30)
                     {
-                        if (_activeWindows.Remove(hud))
-                        {
-                            RestackWindows(settings.Position);
-                        }
+                        _pendingQueue.Enqueue((message, settings, onUrlOpen));
                     }
-                };
-
-                hud.Show();
+                }
             }
         });
+    }
+
+    private void SpawnHudWindow(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
+    {
+        var hud = new NotificationHudWindow();
+        hud.Setup(message, settings, onUrlOpen);
+
+        int slotIndex = _activeWindows.Count;
+        _activeWindows.Add(hud);
+
+        // Position window before showing
+        PositionHudWindow(hud, slotIndex, settings.Position);
+
+        hud.Closed += (s, e) =>
+        {
+            Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                lock (_lock)
+                {
+                    _activeWindows.Remove(hud);
+
+                    // Dequeue next pending notification if available
+                    if (_pendingQueue.Count > 0 && _activeWindows.Count < MaxConcurrentVisible)
+                    {
+                        var next = _pendingQueue.Dequeue();
+                        SpawnHudWindow(next.Message, next.Settings, next.OnUrlOpen);
+                    }
+
+                    // Restack remaining active windows
+                    RestackWindows(settings.Position);
+                }
+            });
+        };
+
+        hud.Show();
+    }
+
+    private double CalculateSlotTop(int slotIndex, HudPosition position)
+    {
+        var workArea = SystemParameters.WorkArea;
+        double slotOffset = slotIndex * (StandardSlotHeight + HudSpacing);
+
+        switch (position)
+        {
+            case HudPosition.TopRight:
+            case HudPosition.TopCenter:
+                return workArea.Top + Margin + slotOffset;
+
+            case HudPosition.BottomRight:
+            case HudPosition.BottomCenter:
+            default:
+                return workArea.Bottom - StandardSlotHeight - Margin - slotOffset;
+        }
     }
 
     private void PositionHudWindow(NotificationHudWindow window, int slotIndex, HudPosition position)
     {
         var workArea = SystemParameters.WorkArea;
         double width = window.Width > 0 ? window.Width : 380.0;
-        double height = 130.0; // standard slot height
-        double slotOffset = slotIndex * (height + HudSpacing);
-
         double left;
-        double top;
 
         switch (position)
         {
-            case HudPosition.BottomRight:
-                left = workArea.Right - width - Margin;
-                top = workArea.Bottom - height - Margin - slotOffset;
-                break;
-
+            case HudPosition.TopCenter:
             case HudPosition.BottomCenter:
                 left = workArea.Left + (workArea.Width - width) / 2.0;
-                top = workArea.Bottom - height - Margin - slotOffset;
                 break;
 
             case HudPosition.TopRight:
-                left = workArea.Right - width - Margin;
-                top = workArea.Top + Margin + slotOffset;
-                break;
-
-            case HudPosition.TopCenter:
-                left = workArea.Left + (workArea.Width - width) / 2.0;
-                top = workArea.Top + Margin + slotOffset;
-                break;
-
+            case HudPosition.BottomRight:
             default:
                 left = workArea.Right - width - Margin;
-                top = workArea.Bottom - height - Margin - slotOffset;
                 break;
         }
 
         window.Left = left;
-        window.Top = top;
+        window.Top = CalculateSlotTop(slotIndex, position);
     }
 
     private void RestackWindows(HudPosition position)
@@ -105,34 +137,31 @@ public class HudManager : IHudManager
         for (int i = 0; i < _activeWindows.Count; i++)
         {
             var win = _activeWindows[i];
-            var workArea = SystemParameters.WorkArea;
-            double height = 130.0;
-            double slotOffset = i * (height + HudSpacing);
-            double targetTop;
+            double targetTop = CalculateSlotTop(i, position);
 
-            switch (position)
+            // Cancel any prior animation on TopProperty to avoid animation property lock
+            win.BeginAnimation(Window.TopProperty, null);
+
+            if (Math.Abs(win.Top - targetTop) > 1.0)
             {
-                case HudPosition.BottomRight:
-                case HudPosition.BottomCenter:
-                    targetTop = workArea.Bottom - height - Margin - slotOffset;
-                    break;
+                var slideAnim = new DoubleAnimation(win.Top, targetTop, TimeSpan.FromMilliseconds(220))
+                {
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                    FillBehavior = FillBehavior.Stop
+                };
 
-                case HudPosition.TopRight:
-                case HudPosition.TopCenter:
-                    targetTop = workArea.Top + Margin + slotOffset;
-                    break;
+                slideAnim.Completed += (s, e) =>
+                {
+                    win.BeginAnimation(Window.TopProperty, null);
+                    win.Top = targetTop;
+                };
 
-                default:
-                    targetTop = workArea.Bottom - height - Margin - slotOffset;
-                    break;
+                win.BeginAnimation(Window.TopProperty, slideAnim);
             }
-
-            // Smooth slide animation to new slot
-            var slideAnim = new DoubleAnimation(win.Top, targetTop, TimeSpan.FromMilliseconds(200))
+            else
             {
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-            };
-            win.BeginAnimation(Window.TopProperty, slideAnim);
+                win.Top = targetTop;
+            }
         }
     }
 }

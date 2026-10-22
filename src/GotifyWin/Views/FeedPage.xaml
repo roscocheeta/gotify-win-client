@@ -127,87 +127,111 @@
                                 <Border Grid.Column="0" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}"/>
 
                                 <Grid Grid.Column="1" Margin="14,12,14,12">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                    <!-- Top Meta Bar: App Name, Time, Priority Badge -->
-                                    <Grid Grid.Row="0" Margin="0,0,0,6">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
+                                    <!-- Left Column: Message Content -->
+                                    <Grid Grid.Column="0">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
 
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DisplayAppName}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
-                                            <TextBlock Text=" • " FontSize="12" Foreground="{DynamicResource ThemeTextMuted}"/>
-                                            <TextBlock Text="{Binding RelativeTime}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                                            <TextBlock Text="{Binding FormattedDate, StringFormat=' ({0})'}" FontSize="10" Foreground="{DynamicResource ThemeTextMuted}"/>
-                                        </StackPanel>
+                                        <!-- Top Meta Bar: App Name, Time, Priority Badge -->
+                                        <Grid Grid.Row="0" Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
 
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                            <!-- Filtered by Rule Badge -->
-                                            <Border CornerRadius="3" Background="#1E3A5F" BorderBrush="#3B82F6" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
-                                                    Visibility="{Binding IsFiltered, Converter={StaticResource BoolToVis}}"
-                                                    ToolTip="{Binding FilteredByRuleName, StringFormat='Automatically filtered: {0}'}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="🔕 " FontSize="9" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding FilteredByRuleName, StringFormat='Filtered: {0}'}" FontSize="10" FontWeight="SemiBold" Foreground="#93C5FD"/>
-                                                </StackPanel>
-                                            </Border>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayAppName}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                                                <TextBlock Text=" • " FontSize="12" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                                <TextBlock Text="{Binding RelativeTime}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                                <TextBlock Text="{Binding FormattedDate, StringFormat=' ({0})'}" FontSize="10" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                            </StackPanel>
 
-                                            <!-- Debounce duplicate badge -->
-                                            <Border CornerRadius="3" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
-                                                    Visibility="{Binding DuplicateCount, Converter={StaticResource BoolToVis}}">
-                                                <TextBlock Text="{Binding DuplicateCount, StringFormat='x{0}'}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                            </Border>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                <!-- Filtered by Rule Badge -->
+                                                <Border CornerRadius="3" Background="#1E3A5F" BorderBrush="#3B82F6" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
+                                                        Visibility="{Binding IsFiltered, Converter={StaticResource BoolToVis}}"
+                                                        ToolTip="{Binding FilteredByRuleName, StringFormat='Automatically filtered: {0}'}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="🔕 " FontSize="9" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding FilteredByRuleName, StringFormat='Filtered: {0}'}" FontSize="10" FontWeight="SemiBold" Foreground="#93C5FD"/>
+                                                    </StackPanel>
+                                                </Border>
 
-                                            <!-- Priority Badge -->
-                                            <Border CornerRadius="3" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}" Padding="6,1">
-                                                <TextBlock Text="{Binding PriorityLabel}" FontSize="10" FontWeight="Bold" Foreground="White"/>
-                                            </Border>
+                                                <!-- Debounce duplicate badge -->
+                                                <Border CornerRadius="3" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
+                                                        Visibility="{Binding DuplicateCount, Converter={StaticResource BoolToVis}}">
+                                                    <TextBlock Text="{Binding DuplicateCount, StringFormat='x{0}'}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                </Border>
+
+                                                <!-- Priority Badge -->
+                                                <Border CornerRadius="3" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}" Padding="6,1">
+                                                    <TextBlock Text="{Binding PriorityLabel}" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Title -->
+                                        <TextBlock Grid.Row="1" Text="{Binding DisplayTitle}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+
+                                        <!-- Body -->
+                                        <TextBlock Grid.Row="2" Text="{Binding Message}" FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,8"/>
+
+                                        <!-- Action Bar -->
+                                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                                            <Button Content="🖼 View Image" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                    Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
+                                                    Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding ImageUrl}"/>
+                                            <Button Content="🔗 Open Link" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                    Visibility="{Binding HasClickUrl, Converter={StaticResource BoolToVis}}"
+                                                    Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding ClickUrl}"/>
+                                            <Button Content="⚡ Create Rule" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                    ToolTip="Pre-fill a new filter rule using this notification"
+                                                    Command="{Binding DataContext.CreateRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="📋 Copy" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                    Command="{Binding DataContext.CopyMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="✕ Dismiss" Style="{StaticResource CardActionButton}"
+                                                    Command="{Binding DataContext.DeleteMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"/>
                                         </StackPanel>
                                     </Grid>
 
-                                    <!-- Title -->
-                                    <TextBlock Grid.Row="1" Text="{Binding DisplayTitle}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" TextWrapping="Wrap" Margin="0,0,0,4"/>
-
-                                    <!-- Body -->
-                                    <TextBlock Grid.Row="2" Text="{Binding Message}" FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,8"/>
-
-                                    <!-- Attached Image Thumbnail Preview -->
-                                    <Border Grid.Row="3" CornerRadius="6" Background="{DynamicResource ThemeCardInnerBackground}"
-                                            BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
-                                            Margin="0,0,0,10" MaxHeight="180" HorizontalAlignment="Left" ClipToBounds="True"
-                                            Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}">
-                                        <Image Source="{Binding ImageUrl}" MaxHeight="180" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                    </Border>
-
-                                    <!-- Action Bar -->
-                                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <Button Content="🖼 View Image" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
-                                                Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
-                                                Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding ImageUrl}"/>
-                                        <Button Content="🔗 Open Link" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
-                                                Visibility="{Binding HasClickUrl, Converter={StaticResource BoolToVis}}"
-                                                Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding ClickUrl}"/>
-                                        <Button Content="⚡ Create Rule" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
-                                                ToolTip="Pre-fill a new filter rule using this notification"
-                                                Command="{Binding DataContext.CreateRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"/>
-                                        <Button Content="📋 Copy" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
-                                                Command="{Binding DataContext.CopyMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"/>
-                                        <Button Content="✕ Dismiss" Style="{StaticResource CardActionButton}"
-                                                Command="{Binding DataContext.DeleteMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"/>
-                                    </StackPanel>
+                                    <!-- Right Column: Attached Image Thumbnail -->
+                                    <Button Grid.Column="1" VerticalAlignment="Top" Margin="14,0,0,0"
+                                            Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding ImageUrl}"
+                                            ToolTip="Click to open full image"
+                                            Cursor="Hand"
+                                            Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
+                                            Background="Transparent" BorderThickness="0" Padding="0">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Width="110" Height="82" CornerRadius="8"
+                                                        Background="{DynamicResource ThemeCardInnerBackground}"
+                                                        BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                                        ClipToBounds="True">
+                                                    <Grid>
+                                                        <Image Source="{Binding ImageUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                        <Border Background="#55000000" VerticalAlignment="Bottom" Padding="4,2">
+                                                            <TextBlock Text="🔍 View" FontSize="10" Foreground="White" HorizontalAlignment="Center"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
                                 </Grid>
                             </Grid>
                         </Border>

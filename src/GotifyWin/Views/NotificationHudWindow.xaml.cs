@@ -39,7 +39,7 @@ public partial class NotificationHudWindow : Window
 
     private void NotificationHudWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        if (double.IsNaN(Left) || Left == 0)
+        if (double.IsNaN(Left))
         {
             PositionWindow(_position);
         }

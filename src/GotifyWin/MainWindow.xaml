@@ -16,6 +16,31 @@
     <Window.Resources>
         <conv:HexColorToBrushConverter x:Key="HexToBrush"/>
         <conv:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:DndGlyphConverter x:Key="DndGlyphConverter"/>
+
+        <Style x:Key="DndFlyoutOptionButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeTextPrimary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="{DynamicResource ThemeItemHover}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <Style x:Key="NavRadioButton" TargetType="RadioButton">
             <Setter Property="Background" Value="Transparent"/>
@@ -115,11 +140,11 @@
 
                 <!-- Brand & Status -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="34" Height="34" CornerRadius="8" Background="Transparent" Margin="0,0,12,0" ClipToBounds="True">
+                    <Border Width="44" Height="44" CornerRadius="10" Background="Transparent" Margin="0,0,12,0" ClipToBounds="True">
                         <Image Source="pack://application:,,,/Assets/app.png" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Gotify" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                        <TextBlock Text="Gotify" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <Ellipse Width="8" Height="8" Fill="{Binding ConnectionStatusColor, Converter={StaticResource HexToBrush}}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding ConnectionStatusText}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
@@ -141,19 +166,122 @@
 
                 <!-- Right Quick Controls -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- DND Quick Button with Context Menu -->
-                    <Button Content="{Binding DndStatusText}" Style="{StaticResource HeaderActionButton}" Margin="0,0,8,0" Click="DndButton_Click">
-                        <Button.ContextMenu>
-                            <ContextMenu Background="{DynamicResource ThemePopupBackground}" Foreground="{DynamicResource ThemeTextPrimary}" BorderBrush="{DynamicResource ThemeCardBorder}">
-                                <MenuItem Header="Disable DND" Command="{Binding DisableDndCommand}"/>
-                                <Separator Background="{DynamicResource ThemeCardBorder}"/>
-                                <MenuItem Header="Snooze 30 minutes" Command="{Binding Snooze30mCommand}"/>
-                                <MenuItem Header="Snooze 1 hour" Command="{Binding Snooze1hCommand}"/>
-                                <MenuItem Header="Snooze 4 hours" Command="{Binding Snooze4hCommand}"/>
-                                <MenuItem Header="Snooze until Tomorrow (8am)" Command="{Binding SnoozeTomorrowCommand}"/>
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </Button>
+                    <!-- Modern Fluent DND Flyout -->
+                    <Grid Margin="0,0,8,0">
+                        <Button x:Name="DndHeaderButton" Style="{StaticResource HeaderActionButton}" Click="DndButton_Click"
+                                ToolTip="Configure Do Not Disturb &amp; Snooze">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding IsDndActive, Converter={StaticResource DndGlyphConverter}}" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding DndStatusText}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Popup x:Name="DndFlyout" PlacementTarget="{Binding ElementName=DndHeaderButton}"
+                               Placement="Bottom" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                            <Border Background="{DynamicResource ThemeCardBackground}"
+                                    BorderBrush="{DynamicResource ThemeCardBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Padding="16,14"
+                                    Margin="0,6,0,0"
+                                    Width="300">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="4" Opacity="0.35" Direction="270"/>
+                                </Border.Effect>
+
+                                <StackPanel>
+                                    <!-- Header -->
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="🌙 Do Not Disturb" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                            <TextBlock Text="Silence incoming notifications &amp; sounds" FontSize="11" Foreground="{DynamicResource ThemeTextMuted}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Active Banner (shown when DND is ON) -->
+                                    <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                            CornerRadius="8" Padding="12,10" Margin="0,0,0,12"
+                                            Visibility="{Binding IsDndActive, Converter={StaticResource BoolToVis}}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="🔕 Currently Active" FontSize="11" FontWeight="Bold" Foreground="#F59E0B"/>
+                                                <TextBlock Text="{Binding DndStatusText}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="Turn Off" Style="{StaticResource HeaderActionButton}" Padding="8,4" FontSize="11"
+                                                    Click="DndDisable_Click"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Presets Header -->
+                                    <TextBlock Text="QUICK SNOOZE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextMuted}" Margin="4,0,0,6"/>
+
+                                    <Button Style="{StaticResource DndFlyoutOptionButton}" Click="DndSnooze30m_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="26"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="⏱️" FontSize="13" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="30 minutes" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                <TextBlock Text="Quick silence for focus or calls" FontSize="10" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+
+                                    <Button Style="{StaticResource DndFlyoutOptionButton}" Click="DndSnooze1h_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="26"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="⏱️" FontSize="13" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="1 hour" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                <TextBlock Text="Standard meeting or deep work" FontSize="10" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+
+                                    <Button Style="{StaticResource DndFlyoutOptionButton}" Click="DndSnooze4h_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="26"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="⏱️" FontSize="13" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="4 hours" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                <TextBlock Text="Half workday silence" FontSize="10" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+
+                                    <Button Style="{StaticResource DndFlyoutOptionButton}" Click="DndSnoozeTomorrow_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="26"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="🌅" FontSize="13" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="Until tomorrow (8:00 AM)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                <TextBlock Text="Silence overnight until next morning" FontSize="10" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </Grid>
 
                     <Button Content="🔄" Style="{StaticResource HeaderIconButton}"
                             ToolTip="Reconnect WebSocket" Command="{Binding ReconnectCommand}"/>
