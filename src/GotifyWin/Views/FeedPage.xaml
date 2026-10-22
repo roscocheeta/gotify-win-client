@@ -91,8 +91,11 @@
             <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableAppFilters}" SelectedItem="{Binding SelectedAppFilter}"
                       Width="160" Height="34" Margin="0,0,12,0" Background="#1E293B" Foreground="#F8FAFC" BorderBrush="#334155"/>
 
-            <!-- Clear All Button -->
-            <Button Grid.Column="2" Content="Clear All" Style="{StaticResource SecondaryButton}" Command="{Binding ClearAllCommand}"/>
+            <!-- Actions -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button Content="🔔 Test Alert" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding TestNotificationCommand}"/>
+                <Button Content="Clear All" Style="{StaticResource SecondaryButton}" Command="{Binding ClearAllCommand}"/>
+            </StackPanel>
         </Grid>
 
         <!-- Empty State -->

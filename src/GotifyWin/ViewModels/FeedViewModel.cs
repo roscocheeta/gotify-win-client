@@ -13,6 +13,7 @@ public class FeedViewModel : ViewModelBase
 {
     private readonly IGotifyApiService _apiService;
     private readonly IConfigService _configService;
+    private readonly INotificationPresenter? _presenter;
     private readonly ObservableCollection<GotifyMessage> _messages = new();
     private readonly ICollectionView _filteredView;
 
@@ -59,13 +60,15 @@ public class FeedViewModel : ViewModelBase
     public ICommand DeleteMessageCommand { get; }
     public ICommand CopyMessageCommand { get; }
     public ICommand OpenUrlCommand { get; }
+    public ICommand TestNotificationCommand { get; }
 
     public event EventHandler<string>? UrlOpenRequested;
 
-    public FeedViewModel(IGotifyApiService apiService, IConfigService configService)
+    public FeedViewModel(IGotifyApiService apiService, IConfigService configService, INotificationPresenter? presenter = null)
     {
         _apiService = apiService;
         _configService = configService;
+        _presenter = presenter;
 
         _filteredView = CollectionViewSource.GetDefaultView(_messages);
         _filteredView.Filter = FilterMessagePredicate;
@@ -74,6 +77,25 @@ public class FeedViewModel : ViewModelBase
         DeleteMessageCommand = new RelayCommand<GotifyMessage>(DeleteMessage);
         CopyMessageCommand = new RelayCommand<GotifyMessage>(CopyMessage);
         OpenUrlCommand = new RelayCommand<string>(OpenUrl);
+        TestNotificationCommand = new RelayCommand(SendTestNotification);
+    }
+
+    private void SendTestNotification()
+    {
+        var testMsg = new GotifyMessage
+        {
+            Id = DateTime.UtcNow.Ticks,
+            AppId = 2,
+            Title = "Test Gotify Notification",
+            Message = "This is a live test notification from GotifyWin verifying desktop popup and audio alerts.",
+            Priority = 6,
+            Date = DateTime.UtcNow,
+            ApplicationName = "GotifyWin",
+            Extras = new Dictionary<string, System.Text.Json.JsonElement>()
+        };
+
+        AddMessage(testMsg);
+        _presenter?.Present(testMsg, _configService.Config);
     }
 
     public void AddMessage(GotifyMessage message)

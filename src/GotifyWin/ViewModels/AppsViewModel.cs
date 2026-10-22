@@ -145,7 +145,7 @@ public class AppsViewModel : ViewModelBase
                             AppId = app.Id,
                             AppName = app.Name,
                             Enabled = true,
-                            MinPriority = app.DefaultPriority
+                            MinPriority = 0
                         };
                         cfg.AppFilters[app.Id] = filter;
                     }

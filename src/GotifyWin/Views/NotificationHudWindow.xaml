@@ -47,7 +47,7 @@
         </Style>
     </Window.Resources>
 
-    <Grid x:Name="RootContainer" Margin="12" Opacity="0">
+    <Grid x:Name="RootContainer" Margin="12" Opacity="1">
         <Border Background="{StaticResource HudBackground}"
                 BorderBrush="{StaticResource HudBorder}"
                 BorderThickness="1"

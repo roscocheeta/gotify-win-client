@@ -81,7 +81,7 @@ public class MainViewModel : ViewModelBase
         _dndManager = dndManager;
         _presenter = presenter;
 
-        Feed = new FeedViewModel(_apiService, _configService);
+        Feed = new FeedViewModel(_apiService, _configService, _presenter);
         Apps = new AppsViewModel(_apiService, _configService);
         Rules = new RulesViewModel(_configService);
         Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter);
@@ -97,7 +97,12 @@ public class MainViewModel : ViewModelBase
         // Wire events
         _wsService.MessageReceived += OnWebSocketMessageReceived;
         _wsService.ConnectionStateChanged += OnConnectionStateChanged;
-        Settings.ConnectionConfigSaved += async (s, e) => await ReconnectAsync();
+        Settings.ConnectionConfigSaved += async (s, e) =>
+        {
+            await Apps.LoadAppsAsync();
+            await LoadRecentHistoryAsync();
+            await ReconnectAsync();
+        };
         Feed.UrlOpenRequested += (s, url) => _presenter.OpenUrl(url);
 
         // DND periodic refresh timer (to update UI when quiet hours or snooze expires)
@@ -119,26 +124,27 @@ public class MainViewModel : ViewModelBase
         var cfg = _configService.Config;
         if (!string.IsNullOrEmpty(cfg.ServerUrl) && !string.IsNullOrEmpty(cfg.ClientToken))
         {
-            // Initial app sync in background
-            _ = Task.Run(async () =>
-            {
-                await Apps.LoadAppsAsync();
-            });
-
-            // Load recent history
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    var recent = await _apiService.GetRecentMessagesAsync(cfg.ServerUrl, cfg.ClientToken, 50);
-                    EnrichMessages(recent);
-                    Feed.SetInitialMessages(recent);
-                }
-                catch { }
-            });
-
-            // Connect WebSocket
+            _ = Task.Run(async () => await Apps.LoadAppsAsync());
+            _ = Task.Run(async () => await LoadRecentHistoryAsync());
             await ReconnectAsync();
+        }
+    }
+
+    public async Task LoadRecentHistoryAsync()
+    {
+        var cfg = _configService.Config;
+        if (!string.IsNullOrEmpty(cfg.ServerUrl) && !string.IsNullOrEmpty(cfg.ClientToken))
+        {
+            try
+            {
+                var recent = await _apiService.GetRecentMessagesAsync(cfg.ServerUrl, cfg.ClientToken, 50);
+                EnrichMessages(recent);
+                Feed.SetInitialMessages(recent);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainVM] Failed to load recent history: {ex.Message}");
+            }
         }
     }
 
@@ -173,15 +179,15 @@ public class MainViewModel : ViewModelBase
         var isDnd = _dndManager.IsDndActive(_configService.Config.Dnd);
         var decision = _filterEngine.Evaluate(message, _configService.Config, isDnd);
 
+        Console.WriteLine($"[GotifyWin] Message #{message.Id} from '{message.DisplayAppName}' (Priority: {message.Priority}) -> {decision.Decision}: {decision.Reason}");
+
         switch (decision.Decision)
         {
             case FilterDecision.Drop:
-                System.Diagnostics.Debug.WriteLine($"[MainVM] Dropped message #{message.Id}: {decision.Reason}");
                 return;
 
             case FilterDecision.SilentLog:
                 Feed.AddMessage(message);
-                System.Diagnostics.Debug.WriteLine($"[MainVM] Silent log message #{message.Id}: {decision.Reason}");
                 break;
 
             case FilterDecision.Alert:
@@ -193,6 +199,7 @@ public class MainViewModel : ViewModelBase
 
     private void OnConnectionStateChanged(object? sender, ConnectionState state)
     {
+        Console.WriteLine($"[GotifyWin] WebSocket state: {state}");
         Application.Current?.Dispatcher?.Invoke(() =>
         {
             switch (state)

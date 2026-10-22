@@ -305,7 +305,9 @@ public class SettingsViewModel : ViewModelBase
             var user = await _apiService.GetCurrentUserAsync(ServerUrl, ClientToken);
             if (user != null)
             {
-                TestStatus = $"Connected successfully! Authenticated as: {user.Name}";
+                TestStatus = $"Connected! Authenticated as: {user.Name}";
+                // Automatically save connection and trigger WebSocket reconnect on successful test
+                SaveConnection();
             }
             else
             {

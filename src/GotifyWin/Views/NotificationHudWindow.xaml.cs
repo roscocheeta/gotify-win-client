@@ -14,17 +14,17 @@ namespace GotifyWin.Views;
 public partial class NotificationHudWindow : Window
 {
     private readonly DispatcherTimer _dismissTimer;
-    private readonly double _durationMs;
+    private double _durationMs = 5000.0;
     private double _elapsedMs;
     private bool _isClosing;
     private Action<string>? _onUrlOpen;
     private GotifyMessage? _message;
+    private HudPosition _position = HudPosition.BottomRight;
 
     public NotificationHudWindow()
     {
         InitializeComponent();
 
-        _durationMs = 5000.0;
         _dismissTimer = new DispatcherTimer(DispatcherPriority.Normal)
         {
             Interval = TimeSpan.FromMilliseconds(50)
@@ -33,12 +33,28 @@ public partial class NotificationHudWindow : Window
 
         MouseEnter += (s, e) => _dismissTimer.Stop();
         MouseLeave += (s, e) => { if (!_isClosing) _dismissTimer.Start(); };
+
+        Loaded += NotificationHudWindow_Loaded;
+    }
+
+    private void NotificationHudWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        PositionWindow(_position);
+
+        var fadeIn = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+        };
+        RootContainer.BeginAnimation(OpacityProperty, fadeIn);
+
+        _dismissTimer.Start();
     }
 
     public void Setup(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
     {
         _message = message;
         _onUrlOpen = onUrlOpen;
+        _position = settings.Position;
 
         AppNameTextBlock.Text = message.DisplayAppName;
         TimeTextBlock.Text = message.RelativeTime;
@@ -82,21 +98,11 @@ public partial class NotificationHudWindow : Window
         // Countdown Progress Bar visibility
         CountdownProgressBar.Visibility = settings.ShowCountdownBar ? Visibility.Visible : Visibility.Collapsed;
 
-        // Position on Screen
-        PositionWindow(settings.Position);
-
-        // Start Countdown
+        // Display Duration
+        _durationMs = Math.Max(2.0, settings.DisplayDurationSeconds) * 1000.0;
         _elapsedMs = 0;
-        var duration = Math.Max(2.0, settings.DisplayDurationSeconds) * 1000.0;
-        _dismissTimer.Interval = TimeSpan.FromMilliseconds(50);
-        _dismissTimer.Start();
 
-        // Fade in
-        var fadeIn = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(250))
-        {
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-        };
-        RootContainer.BeginAnimation(OpacityProperty, fadeIn);
+        PositionWindow(_position);
     }
 
     private void PositionWindow(HudPosition position)
@@ -107,14 +113,16 @@ public partial class NotificationHudWindow : Window
         Width = 380;
         UpdateLayout();
 
+        var height = ActualHeight > 0 ? ActualHeight : 140.0;
+
         double left = workArea.Right - Width - margin;
-        double top = workArea.Bottom - (ActualHeight > 0 ? ActualHeight : 140) - margin;
+        double top = workArea.Bottom - height - margin;
 
         switch (position)
         {
             case HudPosition.BottomRight:
                 left = workArea.Right - Width - margin;
-                top = workArea.Bottom - (ActualHeight > 0 ? ActualHeight : 140) - margin;
+                top = workArea.Bottom - height - margin;
                 break;
             case HudPosition.TopRight:
                 left = workArea.Right - Width - margin;
@@ -126,7 +134,7 @@ public partial class NotificationHudWindow : Window
                 break;
             case HudPosition.BottomCenter:
                 left = workArea.Left + (workArea.Width - Width) / 2.0;
-                top = workArea.Bottom - (ActualHeight > 0 ? ActualHeight : 140) - margin;
+                top = workArea.Bottom - height - margin;
                 break;
         }
 
@@ -137,11 +145,10 @@ public partial class NotificationHudWindow : Window
     private void DismissTimer_Tick(object? sender, EventArgs e)
     {
         _elapsedMs += 50.0;
-        var duration = _durationMs;
-        var progress = Math.Max(0.0, 100.0 - (_elapsedMs / duration * 100.0));
+        var progress = Math.Max(0.0, 100.0 - (_elapsedMs / _durationMs * 100.0));
         CountdownProgressBar.Value = progress;
 
-        if (_elapsedMs >= duration)
+        if (_elapsedMs >= _durationMs)
         {
             _dismissTimer.Stop();
             CloseWithAnimation();

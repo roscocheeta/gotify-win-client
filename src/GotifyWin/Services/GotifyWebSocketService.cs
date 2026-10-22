@@ -124,31 +124,19 @@ public class GotifyWebSocketService : IGotifyWebSocketService
                 _webSocket = new ClientWebSocket();
                 _webSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
 
-                // SEC-08: Prefer X-Gotify-Key request header over query parameter to avoid leaking token in proxy logs
+                // Send token in both query string and header for 100% proxy & Gotify compatibility
                 try
                 {
                     _webSocket.Options.SetRequestHeader("X-Gotify-Key", _clientToken!);
                 }
                 catch { }
 
-                // Connect to /stream (or fallback with token query if header rejected)
-                Uri wsUri;
-                try
-                {
-                    wsUri = new Uri($"{wsBase}/stream");
-                    await _webSocket.ConnectAsync(wsUri, ct);
-                }
-                catch (WebSocketException)
-                {
-                    // Fallback to query param if proxy strips custom headers
-                    _webSocket.Dispose();
-                    _webSocket = new ClientWebSocket();
-                    _webSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
-                    wsUri = new Uri($"{wsBase}/stream?token={Uri.EscapeDataString(_clientToken!)}");
-                    await _webSocket.ConnectAsync(wsUri, ct);
-                }
+                var wsUri = new Uri($"{wsBase}/stream?token={Uri.EscapeDataString(_clientToken!)}");
+                Console.WriteLine($"[GotifyWebSocket] Connecting to {wsBase}/stream...");
+                await _webSocket.ConnectAsync(wsUri, ct);
 
                 State = ConnectionState.Connected;
+                Console.WriteLine($"[GotifyWebSocket] Successfully connected to {wsBase}/stream!");
                 backoffSeconds = 2.0; // Reset backoff on successful connect
 
                 await ReceiveLoopAsync(_webSocket, ct);
@@ -160,6 +148,7 @@ public class GotifyWebSocketService : IGotifyWebSocketService
             catch (Exception ex)
             {
                 LastError = ex.Message;
+                Console.WriteLine($"[GotifyWebSocket] Connection error: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[GotifyWebSocket] Connection error: {ex.Message}");
             }
 
@@ -229,6 +218,7 @@ public class GotifyWebSocketService : IGotifyWebSocketService
 
                     if (message != null)
                     {
+                        Console.WriteLine($"[GotifyWebSocket] Received message #{message.Id}: '{message.Title}'");
                         MessageReceived?.Invoke(this, message);
                     }
                 }
