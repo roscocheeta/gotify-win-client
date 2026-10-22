@@ -170,6 +170,10 @@
                                                 Visibility="{Binding HasClickUrl, Converter={StaticResource BoolToVis}}"
                                                 Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding ClickUrl}"/>
+                                        <Button Content="⚡ Create Rule" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                ToolTip="Pre-fill a new filter rule using this notification"
+                                                Command="{Binding DataContext.CreateRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"/>
                                         <Button Content="📋 Copy" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
                                                 Command="{Binding DataContext.CopyMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"/>

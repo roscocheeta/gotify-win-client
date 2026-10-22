@@ -104,6 +104,11 @@ public class MainViewModel : ViewModelBase
             await ReconnectAsync();
         };
         Feed.UrlOpenRequested += (s, url) => _presenter.OpenUrl(url);
+        Feed.CreateRuleRequested += (s, msg) =>
+        {
+            Rules.PrepopulateFromMessage(msg);
+            SelectedTabIndex = 2;
+        };
 
         // DND periodic refresh timer (to update UI when quiet hours or snooze expires)
         var timer = new DispatcherTimer(DispatcherPriority.Background)

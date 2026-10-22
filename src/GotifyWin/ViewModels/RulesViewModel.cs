@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using GotifyWin.Models;
 using GotifyWin.Models.Config;
 using GotifyWin.Services;
 
@@ -67,6 +68,21 @@ public class RulesViewModel : ViewModelBase
         ToggleRuleCommand = new RelayCommand<NotificationRule>(ToggleRule);
 
         LoadRules();
+    }
+
+    public void PrepopulateFromMessage(GotifyMessage message)
+    {
+        var pattern = !string.IsNullOrWhiteSpace(message.Title)
+            ? message.Title
+            : message.Message;
+
+        var shortPattern = pattern.Length > 28 ? pattern[..28] + "..." : pattern;
+        NewRuleName = $"Filter {message.DisplayAppName}: {shortPattern}";
+        NewRuleField = !string.IsNullOrWhiteSpace(message.Title) ? RuleField.Title : RuleField.Message;
+        NewRuleOperator = RuleOperator.Contains;
+        NewRulePattern = pattern;
+        NewRuleAction = RuleAction.Drop;
+        NewRuleCaseSensitive = false;
     }
 
     private void LoadRules()

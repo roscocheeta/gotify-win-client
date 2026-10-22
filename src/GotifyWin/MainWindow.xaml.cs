@@ -24,6 +24,14 @@ public partial class MainWindow : Window
 
         InitializeSystemTray();
 
+        _viewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.SelectedTabIndex))
+            {
+                SwitchTab(_viewModel.SelectedTabIndex);
+            }
+        };
+
         Loaded += async (s, e) =>
         {
             await _viewModel.InitializeAsync();
@@ -105,6 +113,12 @@ public partial class MainWindow : Window
     private void SwitchTab(int index)
     {
         _viewModel.SelectedTabIndex = index;
+        if (NavFeedRadio != null) NavFeedRadio.IsChecked = index == 0;
+        if (NavAppsRadio != null) NavAppsRadio.IsChecked = index == 1;
+        if (NavRulesRadio != null) NavRulesRadio.IsChecked = index == 2;
+        if (NavSettingsRadio != null) NavSettingsRadio.IsChecked = index == 3;
+
+        if (FeedPageView != null) FeedPageView.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
         if (AppsPageView != null) AppsPageView.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
         if (RulesPageView != null) RulesPageView.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
         if (SettingsPageView != null) SettingsPageView.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;

@@ -102,17 +102,13 @@
 
                 <!-- Navigation Tabs in Center -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <RadioButton Content="Notifications" Style="{StaticResource NavRadioButton}"
-                                 IsChecked="{Binding SelectedTabIndex, Converter={StaticResource BoolToVis}, ConverterParameter=0, Mode=OneWay}"
+                    <RadioButton x:Name="NavFeedRadio" Content="Notifications" Style="{StaticResource NavRadioButton}"
                                  Checked="NavFeed_Checked" Margin="0,0,4,0"/>
-                    <RadioButton Content="Apps" Style="{StaticResource NavRadioButton}"
-                                 IsChecked="{Binding SelectedTabIndex, Converter={StaticResource BoolToVis}, ConverterParameter=1, Mode=OneWay}"
+                    <RadioButton x:Name="NavAppsRadio" Content="Apps" Style="{StaticResource NavRadioButton}"
                                  Checked="NavApps_Checked" Margin="0,0,4,0"/>
-                    <RadioButton Content="Filter Rules" Style="{StaticResource NavRadioButton}"
-                                 IsChecked="{Binding SelectedTabIndex, Converter={StaticResource BoolToVis}, ConverterParameter=2, Mode=OneWay}"
+                    <RadioButton x:Name="NavRulesRadio" Content="Filter Rules" Style="{StaticResource NavRadioButton}"
                                  Checked="NavRules_Checked" Margin="0,0,4,0"/>
-                    <RadioButton Content="Settings" Style="{StaticResource NavRadioButton}"
-                                 IsChecked="{Binding SelectedTabIndex, Converter={StaticResource BoolToVis}, ConverterParameter=3, Mode=OneWay}"
+                    <RadioButton x:Name="NavSettingsRadio" Content="Settings" Style="{StaticResource NavRadioButton}"
                                  Checked="NavSettings_Checked"/>
                 </StackPanel>
 
@@ -141,8 +137,7 @@
         <!-- Main Content Area -->
         <Grid Grid.Row="2">
             <!-- Feed Page -->
-            <views:FeedPage DataContext="{Binding Feed}"
-                            Visibility="{Binding SelectedTabIndex, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}"/>
+            <views:FeedPage x:Name="FeedPageView" DataContext="{Binding Feed}"/>
 
             <!-- Apps Page -->
             <views:AppsPage x:Name="AppsPageView" DataContext="{Binding Apps}" Visibility="Collapsed"/>

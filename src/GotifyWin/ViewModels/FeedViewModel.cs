@@ -59,10 +59,12 @@ public class FeedViewModel : ViewModelBase
     public ICommand ClearAllCommand { get; }
     public ICommand DeleteMessageCommand { get; }
     public ICommand CopyMessageCommand { get; }
+    public ICommand CreateRuleCommand { get; }
     public ICommand OpenUrlCommand { get; }
     public ICommand TestNotificationCommand { get; }
 
     public event EventHandler<string>? UrlOpenRequested;
+    public event EventHandler<GotifyMessage>? CreateRuleRequested;
 
     public FeedViewModel(IGotifyApiService apiService, IConfigService configService, INotificationPresenter? presenter = null)
     {
@@ -76,8 +78,17 @@ public class FeedViewModel : ViewModelBase
         ClearAllCommand = new RelayCommand(ClearAll);
         DeleteMessageCommand = new RelayCommand<GotifyMessage>(DeleteMessage);
         CopyMessageCommand = new RelayCommand<GotifyMessage>(CopyMessage);
+        CreateRuleCommand = new RelayCommand<GotifyMessage>(CreateRule);
         OpenUrlCommand = new RelayCommand<string>(OpenUrl);
         TestNotificationCommand = new RelayCommand(SendTestNotification);
+    }
+
+    private void CreateRule(GotifyMessage? message)
+    {
+        if (message != null)
+        {
+            CreateRuleRequested?.Invoke(this, message);
+        }
     }
 
     private void SendTestNotification()
