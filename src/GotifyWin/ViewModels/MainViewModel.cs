@@ -16,6 +16,7 @@ public class MainViewModel : ViewModelBase
     private readonly IFilterEngine _filterEngine;
     private readonly IDndManager _dndManager;
     private readonly INotificationPresenter _presenter;
+    private readonly INotificationPatternAnalyzer _patternAnalyzer;
 
     private int _selectedTabIndex;
     public int SelectedTabIndex
@@ -72,7 +73,8 @@ public class MainViewModel : ViewModelBase
         IFilterEngine filterEngine,
         IDndManager dndManager,
         INotificationPresenter presenter,
-        IStartupManager startupManager)
+        IStartupManager startupManager,
+        INotificationPatternAnalyzer? patternAnalyzer = null)
     {
         _configService = configService;
         _apiService = apiService;
@@ -80,10 +82,11 @@ public class MainViewModel : ViewModelBase
         _filterEngine = filterEngine;
         _dndManager = dndManager;
         _presenter = presenter;
+        _patternAnalyzer = patternAnalyzer ?? new NotificationPatternAnalyzer();
 
         Feed = new FeedViewModel(_apiService, _configService, _presenter);
         Apps = new AppsViewModel(_apiService, _configService);
-        Rules = new RulesViewModel(_configService);
+        Rules = new RulesViewModel(_configService, _patternAnalyzer, () => Feed.Messages);
         Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter);
 
         ToggleDndCommand = new RelayCommand(ToggleDnd);
@@ -145,6 +148,12 @@ public class MainViewModel : ViewModelBase
                 var recent = await _apiService.GetRecentMessagesAsync(cfg.ServerUrl, cfg.ClientToken, 50);
                 EnrichMessages(recent);
                 Feed.SetInitialMessages(recent);
+
+                var recs = _patternAnalyzer.Analyze(recent, _configService.Config, threshold: 5);
+                Application.Current?.Dispatcher?.Invoke(() =>
+                {
+                    Rules.SetRecommendations(recs);
+                });
             }
             catch (Exception ex)
             {

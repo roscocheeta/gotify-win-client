@@ -38,7 +38,7 @@ public class RuleWorkflowTests
         Assert.Equal(RuleField.Title, rulesVm.NewRuleField);
         Assert.Equal(RuleOperator.Contains, rulesVm.NewRuleOperator);
         Assert.Equal("Episode Downloaded", rulesVm.NewRulePattern);
-        Assert.Equal(RuleAction.Drop, rulesVm.NewRuleAction);
+        Assert.Equal(RuleAction.SilentLog, rulesVm.NewRuleAction);
         Assert.Contains("Sonarr", rulesVm.NewRuleName);
     }
 
@@ -85,5 +85,89 @@ public class RuleWorkflowTests
 
         Assert.NotNull(received);
         Assert.Equal("Disk Low Space", received.Title);
+    }
+
+    [Fact]
+    public void ApplyRecommendation_AddsRuleAndRemovesRecommendation()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var rec = new RuleRecommendation
+        {
+            AppId = 8,
+            AppName = "Bazarr",
+            Title = "Mute routine Bazarr alerts",
+            SuggestedField = RuleField.Title,
+            SuggestedOperator = RuleOperator.Contains,
+            SuggestedPattern = "Subtitle Downloaded",
+            SuggestedAction = RuleAction.SilentLog,
+            MatchCount = 7
+        };
+
+        rulesVm.SetRecommendations(new[] { rec });
+        Assert.True(rulesVm.HasRecommendations);
+        Assert.Single(rulesVm.Recommendations);
+
+        rulesVm.ApplyRecommendation(rec, RuleAction.SilentLog);
+
+        Assert.False(rulesVm.HasRecommendations);
+        Assert.Single(rulesVm.Rules);
+        Assert.Equal("Subtitle Downloaded", rulesVm.Rules[0].Pattern);
+        Assert.Equal(RuleAction.SilentLog, rulesVm.Rules[0].Action);
+        Assert.Single(configService.Config.Rules);
+    }
+
+    [Fact]
+    public void DismissRecommendation_RemovesRecommendationWithoutAddingRule()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var rec = new RuleRecommendation
+        {
+            AppId = 8,
+            AppName = "Bazarr",
+            Title = "Mute routine Bazarr alerts"
+        };
+
+        rulesVm.SetRecommendations(new[] { rec });
+        Assert.True(rulesVm.HasRecommendations);
+
+        rulesVm.DismissRecommendation(rec);
+
+        Assert.False(rulesVm.HasRecommendations);
+        Assert.Empty(rulesVm.Rules);
+    }
+
+    [Fact]
+    public void FilterEngine_WhenMatchedSilentLogRule_SetsFilteredByRuleName()
+    {
+        var engine = new FilterEngine();
+        var config = new GotifyClientConfig();
+        config.Rules.Add(new NotificationRule
+        {
+            Name = "Ignore Health Check",
+            Enabled = true,
+            TargetField = RuleField.Title,
+            Operator = RuleOperator.Contains,
+            Pattern = "HealthCheck",
+            Action = RuleAction.SilentLog
+        });
+
+        var msg = new GotifyMessage
+        {
+            Id = 555,
+            AppId = 1,
+            Title = "HealthCheck OK",
+            Message = "All systems operational",
+            Priority = 3
+        };
+
+        var result = engine.Evaluate(msg, config, isDndActive: false);
+
+        Assert.Equal(FilterDecision.SilentLog, result.Decision);
+        Assert.True(msg.IsFiltered);
+        Assert.Equal("Ignore Health Check", msg.FilteredByRuleName);
     }
 }

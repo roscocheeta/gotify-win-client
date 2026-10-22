@@ -37,6 +37,12 @@ public class GotifyMessage
     public int DuplicateCount { get; set; } = 1;
 
     [JsonIgnore]
+    public string? FilteredByRuleName { get; set; }
+
+    [JsonIgnore]
+    public bool IsFiltered => !string.IsNullOrEmpty(FilteredByRuleName);
+
+    [JsonIgnore]
     public string DisplayTitle => string.IsNullOrWhiteSpace(Title) ? (string.IsNullOrWhiteSpace(ApplicationName) ? "Gotify Alert" : ApplicationName) : Title;
 
     [JsonIgnore]

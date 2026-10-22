@@ -60,6 +60,7 @@ public class FilterEngine : IFilterEngine
                     case RuleAction.Drop:
                         return new FilterResult(FilterDecision.Drop, $"Matched rule '{rule.Name}' (Action: Drop).");
                     case RuleAction.SilentLog:
+                        message.FilteredByRuleName = rule.Name;
                         return new FilterResult(FilterDecision.SilentLog, $"Matched rule '{rule.Name}' (Action: SilentLog).");
                     case RuleAction.UrgentAlert:
                         // Urgent alert forces display and bypasses DND
@@ -109,6 +110,7 @@ public class FilterEngine : IFilterEngine
                         entry.Count++;
                         entry.LastSeenUtc = now;
                         message.DuplicateCount = entry.Count;
+                        message.FilteredByRuleName = "Anti-Flap Debounce";
                         return new FilterResult(
                             FilterDecision.SilentLog,
                             $"Debounced duplicate #{entry.Count} within {config.Presentation.DebounceWindowSeconds}s window.",
@@ -146,6 +148,7 @@ public class FilterEngine : IFilterEngine
                     $"App '{appSetting.AppName}' has DND override enabled.");
             }
 
+            message.FilteredByRuleName = "Do Not Disturb";
             return new FilterResult(FilterDecision.SilentLog, "Suppressed by active Do Not Disturb or Quiet Hours.");
         }
 
@@ -153,7 +156,7 @@ public class FilterEngine : IFilterEngine
         return new FilterResult(FilterDecision.Alert, "Passed all filter gates.");
     }
 
-    private static bool MatchesRule(GotifyMessage message, NotificationRule rule)
+    public static bool MatchesRule(GotifyMessage message, NotificationRule rule)
     {
         if (string.IsNullOrEmpty(rule.Pattern))
             return false;

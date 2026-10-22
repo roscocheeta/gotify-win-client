@@ -22,6 +22,7 @@ public partial class App : System.Windows.Application
         var soundService = new SoundService();
         var presenter = new NotificationPresenter(soundService);
         var startupManager = new StartupManager();
+        var patternAnalyzer = new NotificationPatternAnalyzer();
 
         var mainViewModel = new MainViewModel(
             configService,
@@ -30,7 +31,8 @@ public partial class App : System.Windows.Application
             filterEngine,
             dndManager,
             presenter,
-            startupManager
+            startupManager,
+            patternAnalyzer
         );
 
         _mainWindow = new MainWindow(mainViewModel, configService);

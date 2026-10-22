@@ -146,6 +146,16 @@
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <!-- Filtered by Rule Badge -->
+                                            <Border CornerRadius="3" Background="#0F2744" BorderBrush="#2563EB" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
+                                                    Visibility="{Binding IsFiltered, Converter={StaticResource BoolToVis}}"
+                                                    ToolTip="{Binding FilteredByRuleName, StringFormat='Automatically filtered: {0}'}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="🔕 " FontSize="9" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding FilteredByRuleName, StringFormat='Filtered: {0}'}" FontSize="10" FontWeight="SemiBold" Foreground="#93C5FD"/>
+                                                </StackPanel>
+                                            </Border>
+
                                             <!-- Debounce duplicate badge -->
                                             <Border CornerRadius="3" Background="#475569" Padding="5,1" Margin="0,0,6,0"
                                                     Visibility="{Binding DuplicateCount, Converter={StaticResource BoolToVis}}">

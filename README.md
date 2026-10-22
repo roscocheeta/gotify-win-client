@@ -16,13 +16,15 @@ Unlike legacy tray wrappers, GotifyWin brings **Windows 11 Fluent 2 aesthetics**
 * **Local Icon Caching**: Automatically downloads and caches application icons (`/application/{id}/image`) so notifications display service logos (Home Assistant, Docker, Uptime Kuma, etc.).
 * **Per-App Priority Thresholds**: Configure individual minimum priority filters per application.
 
-### ⚡ Granular Filter Rules & Anti-Flap Debounce
-* **Multi-Condition Rule Engine**: Create whitelist and blacklist rules matching against `Title`, `Message`, or `AppName`.
-* **Operators Supported**: `Contains`, `Does Not Contain`, `Starts With`, `Ends With`, `Exact Match`, and `Regex Match`.
-* **Actions**:
-  * `Drop`: Completely discard message (e.g. routine heartbeat pings).
-  * `Silent Log`: Record in notification history feed without desktop popup or chime.
-  * `Urgent Alert`: Force notification and sound, bypassing active DND.
+### ⚡ Intelligent Noise Reduction & Smart Recommendations
+* **Automated Pattern Detection**: Analyzes local notification history using deterministic variable-masking clustering (normalizes timestamps, durations, numbers, IPs, and hashes) to detect repetitive operational noise (minimum 5 occurrences).
+* **1-Click Muting & Progressive Disclosure**:
+  * **💡 Smart Recommendations**: One-click `[🔕 Silent Log]` (suppresses desktop popups/chimes while keeping the record) or `[🔇 Drop]` directly from automated suggestion cards.
+  * **Interactive Match Preview**: Expandable drawer allows users to review the exact past messages matching any recommendation before applying it.
+  * **🛡️ Active Rules Management**: Clean overview to toggle, monitor, and delete active rules.
+  * **⚙️ Advanced Rule Builder**: Collapsible power-user drawer for custom regex, multi-condition matching, and priority overrides.
+* **Audit Tagging & Log Flagging**: Silently logged messages are visually tagged in the feed with an interactive badge (`🔕 Filtered: <RuleName>`), providing complete transparency.
+* **Safety First**: Intelligent safeguards prevent muting high-priority alerts ($\ge 7$) or notifications containing failure keywords (`error`, `down`, `critical`, `failed`, `corrupt`).
 * **Anti-Spam / Flap Debounce**: Deduplicates flapping monitor alerts within a configurable time window (3s–60s) with duplicate counters (`x5`).
 
 ### 🔔 Maximum Presentation Customization

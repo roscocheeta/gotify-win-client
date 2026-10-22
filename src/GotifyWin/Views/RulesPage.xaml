@@ -6,16 +6,17 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="800"
+             mc:Ignorable="d" d:DesignHeight="750" d:DesignWidth="850"
              Background="#0B1120">
     <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:BooleanToVisibilityConverter x:Key="InverseBoolToVis" Invert="True"/>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="#3B82F6"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="Padding" Value="14,7"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -31,6 +32,79 @@
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#2563EB"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SilentLogButton" TargetType="Button">
+            <Setter Property="Background" Value="#1D4ED8"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2563EB"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DropButton" TargetType="Button">
+            <Setter Property="Background" Value="#334155"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#475569"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -57,151 +131,360 @@
     <Grid Margin="24,16,24,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Granular Filter Rules" FontSize="18" FontWeight="Bold" Foreground="#F8FAFC"/>
-            <TextBlock Text="Intercept and filter specific notifications based on regex, keywords, or sender application."
-                       FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0"/>
-        </StackPanel>
+        <!-- Top Header & Actions -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-        <!-- Rule Builder Card -->
-        <Border Grid.Row="1" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Filter Rules &amp; Noise Reduction" FontSize="18" FontWeight="Bold" Foreground="#F8FAFC"/>
+                <TextBlock Text="Automated recommendations and custom rules to keep your desktop noise-free."
+                           FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0"/>
+            </StackPanel>
 
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="140"/>
-                        <ColumnDefinition Width="140"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="130"/>
-                    </Grid.ColumnDefinitions>
+            <Button Grid.Column="1" Content="⚡ Re-scan History" Style="{StaticResource SecondaryButton}"
+                    Command="{Binding ReanalyzeCommand}" ToolTip="Scan message history for repetitive patterns (minimum 5 occurrences)"/>
+        </Grid>
 
-                    <!-- Target Field -->
-                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                        <TextBlock Text="Field" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,4"/>
-                        <ComboBox Style="{StaticResource InputComboBox}" SelectedValue="{Binding NewRuleField}" SelectedValuePath="Tag">
-                            <ComboBoxItem Content="Title" Tag="{x:Static cfg:RuleField.Title}" IsSelected="True"/>
-                            <ComboBoxItem Content="Message" Tag="{x:Static cfg:RuleField.Message}"/>
-                            <ComboBoxItem Content="App Name" Tag="{x:Static cfg:RuleField.AppName}"/>
-                        </ComboBox>
+        <!-- Main Scrollable Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- ========================================== -->
+                <!-- 1. SMART RECOMMENDATIONS SECTION           -->
+                <!-- ========================================== -->
+                <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                    <StackPanel>
+                        <!-- Section Header -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="💡 Smart Noise Recommendations" FontSize="14" FontWeight="Bold" Foreground="#F8FAFC"/>
+                                <Border CornerRadius="10" Background="#0284C7" Padding="6,1" Margin="8,0,0,0"
+                                        Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding Recommendations.Count, StringFormat='{}{0} suggestions'}" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Empty State: No recommendations detected -->
+                        <Border Background="#0F172A" CornerRadius="6" Padding="14,12" Margin="0,0,0,4"
+                                Visibility="{Binding HasRecommendations, Converter={StaticResource InverseBoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✨" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="All clean! No repetitive noise patterns detected yet (minimum 5 occurrences required)."
+                                           FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Recommendations List -->
+                        <ItemsControl ItemsSource="{Binding Recommendations}"
+                                      Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" Padding="14,12">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Main Card Row -->
+                                            <Grid Grid.Row="0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Left: Title, Description, Pattern -->
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                        <TextBlock Text="{Binding AppName}" FontSize="12" FontWeight="Bold" Foreground="#38BDF8"/>
+                                                        <TextBlock Text=" • " FontSize="12" Foreground="#64748B"/>
+                                                        <Border CornerRadius="3" Background="#1E293B" Padding="5,1" Margin="0,0,6,0">
+                                                            <TextBlock Text="{Binding MatchCount, StringFormat='Seen {0} times'}" FontSize="10" FontWeight="Bold" Foreground="#F8FAFC"/>
+                                                        </Border>
+                                                    </StackPanel>
+
+                                                    <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,2"/>
+                                                    <TextBlock Text="{Binding Description}" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,6"/>
+
+                                                    <!-- Preview Toggle Button -->
+                                                    <Button Content="{Binding PreviewToggleText}" Style="{StaticResource SecondaryButton}"
+                                                            Padding="8,3" FontSize="10" HorizontalAlignment="Left"
+                                                            Command="{Binding TogglePreviewCommand}"/>
+                                                </StackPanel>
+
+                                                <!-- Right: Action Buttons -->
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Content="🔕 Silent Log" Style="{StaticResource SilentLogButton}" Margin="0,0,8,0"
+                                                            ToolTip="Record in history but suppress popup &amp; chime"
+                                                            Command="{Binding ApplySilentLogCommand}"/>
+                                                    <Button Content="🔇 Drop" Style="{StaticResource DropButton}" Margin="0,0,8,0"
+                                                            ToolTip="Completely discard matching notifications"
+                                                            Command="{Binding ApplyDropCommand}"/>
+                                                    <Button Content="✕" Width="26" Height="26" Background="Transparent" BorderThickness="0"
+                                                            Foreground="#94A3B8" FontSize="12" Cursor="Hand" ToolTip="Dismiss recommendation"
+                                                            Command="{Binding DismissCommand}"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Expandable Match Preview Drawer -->
+                                            <Border Grid.Row="1" Background="#0B1120" BorderBrush="#1E293B" BorderThickness="1"
+                                                    CornerRadius="6" Padding="10" Margin="0,10,0,0"
+                                                    Visibility="{Binding IsPreviewExpanded, Converter={StaticResource BoolToVis}}">
+                                                <StackPanel>
+                                                    <TextBlock Text="Sample Matching Historical Messages:" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                    <ItemsControl ItemsSource="{Binding SampleMessages}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border BorderBrush="#1E293B" BorderThickness="0,0,0,1" Padding="0,4">
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Text="{Binding FormattedDate}" FontSize="10" Foreground="#64748B" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                                            <TextBlock Text="{Binding DisplayTitle}" FontSize="11" FontWeight="SemiBold" Foreground="#E2E8F0" Margin="0,0,6,0"/>
+                                                                            <TextBlock Text="{Binding Message}" FontSize="11" Foreground="#94A3B8" TextTrimming="CharacterEllipsis"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
+                </Border>
 
-                    <!-- Operator -->
-                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
-                        <TextBlock Text="Operator" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,4"/>
-                        <ComboBox Style="{StaticResource InputComboBox}" SelectedValue="{Binding NewRuleOperator}" SelectedValuePath="Tag">
-                            <ComboBoxItem Content="Contains" Tag="{x:Static cfg:RuleOperator.Contains}" IsSelected="True"/>
-                            <ComboBoxItem Content="Does Not Contain" Tag="{x:Static cfg:RuleOperator.DoesNotContain}"/>
-                            <ComboBoxItem Content="Starts With" Tag="{x:Static cfg:RuleOperator.StartsWith}"/>
-                            <ComboBoxItem Content="Ends With" Tag="{x:Static cfg:RuleOperator.EndsWith}"/>
-                            <ComboBoxItem Content="Exact Match" Tag="{x:Static cfg:RuleOperator.ExactMatch}"/>
-                            <ComboBoxItem Content="Regex Match" Tag="{x:Static cfg:RuleOperator.RegexMatch}"/>
-                        </ComboBox>
+                <!-- ========================================== -->
+                <!-- 2. ACTIVE RULES SECTION                    -->
+                <!-- ========================================== -->
+                <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                    <StackPanel>
+                        <!-- Section Header -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Active Rules" FontSize="14" FontWeight="Bold" Foreground="#F8FAFC"/>
+                                <Border CornerRadius="10" Background="#334155" Padding="6,1" Margin="8,0,0,0">
+                                    <TextBlock Text="{Binding ActiveRulesCount}" FontSize="10" FontWeight="Bold" Foreground="#F8FAFC"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Empty State: No active rules -->
+                        <Border Background="#0F172A" CornerRadius="6" Padding="14,12" Margin="0,0,0,4"
+                                Visibility="{Binding HasActiveRules, Converter={StaticResource InverseBoolToVis}}">
+                            <TextBlock Text="No active filter rules configured. Use recommendations above or expand the advanced builder below."
+                                       FontSize="12" Foreground="#94A3B8"/>
+                        </Border>
+
+                        <!-- Active Rules List -->
+                        <ItemsControl ItemsSource="{Binding Rules}"
+                                      Visibility="{Binding HasActiveRules, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Margin="0,0,0,8" Padding="14,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Rule Details -->
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Bold" Foreground="#F8FAFC"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                    <TextBlock Text="{Binding TargetField}" FontSize="11" Foreground="#38BDF8"/>
+                                                    <TextBlock Text=" " FontSize="11"/>
+                                                    <TextBlock Text="{Binding Operator}" FontSize="11" Foreground="#94A3B8"/>
+                                                    <TextBlock Text=": '" FontSize="11" Foreground="#64748B"/>
+                                                    <TextBlock Text="{Binding Pattern}" FontSize="11" FontWeight="SemiBold" Foreground="#E2E8F0"/>
+                                                    <TextBlock Text="'" FontSize="11" Foreground="#64748B"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Action Badge -->
+                                            <Border Grid.Column="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,14,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#475569"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.Drop}">
+                                                                <Setter Property="Background" Value="#7F1D1D"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.SilentLog}">
+                                                                <Setter Property="Background" Value="#1E3A8A"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.UrgentAlert}">
+                                                                <Setter Property="Background" Value="#B45309"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding Action}" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                            </Border>
+
+                                            <!-- Enabled Toggle -->
+                                            <CheckBox Grid.Column="2" IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,14,0"
+                                                      ToolTip="Toggle rule active state"
+                                                      Command="{Binding DataContext.ToggleRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                      CommandParameter="{Binding}"/>
+
+                                            <!-- Delete Button -->
+                                            <Button Grid.Column="3" Content="✕" Width="26" Height="26" Background="Transparent" BorderThickness="0"
+                                                    Foreground="#EF4444" FontSize="12" Cursor="Hand" VerticalAlignment="Center" ToolTip="Delete rule"
+                                                    Command="{Binding DataContext.DeleteRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
+                </Border>
 
-                    <!-- Pattern -->
-                    <StackPanel Grid.Column="2" Margin="0,0,10,0">
-                        <TextBlock Text="Match Pattern / Keyword / Regex" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,4"/>
-                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NewRulePattern, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
+                <!-- ========================================== -->
+                <!-- 3. ADVANCED MANUAL RULE BUILDER SECTION     -->
+                <!-- ========================================== -->
+                <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                    <StackPanel>
+                        <!-- Clickable Accordion Header -->
+                        <Grid Cursor="Hand">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                    <!-- Action -->
-                    <StackPanel Grid.Column="3">
-                        <TextBlock Text="Action" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,4"/>
-                        <ComboBox Style="{StaticResource InputComboBox}" SelectedValue="{Binding NewRuleAction}" SelectedValuePath="Tag">
-                            <ComboBoxItem Content="Drop (Discard)" Tag="{x:Static cfg:RuleAction.Drop}" IsSelected="True"/>
-                            <ComboBoxItem Content="Silent Log" Tag="{x:Static cfg:RuleAction.SilentLog}"/>
-                            <ComboBoxItem Content="Urgent Alert" Tag="{x:Static cfg:RuleAction.UrgentAlert}"/>
-                        </ComboBox>
-                    </StackPanel>
-                </Grid>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="⚙️ Advanced Rule Builder" FontSize="14" FontWeight="Bold" Foreground="#F8FAFC"/>
+                                <TextBlock Text="Create manual rules using custom regex, substrings, and target fields."
+                                           FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                            </StackPanel>
 
-                <Grid Grid.Row="1" Margin="0,12,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                            <Button Grid.Column="1" Padding="10,5"
+                                    Command="{Binding ToggleAdvancedCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                        <Setter Property="Content" Value="Expand ▼"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAdvancedExpanded}" Value="True">
+                                                <Setter Property="Content" Value="Collapse ▲"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
 
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <CheckBox Content="Case Sensitive" IsChecked="{Binding NewRuleCaseSensitive}" FontSize="11" Foreground="#94A3B8" Margin="0,0,16,0"/>
-                    </StackPanel>
+                        <!-- Collapsible Builder Form -->
+                        <Grid Margin="0,16,0,0" Visibility="{Binding IsAdvancedExpanded, Converter={StaticResource BoolToVis}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                    <Button Grid.Column="1" Content="+ Add Rule" Style="{StaticResource PrimaryButton}" Command="{Binding AddRuleCommand}"/>
-                </Grid>
-            </Grid>
-        </Border>
+                            <Grid Grid.Row="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-        <!-- Rules List -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding Rules}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Margin="0,0,0,8" Padding="14,10">
-                            <Grid>
+                                <!-- Row A: Rule Name -->
+                                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                                    <TextBlock Text="Rule Name (Optional)" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                                    <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NewRuleName, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+
+                                <!-- Row B: Field, Operator, Pattern, Action -->
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Target Field -->
+                                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                        <TextBlock Text="Field" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                                        <ComboBox Style="{StaticResource InputComboBox}" SelectedValue="{Binding NewRuleField}" SelectedValuePath="Tag">
+                                            <ComboBoxItem Content="Title" Tag="{x:Static cfg:RuleField.Title}" IsSelected="True"/>
+                                            <ComboBoxItem Content="Message" Tag="{x:Static cfg:RuleField.Message}"/>
+                                            <ComboBoxItem Content="App Name" Tag="{x:Static cfg:RuleField.AppName}"/>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <!-- Operator -->
+                                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                        <TextBlock Text="Operator" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                                        <ComboBox Style="{StaticResource InputComboBox}" SelectedValue="{Binding NewRuleOperator}" SelectedValuePath="Tag">
+                                            <ComboBoxItem Content="Contains" Tag="{x:Static cfg:RuleOperator.Contains}" IsSelected="True"/>
+                                            <ComboBoxItem Content="Does Not Contain" Tag="{x:Static cfg:RuleOperator.DoesNotContain}"/>
+                                            <ComboBoxItem Content="Starts With" Tag="{x:Static cfg:RuleOperator.StartsWith}"/>
+                                            <ComboBoxItem Content="Ends With" Tag="{x:Static cfg:RuleOperator.EndsWith}"/>
+                                            <ComboBoxItem Content="Exact Match" Tag="{x:Static cfg:RuleOperator.ExactMatch}"/>
+                                            <ComboBoxItem Content="Regex Match" Tag="{x:Static cfg:RuleOperator.RegexMatch}"/>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <!-- Pattern -->
+                                    <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                                        <TextBlock Text="Match Pattern / Keyword / Regex" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NewRulePattern, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+
+                                    <!-- Action -->
+                                    <StackPanel Grid.Column="3">
+                                        <TextBlock Text="Action" FontSize="11" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                                        <ComboBox Style="{StaticResource InputComboBox}" SelectedValue="{Binding NewRuleAction}" SelectedValuePath="Tag">
+                                            <ComboBoxItem Content="Silent Log" Tag="{x:Static cfg:RuleAction.SilentLog}" IsSelected="True"/>
+                                            <ComboBoxItem Content="Drop (Discard)" Tag="{x:Static cfg:RuleAction.Drop}"/>
+                                            <ComboBoxItem Content="Urgent Alert" Tag="{x:Static cfg:RuleAction.UrgentAlert}"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Bottom Row: Case Sensitive & Add Button -->
+                            <Grid Grid.Row="1" Margin="0,12,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Rule Description -->
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Bold" Foreground="#F8FAFC"/>
-                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                        <TextBlock Text="{Binding TargetField}" FontSize="11" Foreground="#38BDF8"/>
-                                        <TextBlock Text=" " FontSize="11"/>
-                                        <TextBlock Text="{Binding Operator}" FontSize="11" Foreground="#94A3B8"/>
-                                        <TextBlock Text=": '" FontSize="11" Foreground="#64748B"/>
-                                        <TextBlock Text="{Binding Pattern}" FontSize="11" FontWeight="SemiBold" Foreground="#E2E8F0"/>
-                                        <TextBlock Text="'" FontSize="11" Foreground="#64748B"/>
-                                    </StackPanel>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <CheckBox Content="Case Sensitive" IsChecked="{Binding NewRuleCaseSensitive}" FontSize="11" Foreground="#94A3B8" Margin="0,0,16,0"/>
                                 </StackPanel>
 
-                                <!-- Action Badge -->
-                                <Border Grid.Column="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,14,0">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#475569"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.Drop}">
-                                                    <Setter Property="Background" Value="#7F1D1D"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.SilentLog}">
-                                                    <Setter Property="Background" Value="#78350F"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.UrgentAlert}">
-                                                    <Setter Property="Background" Value="#1E3A8A"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <TextBlock Text="{Binding Action}" FontSize="10" FontWeight="Bold" Foreground="White"/>
-                                </Border>
-
-                                <!-- Enabled Toggle -->
-                                <CheckBox Grid.Column="2" IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,14,0"
-                                          Command="{Binding DataContext.ToggleRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                          CommandParameter="{Binding}"/>
-
-                                <!-- Delete Button -->
-                                <Button Grid.Column="3" Content="✕" Width="26" Height="26" Background="Transparent" BorderThickness="0"
-                                        Foreground="#EF4444" FontSize="12" Cursor="Hand" VerticalAlignment="Center"
-                                        Command="{Binding DataContext.DeleteRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                        CommandParameter="{Binding}"/>
+                                <Button Grid.Column="1" Content="+ Add Custom Rule" Style="{StaticResource PrimaryButton}" Command="{Binding AddRuleCommand}"/>
                             </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </UserControl>

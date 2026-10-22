@@ -15,6 +15,7 @@ public class FeedViewModel : ViewModelBase
     private readonly IConfigService _configService;
     private readonly INotificationPresenter? _presenter;
     private readonly ObservableCollection<GotifyMessage> _messages = new();
+    public ObservableCollection<GotifyMessage> Messages => _messages;
     private readonly ICollectionView _filteredView;
 
     private string _searchText = string.Empty;
