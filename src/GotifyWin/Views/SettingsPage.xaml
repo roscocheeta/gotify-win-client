@@ -1,0 +1,242 @@
+<UserControl x:Class="GotifyWin.Views.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cfg="clr-namespace:GotifyWin.Models.Config"
+             xmlns:conv="clr-namespace:GotifyWin.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignHeight="900" d:DesignWidth="800">
+    <UserControl.Resources>
+        <conv:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="SectionBorder" TargetType="Border">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#3B82F6"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2563EB"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#334155"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#475569"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SettingsTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="CaretBrush" Value="White"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,16,24,24">
+        <StackPanel>
+            <!-- Page Title -->
+            <TextBlock Text="Settings &amp; Configuration" FontSize="18" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,16"/>
+
+            <!-- 1. Server Connection -->
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <TextBlock Text="Gotify Server Connection" FontSize="15" FontWeight="SemiBold" Foreground="#F8FAFC" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="Server URL (e.g. https://gotify.homelab.lan:8080)" FontSize="12" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                    <TextBox Style="{StaticResource SettingsTextBox}" Text="{Binding ServerUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="Client Token" FontSize="12" Foreground="#94A3B8" Margin="0,0,0,4"/>
+                    <TextBox Style="{StaticResource SettingsTextBox}" Text="{Binding ClientToken, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
+
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" Content="Test Connection" Style="{StaticResource SecondaryButton}" Command="{Binding TestConnectionCommand}" Margin="0,0,8,0"/>
+                        <Button Grid.Column="1" Content="Save Connection" Style="{StaticResource PrimaryButton}" Command="{Binding SaveConnectionCommand}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding TestStatus}" FontSize="12" Foreground="#38BDF8" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 2. Windows 11 Notification Presentation -->
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <TextBlock Text="Notification Presentation" FontSize="15" FontWeight="SemiBold" Foreground="#F8FAFC"/>
+                        <Button Content="🔔 Preview Alert" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Right" Command="{Binding SendTestNotificationCommand}"/>
+                    </Grid>
+
+                    <!-- Presentation Mode -->
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="220"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Delivery Mode" FontSize="13" FontWeight="SemiBold" Foreground="#F8FAFC"/>
+                            <TextBlock Text="Choose between ultra-sleek floating HUD overlay or Windows 11 Action Center toasts." FontSize="11" Foreground="#94A3B8"/>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1" Height="32" Background="#0F172A" Foreground="#F8FAFC" BorderBrush="#334155"
+                                  SelectedValue="{Binding SelectedMode}" SelectedValuePath="Tag">
+                            <ComboBoxItem Content="Custom Fluent HUD (Recommended)" Tag="{x:Static cfg:NotificationMode.CustomHud}"/>
+                            <ComboBoxItem Content="Windows 11 Native Toast" Tag="{x:Static cfg:NotificationMode.NativeToast}"/>
+                            <ComboBoxItem Content="Both (Hybrid)" Tag="{x:Static cfg:NotificationMode.Both}"/>
+                        </ComboBox>
+                    </Grid>
+
+                    <!-- HUD Position -->
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="220"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="HUD Screen Position" FontSize="13" FontWeight="SemiBold" Foreground="#F8FAFC"/>
+                            <TextBlock Text="Location where floating notifications appear on screen." FontSize="11" Foreground="#94A3B8"/>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1" Height="32" Background="#0F172A" Foreground="#F8FAFC" BorderBrush="#334155"
+                                  SelectedValue="{Binding SelectedPosition}" SelectedValuePath="Tag">
+                            <ComboBoxItem Content="Bottom-Right" Tag="{x:Static cfg:HudPosition.BottomRight}"/>
+                            <ComboBoxItem Content="Top-Right" Tag="{x:Static cfg:HudPosition.TopRight}"/>
+                            <ComboBoxItem Content="Top-Center" Tag="{x:Static cfg:HudPosition.TopCenter}"/>
+                            <ComboBoxItem Content="Bottom-Center" Tag="{x:Static cfg:HudPosition.BottomCenter}"/>
+                        </ComboBox>
+                    </Grid>
+
+                    <!-- Display Duration -->
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="220"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Dismiss Duration" FontSize="13" FontWeight="SemiBold" Foreground="#F8FAFC"/>
+                            <TextBlock Text="{Binding DurationText}" FontSize="11" Foreground="#38BDF8"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Minimum="2" Maximum="20" Value="{Binding DisplayDurationSeconds}" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Countdown Bar & Audio Toggles -->
+                    <CheckBox Content="Show visual countdown progress bar on HUD" IsChecked="{Binding ShowCountdownBar}" Foreground="#E2E8F0" FontSize="12" Margin="0,0,0,8"/>
+                    <CheckBox Content="Play notification sound chime on new alerts" IsChecked="{Binding PlaySound}" Foreground="#E2E8F0" FontSize="12"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. Debounce & Anti-Flap -->
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <TextBlock Text="Anti-Spam &amp; Flap Protection" FontSize="15" FontWeight="SemiBold" Foreground="#F8FAFC" Margin="0,0,0,12"/>
+                    <CheckBox Content="Enable debounce deduplication for flapping alerts" IsChecked="{Binding EnableDebounce}" Foreground="#E2E8F0" FontSize="12" Margin="0,0,0,8"/>
+
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="220"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Debounce Suppression Window" FontSize="12" Foreground="#94A3B8"/>
+                            <TextBlock Text="{Binding DebounceText}" FontSize="11" Foreground="#38BDF8"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Minimum="3" Maximum="30" Value="{Binding DebounceWindowSeconds}" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 4. Do Not Disturb Suite -->
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <TextBlock Text="Do Not Disturb &amp; Quiet Hours" FontSize="15" FontWeight="SemiBold" Foreground="#F8FAFC" Margin="0,0,0,12"/>
+
+                    <!-- Emergency Bypass -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="220"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <CheckBox Content="Allow Urgent alerts to breakthrough DND" IsChecked="{Binding EnableEmergencyBypass}" Foreground="#E2E8F0" FontSize="12"/>
+                            <TextBlock Text="{Binding BypassText}" FontSize="11" Foreground="#38BDF8" Margin="20,2,0,0"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Minimum="5" Maximum="10" Value="{Binding EmergencyBypassPriority}" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Scheduled Quiet Hours -->
+                    <CheckBox Content="Enable scheduled quiet hours" IsChecked="{Binding QuietHoursEnabled}" Foreground="#E2E8F0" FontSize="12" Margin="0,0,0,8"/>
+                    <Grid Margin="20,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Start:" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Style="{StaticResource SettingsTextBox}" Text="{Binding QuietHoursStart}" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Column="2" Text="End:" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="3" Style="{StaticResource SettingsTextBox}" Text="{Binding QuietHoursEnd}"/>
+                    </Grid>
+
+                    <!-- Fullscreen Suppression -->
+                    <CheckBox Content="Automatically suppress alerts when running full-screen games or presentations"
+                              IsChecked="{Binding SuppressOnFullscreen}" Foreground="#E2E8F0" FontSize="12"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 5. System Integration -->
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <TextBlock Text="Windows System Integration" FontSize="15" FontWeight="SemiBold" Foreground="#F8FAFC" Margin="0,0,0,12"/>
+                    <CheckBox Content="Start Gotify Client automatically with Windows" IsChecked="{Binding StartWithWindows}" Foreground="#E2E8F0" FontSize="12" Margin="0,0,0,8"/>
+                    <CheckBox Content="Minimize to System Tray when closing the window" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="#E2E8F0" FontSize="12"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

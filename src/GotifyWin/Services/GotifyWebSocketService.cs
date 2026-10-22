@@ -1,0 +1,259 @@
+using System.IO;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
+using GotifyWin.Models;
+using GotifyWin.Models.Config;
+
+namespace GotifyWin.Services;
+
+public class GotifyWebSocketService : IGotifyWebSocketService
+{
+    private const int MaxMessageSizeBytes = 512 * 1024; // SEC-04: 512 KB ceiling to prevent LOH exhaustion DoS
+    private readonly SemaphoreSlim _connectionLock = new(1, 1); // SEC-12: Thread synchronization
+    private ClientWebSocket? _webSocket;
+    private CancellationTokenSource? _cts;
+    private string? _serverUrl;
+    private string? _clientToken;
+    private bool _isDisposed;
+    private bool _explicitDisconnect;
+
+    private ConnectionState _state = ConnectionState.Disconnected;
+    public ConnectionState State
+    {
+        get => _state;
+        private set
+        {
+            if (_state != value)
+            {
+                _state = value;
+                ConnectionStateChanged?.Invoke(this, _state);
+            }
+        }
+    }
+
+    public string? LastError { get; private set; }
+
+    public event EventHandler<GotifyMessage>? MessageReceived;
+    public event EventHandler<ConnectionState>? ConnectionStateChanged;
+
+    public async Task ConnectAsync(string serverUrl, string clientToken)
+    {
+        if (string.IsNullOrWhiteSpace(serverUrl) || string.IsNullOrWhiteSpace(clientToken))
+            throw new ArgumentException("Server URL and Client Token must not be empty.");
+
+        await _connectionLock.WaitAsync();
+        try
+        {
+            _serverUrl = serverUrl.Trim().TrimEnd('/');
+            _clientToken = clientToken.Trim();
+            _explicitDisconnect = false;
+
+            await StopInternalAsync();
+
+            _cts = new CancellationTokenSource();
+            _ = Task.Run(() => ConnectionLoopAsync(_cts.Token));
+        }
+        finally
+        {
+            _connectionLock.Release();
+        }
+    }
+
+    public async Task DisconnectAsync()
+    {
+        await _connectionLock.WaitAsync();
+        try
+        {
+            _explicitDisconnect = true;
+            await StopInternalAsync();
+            State = ConnectionState.Disconnected;
+        }
+        finally
+        {
+            _connectionLock.Release();
+        }
+    }
+
+    private async Task StopInternalAsync()
+    {
+        try
+        {
+            if (_cts != null)
+            {
+                _cts.Cancel();
+                _cts.Dispose(); // SEC-12: Dispose previous CTS
+                _cts = null;
+            }
+
+            if (_webSocket != null)
+            {
+                if (_webSocket.State == WebSocketState.Open || _webSocket.State == WebSocketState.Connecting)
+                {
+                    using var closeCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                    try
+                    {
+                        await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", closeCts.Token);
+                    }
+                    catch { }
+                }
+                _webSocket.Dispose();
+                _webSocket = null;
+            }
+        }
+        catch { }
+    }
+
+    private async Task ConnectionLoopAsync(CancellationToken ct)
+    {
+        var backoffSeconds = 2.0;
+        var maxBackoffSeconds = 60.0;
+        var random = new Random();
+
+        while (!ct.IsCancellationRequested && !_explicitDisconnect)
+        {
+            try
+            {
+                State = ConnectionState.Connecting;
+                LastError = null;
+
+                var wsBase = _serverUrl!
+                    .Replace("https://", "wss://", StringComparison.OrdinalIgnoreCase)
+                    .Replace("http://", "ws://", StringComparison.OrdinalIgnoreCase);
+
+                _webSocket = new ClientWebSocket();
+                _webSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+
+                // SEC-08: Prefer X-Gotify-Key request header over query parameter to avoid leaking token in proxy logs
+                try
+                {
+                    _webSocket.Options.SetRequestHeader("X-Gotify-Key", _clientToken!);
+                }
+                catch { }
+
+                // Connect to /stream (or fallback with token query if header rejected)
+                Uri wsUri;
+                try
+                {
+                    wsUri = new Uri($"{wsBase}/stream");
+                    await _webSocket.ConnectAsync(wsUri, ct);
+                }
+                catch (WebSocketException)
+                {
+                    // Fallback to query param if proxy strips custom headers
+                    _webSocket.Dispose();
+                    _webSocket = new ClientWebSocket();
+                    _webSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+                    wsUri = new Uri($"{wsBase}/stream?token={Uri.EscapeDataString(_clientToken!)}");
+                    await _webSocket.ConnectAsync(wsUri, ct);
+                }
+
+                State = ConnectionState.Connected;
+                backoffSeconds = 2.0; // Reset backoff on successful connect
+
+                await ReceiveLoopAsync(_webSocket, ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                System.Diagnostics.Debug.WriteLine($"[GotifyWebSocket] Connection error: {ex.Message}");
+            }
+
+            if (ct.IsCancellationRequested || _explicitDisconnect)
+                break;
+
+            State = ConnectionState.Reconnecting;
+
+            // Exponential backoff with jitter
+            var jitter = (random.NextDouble() - 0.5) * 1.0;
+            var delay = TimeSpan.FromSeconds(Math.Min(backoffSeconds + jitter, maxBackoffSeconds));
+            backoffSeconds = Math.Min(backoffSeconds * 2, maxBackoffSeconds);
+
+            try
+            {
+                await Task.Delay(delay, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+        }
+
+        State = ConnectionState.Disconnected;
+    }
+
+    private async Task ReceiveLoopAsync(ClientWebSocket ws, CancellationToken ct)
+    {
+        var buffer = new byte[1024 * 8];
+
+        while (ws.State == WebSocketState.Open && !ct.IsCancellationRequested)
+        {
+            using var ms = new MemoryStream();
+            WebSocketReceiveResult result;
+
+            do
+            {
+                result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    return;
+                }
+
+                // SEC-04: Limit frame size to prevent LOH memory exhaustion attacks
+                if (ms.Length + result.Count > MaxMessageSizeBytes)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[GotifyWebSocket] Discarded oversized WebSocket message exceeding {MaxMessageSizeBytes} bytes.");
+                    break;
+                }
+
+                ms.Write(buffer, 0, result.Count);
+            }
+            while (!result.EndOfMessage);
+
+            if (result.MessageType == WebSocketMessageType.Text && ms.Length <= MaxMessageSizeBytes)
+            {
+                ms.Seek(0, SeekOrigin.Begin);
+                using var reader = new StreamReader(ms, Encoding.UTF8);
+                var json = await reader.ReadToEndAsync(ct);
+
+                try
+                {
+                    var message = JsonSerializer.Deserialize<GotifyMessage>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (message != null)
+                    {
+                        MessageReceived?.Invoke(this, message);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[GotifyWebSocket] Failed to parse message JSON: {ex.Message}");
+                }
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed) return;
+        _isDisposed = true;
+        _explicitDisconnect = true;
+
+        if (_cts != null)
+        {
+            _cts.Cancel();
+            _cts.Dispose();
+            _cts = null;
+        }
+
+        _webSocket?.Dispose();
+        _connectionLock.Dispose();
+    }
+}

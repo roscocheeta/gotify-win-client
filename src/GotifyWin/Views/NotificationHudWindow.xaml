@@ -1,0 +1,138 @@
+<Window x:Class="GotifyWin.Views.NotificationHudWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Gotify Notification"
+        Width="380" SizeToContent="Height"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Focusable="False"
+        ResizeMode="NoResize"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+    <Window.Resources>
+        <SolidColorBrush x:Key="HudBackground" Color="#1E232A"/>
+        <SolidColorBrush x:Key="HudBorder" Color="#323B47"/>
+        <SolidColorBrush x:Key="PrimaryText" Color="#F3F4F6"/>
+        <SolidColorBrush x:Key="SecondaryText" Color="#D1D5DB"/>
+        <SolidColorBrush x:Key="MutedText" Color="#9CA3AF"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="ButtonHover" Color="#2E3744"/>
+
+        <Style x:Key="HudActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#272F3C"/>
+            <Setter Property="Foreground" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource ButtonHover}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="RootContainer" Margin="12" Opacity="0">
+        <Border Background="{StaticResource HudBackground}"
+                BorderBrush="{StaticResource HudBorder}"
+                BorderThickness="1"
+                CornerRadius="10"
+                ClipToBounds="True">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" BlurRadius="18" ShadowDepth="4" Opacity="0.45" Direction="270"/>
+            </Border.Effect>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="2"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header / App bar -->
+                <Grid Grid.Row="0" Margin="14,12,14,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- App Icon / Placeholder -->
+                    <Border Grid.Column="0" Width="20" Height="20" CornerRadius="4" ClipToBounds="True" Margin="0,0,8,0">
+                        <Image x:Name="AppIconImage" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+
+                    <!-- App Name & Time -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock x:Name="AppNameTextBlock" Text="Gotify" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource MutedText}"/>
+                        <TextBlock Text=" • " FontSize="11" Foreground="{StaticResource MutedText}"/>
+                        <TextBlock x:Name="TimeTextBlock" Text="Just now" FontSize="11" Foreground="{StaticResource MutedText}"/>
+                    </StackPanel>
+
+                    <!-- Priority Badge -->
+                    <Border Grid.Column="2" x:Name="PriorityBadge" CornerRadius="3" Padding="5,1" Margin="6,0,8,0" Background="#3B82F6">
+                        <TextBlock x:Name="PriorityText" Text="Normal" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                    </Border>
+
+                    <!-- Close Button -->
+                    <Button Grid.Column="3" Width="20" Height="20" Background="Transparent" BorderThickness="0"
+                            Foreground="{StaticResource MutedText}" FontSize="11" Cursor="Hand" Click="CloseButton_Click" ToolTip="Dismiss">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                    <TextBlock Text="✕" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#374151"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+
+                <!-- Content Area -->
+                <StackPanel Grid.Row="1" Margin="14,4,14,10">
+                    <TextBlock x:Name="TitleTextBlock" Text="Notification Title" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryText}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                    <TextBlock x:Name="MessageTextBlock" Text="Notification message body goes here..." FontSize="12" Foreground="{StaticResource SecondaryText}" TextWrapping="Wrap" MaxHeight="80" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+
+                <!-- Actions Area -->
+                <Grid Grid.Row="2" x:Name="ActionsGrid" Margin="14,0,14,10" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="OpenLinkButton" Style="{StaticResource HudActionButton}" Content="🔗 Open Link" Margin="0,0,8,0" Click="OpenLinkButton_Click"/>
+                        <Button Style="{StaticResource HudActionButton}" Content="Dismiss" Click="CloseButton_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Countdown Progress Bar -->
+                <ProgressBar Grid.Row="3" x:Name="CountdownProgressBar"
+                             Height="2" Minimum="0" Maximum="100" Value="100"
+                             BorderThickness="0" Background="Transparent" Foreground="{StaticResource AccentColor}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
