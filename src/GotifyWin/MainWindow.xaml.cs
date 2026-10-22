@@ -110,18 +110,28 @@ public partial class MainWindow : Window
         }
     }
 
+    private bool _isSwitchingTab;
     private void SwitchTab(int index)
     {
-        _viewModel.SelectedTabIndex = index;
-        if (NavFeedRadio != null) NavFeedRadio.IsChecked = index == 0;
-        if (NavAppsRadio != null) NavAppsRadio.IsChecked = index == 1;
-        if (NavRulesRadio != null) NavRulesRadio.IsChecked = index == 2;
-        if (NavSettingsRadio != null) NavSettingsRadio.IsChecked = index == 3;
+        if (_isSwitchingTab) return;
+        try
+        {
+            _isSwitchingTab = true;
+            _viewModel.SelectedTabIndex = index;
+            if (NavFeedRadio != null) NavFeedRadio.IsChecked = index == 0;
+            if (NavAppsRadio != null) NavAppsRadio.IsChecked = index == 1;
+            if (NavRulesRadio != null) NavRulesRadio.IsChecked = index == 2;
+            if (NavSettingsRadio != null) NavSettingsRadio.IsChecked = index == 3;
 
-        if (FeedPageView != null) FeedPageView.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
-        if (AppsPageView != null) AppsPageView.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
-        if (RulesPageView != null) RulesPageView.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
-        if (SettingsPageView != null) SettingsPageView.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+            if (FeedPageView != null) FeedPageView.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (AppsPageView != null) AppsPageView.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
+            if (RulesPageView != null) RulesPageView.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
+            if (SettingsPageView != null) SettingsPageView.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        finally
+        {
+            _isSwitchingTab = false;
+        }
     }
 
     private void NavFeed_Checked(object sender, RoutedEventArgs e) => SwitchTab(0);
