@@ -350,4 +350,140 @@ public class RuleWorkflowTests
         Assert.False(rulesVm.IsReanalyzing);
         Assert.Equal("⚡ Re-scan History", rulesVm.ReanalyzeButtonText);
     }
+
+    [Fact]
+    public void PrepopulateFromMessage_SetsAppScopeAndPrefillsRule()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var msg = new GotifyMessage
+        {
+            Id = 1001,
+            AppId = 2,
+            ApplicationName = "Sonarr",
+            Title = "Import Complete",
+            Message = "Episode imported successfully"
+        };
+
+        rulesVm.PrepopulateFromMessage(msg);
+
+        Assert.NotNull(rulesVm.SelectedAppFilterOption);
+        Assert.Equal(2, rulesVm.SelectedAppFilterOption.Id);
+        Assert.Equal("Sonarr", rulesVm.SelectedAppFilterOption.Name);
+        Assert.Equal("Import Complete", rulesVm.NewRulePattern);
+
+        // Add the rule via command
+        rulesVm.AddRuleCommand.Execute(null);
+
+        Assert.Single(rulesVm.Rules);
+        var created = rulesVm.Rules[0];
+        Assert.Equal(2, created.AppFilterId);
+        Assert.Equal("Sonarr", created.AppFilterName);
+        Assert.Equal("Sonarr", created.ScopeDescription);
+        Assert.Equal("Import Complete", created.Pattern);
+    }
+
+    [Fact]
+    public void FilterEngine_AppScopedRule_MatchesTargetAppOnly()
+    {
+        var engine = new FilterEngine();
+        var config = new GotifyClientConfig();
+
+        // Rule scoped strictly to Sonarr (AppId 2)
+        config.Rules.Add(new NotificationRule
+        {
+            Name = "Mute Sonarr Import Complete",
+            Enabled = true,
+            AppFilterId = 2,
+            AppFilterName = "Sonarr",
+            TargetField = RuleField.Title,
+            Operator = RuleOperator.Contains,
+            Pattern = "Import Complete",
+            Action = RuleAction.SilentLog
+        });
+
+        // Message 1: From Sonarr (AppId 2) with "Import Complete"
+        var sonarrMsg = new GotifyMessage
+        {
+            Id = 201,
+            AppId = 2,
+            ApplicationName = "Sonarr",
+            Title = "Import Complete",
+            Message = "Show X downloaded and imported",
+            Priority = 5
+        };
+        var result1 = engine.Evaluate(sonarrMsg, config, isDndActive: false);
+        Assert.Equal(FilterDecision.SilentLog, result1.Decision);
+        Assert.True(sonarrMsg.IsFiltered);
+        Assert.Equal("Mute Sonarr Import Complete", sonarrMsg.FilteredByRuleName);
+
+        // Message 2: From Radarr (AppId 3) with identical title "Import Complete"
+        var radarrMsg = new GotifyMessage
+        {
+            Id = 202,
+            AppId = 3,
+            ApplicationName = "Radarr",
+            Title = "Import Complete",
+            Message = "Movie Y downloaded and imported",
+            Priority = 5
+        };
+        var result2 = engine.Evaluate(radarrMsg, config, isDndActive: false);
+        // Must NOT be dropped or muted because the rule is scoped only to Sonarr!
+        Assert.Equal(FilterDecision.Alert, result2.Decision);
+        Assert.False(radarrMsg.IsFiltered);
+    }
+
+    [Fact]
+    public void FilterEngine_GlobalRule_MatchesAnyApp()
+    {
+        var engine = new FilterEngine();
+        var config = new GotifyClientConfig();
+
+        // Unscoped global rule (AppFilterId = null)
+        config.Rules.Add(new NotificationRule
+        {
+            Name = "Mute All Test Alerts",
+            Enabled = true,
+            AppFilterId = null,
+            AppFilterName = null,
+            TargetField = RuleField.Title,
+            Operator = RuleOperator.Contains,
+            Pattern = "Test Alert",
+            Action = RuleAction.Drop
+        });
+
+        var msgFromApp1 = new GotifyMessage { Id = 301, AppId = 1, ApplicationName = "App1", Title = "Test Alert" };
+        var msgFromApp2 = new GotifyMessage { Id = 302, AppId = 2, ApplicationName = "App2", Title = "Test Alert" };
+
+        Assert.Equal(FilterDecision.Drop, engine.Evaluate(msgFromApp1, config, isDndActive: false).Decision);
+        Assert.Equal(FilterDecision.Drop, engine.Evaluate(msgFromApp2, config, isDndActive: false).Decision);
+    }
+
+    [Fact]
+    public void ApplyRecommendation_SetsAppFilterIdAndName()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var rec = new RuleRecommendation
+        {
+            AppId = 99,
+            AppName = "Plex",
+            Title = "Mute Plex transcode warnings",
+            SuggestedField = RuleField.Title,
+            SuggestedOperator = RuleOperator.Contains,
+            SuggestedPattern = "Transcode Slow",
+            SuggestedAction = RuleAction.SilentLog,
+            MatchCount = 6
+        };
+
+        rulesVm.ApplyRecommendation(rec, RuleAction.SilentLog);
+
+        Assert.Single(rulesVm.Rules);
+        var rule = rulesVm.Rules[0];
+        Assert.Equal(99, rule.AppFilterId);
+        Assert.Equal("Plex", rule.AppFilterName);
+        Assert.Equal("Plex", rule.ScopeDescription);
+    }
 }

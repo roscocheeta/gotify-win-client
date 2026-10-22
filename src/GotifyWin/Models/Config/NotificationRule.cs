@@ -26,6 +26,12 @@ public class NotificationRule : INotifyPropertyChanged
 
     public string StatusLabel => Enabled ? "Active" : "Paused";
 
+    public long? AppFilterId { get; set; }
+    public string? AppFilterName { get; set; }
+    public string ScopeDescription => (AppFilterId.HasValue && AppFilterId.Value > 0)
+        ? (!string.IsNullOrWhiteSpace(AppFilterName) ? AppFilterName : $"App #{AppFilterId}")
+        : "All Apps";
+
     public RuleField TargetField { get; set; } = RuleField.Title;
     public RuleOperator Operator { get; set; } = RuleOperator.Contains;
     public string Pattern { get; set; } = string.Empty;

@@ -6,6 +6,19 @@ using GotifyWin.Services;
 
 namespace GotifyWin.ViewModels;
 
+public class AppFilterOption
+{
+    public long Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+
+    public override string ToString() => Name;
+
+    public override bool Equals(object? obj) =>
+        obj is AppFilterOption other && Id == other.Id && string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
+
+    public override int GetHashCode() => HashCode.Combine(Id, Name?.ToLowerInvariant());
+}
+
 public class RecommendationItemViewModel : ViewModelBase
 {
     private readonly RuleRecommendation _recommendation;
@@ -122,6 +135,15 @@ public class RulesViewModel : ViewModelBase
         set => SetProperty(ref _newRuleName, value);
     }
 
+    public ObservableCollection<AppFilterOption> AvailableAppFilterOptions { get; } = new();
+
+    private AppFilterOption? _selectedAppFilterOption;
+    public AppFilterOption? SelectedAppFilterOption
+    {
+        get => _selectedAppFilterOption;
+        set => SetProperty(ref _selectedAppFilterOption, value);
+    }
+
     private RuleField _newRuleField = RuleField.Title;
     public RuleField NewRuleField
     {
@@ -197,7 +219,59 @@ public class RulesViewModel : ViewModelBase
         ToggleConfiguredRulesCommand = new RelayCommand(() => IsConfiguredRulesExpanded = !IsConfiguredRulesExpanded);
         ReanalyzeCommand = new RelayCommand(async () => await ReanalyzeHistoryAsync());
 
+        RefreshAvailableApps();
         LoadRules();
+    }
+
+    public void RefreshAvailableApps()
+    {
+        var currentSelectedId = SelectedAppFilterOption?.Id ?? 0;
+        var list = new List<AppFilterOption>
+        {
+            new() { Id = 0, Name = "All Applications" }
+        };
+
+        if (_configService.Config.AppFilters != null)
+        {
+            foreach (var app in _configService.Config.AppFilters.Values.OrderBy(a => a.AppName))
+            {
+                if (app.AppId > 0 && !string.IsNullOrWhiteSpace(app.AppName))
+                {
+                    if (!list.Any(x => x.Id == app.AppId))
+                    {
+                        list.Add(new AppFilterOption { Id = app.AppId, Name = app.AppName });
+                    }
+                }
+            }
+        }
+
+        if (_messageSource != null)
+        {
+            try
+            {
+                var msgs = _messageSource();
+                foreach (var m in msgs)
+                {
+                    if (m.AppId > 0 && !string.IsNullOrWhiteSpace(m.DisplayAppName))
+                    {
+                        if (!list.Any(x => x.Id == m.AppId))
+                        {
+                            list.Add(new AppFilterOption { Id = m.AppId, Name = m.DisplayAppName });
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        AvailableAppFilterOptions.Clear();
+        foreach (var opt in list)
+        {
+            AvailableAppFilterOptions.Add(opt);
+        }
+
+        SelectedAppFilterOption = AvailableAppFilterOptions.FirstOrDefault(x => x.Id == currentSelectedId)
+            ?? AvailableAppFilterOptions.FirstOrDefault();
     }
 
     public void PrepareManualRuleFromNotification(GotifyMessage message)
@@ -210,6 +284,23 @@ public class RulesViewModel : ViewModelBase
 
     public void PrepopulateFromMessage(GotifyMessage message)
     {
+        RefreshAvailableApps();
+
+        if (message.AppId > 0)
+        {
+            var matching = AvailableAppFilterOptions.FirstOrDefault(x => x.Id == message.AppId);
+            if (matching == null)
+            {
+                matching = new AppFilterOption { Id = message.AppId, Name = message.DisplayAppName };
+                AvailableAppFilterOptions.Add(matching);
+            }
+            SelectedAppFilterOption = matching;
+        }
+        else
+        {
+            SelectedAppFilterOption = AvailableAppFilterOptions.FirstOrDefault();
+        }
+
         var pattern = !string.IsNullOrWhiteSpace(message.Title)
             ? message.Title
             : message.Message;
@@ -300,6 +391,8 @@ public class RulesViewModel : ViewModelBase
         {
             Name = ruleName,
             Enabled = true,
+            AppFilterId = recommendation.AppId > 0 ? recommendation.AppId : null,
+            AppFilterName = !string.IsNullOrWhiteSpace(recommendation.AppName) ? recommendation.AppName : null,
             TargetField = recommendation.SuggestedField,
             Operator = recommendation.SuggestedOperator,
             Pattern = recommendation.SuggestedPattern,
@@ -364,10 +457,19 @@ public class RulesViewModel : ViewModelBase
             ? $"{NewRuleField} {NewRuleOperator} '{NewRulePattern}'"
             : NewRuleName.Trim();
 
+        var appId = (SelectedAppFilterOption != null && SelectedAppFilterOption.Id > 0)
+            ? SelectedAppFilterOption.Id
+            : (long?)null;
+        var appName = (SelectedAppFilterOption != null && SelectedAppFilterOption.Id > 0)
+            ? SelectedAppFilterOption.Name
+            : null;
+
         var rule = new NotificationRule
         {
             Name = name,
             Enabled = true,
+            AppFilterId = appId,
+            AppFilterName = appName,
             TargetField = NewRuleField,
             Operator = NewRuleOperator,
             Pattern = NewRulePattern.Trim(),
@@ -384,6 +486,7 @@ public class RulesViewModel : ViewModelBase
         // Reset inputs
         NewRuleName = string.Empty;
         NewRulePattern = string.Empty;
+        SelectedAppFilterOption = AvailableAppFilterOptions.FirstOrDefault();
     }
 
     private void DeleteRule(NotificationRule? rule)

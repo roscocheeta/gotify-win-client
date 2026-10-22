@@ -147,6 +147,21 @@ public class GotifyMessage
     };
 
     [JsonIgnore]
+    public string PriorityTextColor => Priority switch
+    {
+        >= 8 => "#FFFFFF", // White on Red (4.5:1 contrast)
+        >= 5 => "#0F172A", // Dark Slate on Amber (9.8:1 contrast, crystal clear in dark & light mode)
+        >= 3 => "#FFFFFF", // White on Blue (4.6:1 contrast)
+        _ => "#FFFFFF"     // White on Gray (4.6:1 contrast)
+    };
+
+    [JsonIgnore]
+    public string PriorityDisplay => $"{PriorityLabel} ({Priority})";
+
+    [JsonIgnore]
+    public string PriorityTooltip => $"Priority {Priority}/10: {PriorityLabel} priority notification";
+
+    [JsonIgnore]
     public string FormattedDate => Date.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss");
 
     [JsonIgnore]

@@ -64,7 +64,7 @@ public partial class NotificationHudWindow : Window
         TitleTextBlock.Text = message.DisplayTitle;
         MessageTextBlock.Text = message.Message;
 
-        PriorityText.Text = message.PriorityLabel;
+        PriorityText.Text = message.PriorityDisplay;
         try
         {
             var priorityBrush = new BrushConverter().ConvertFromString(message.PriorityColor) as Brush;
@@ -72,6 +72,12 @@ public partial class NotificationHudWindow : Window
             {
                 PriorityBadge.Background = priorityBrush;
                 CountdownProgressBar.Foreground = priorityBrush;
+            }
+
+            var textBrush = new BrushConverter().ConvertFromString(message.PriorityTextColor) as Brush;
+            if (textBrush != null)
+            {
+                PriorityText.Foreground = textBrush;
             }
         }
         catch { }

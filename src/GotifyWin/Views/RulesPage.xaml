@@ -142,12 +142,12 @@
             </StackPanel>
 
             <Button Grid.Column="1" Content="{Binding ReanalyzeButtonText}" Style="{StaticResource SecondaryButton}"
-                    IsEnabled="{Binding CanReanalyze}"
+                    Width="145" HorizontalContentAlignment="Center"
                     Command="{Binding ReanalyzeCommand}" ToolTip="Scan message history for repetitive patterns (minimum 5 occurrences)"/>
         </Grid>
 
         <!-- Main Scrollable Content -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
             <StackPanel>
 
                 <!-- ========================================== -->
@@ -366,6 +366,13 @@
                                                             <TextBlock Text="{Binding StatusLabel}" FontSize="9" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </Border>
+                                                    <!-- Scope Badge -->
+                                                    <Border CornerRadius="6" Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="📱 " FontSize="9" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding ScopeDescription}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
                                                 </StackPanel>
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding TargetField}" FontSize="11" Foreground="{DynamicResource ThemeBrandAccent}"/>
@@ -483,11 +490,28 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <!-- Row A: Rule Name -->
-                                <StackPanel Grid.Row="0" Margin="0,0,0,10">
-                                    <TextBlock Text="Rule Name (Optional)" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,0,0,4"/>
-                                    <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NewRuleName, UpdateSourceTrigger=PropertyChanged}"/>
-                                </StackPanel>
+                                <!-- Row A: Rule Name & Application Scope -->
+                                <Grid Grid.Row="0" Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="220"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Rule Name -->
+                                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                        <TextBlock Text="Rule Name (Optional)" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,0,0,4"/>
+                                        <TextBox Style="{StaticResource InputTextBox}" Text="{Binding NewRuleName, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+
+                                    <!-- Application Scope -->
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Application Scope" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,0,0,4"/>
+                                        <ComboBox ItemsSource="{Binding AvailableAppFilterOptions}"
+                                                  SelectedItem="{Binding SelectedAppFilterOption}"
+                                                  DisplayMemberPath="Name"
+                                                  Height="34"/>
+                                    </StackPanel>
+                                </Grid>
 
                                 <!-- Row B: Field, Operator, Pattern, Action -->
                                 <Grid Grid.Row="1">

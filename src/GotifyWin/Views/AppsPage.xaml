@@ -54,14 +54,14 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="🔄 Sync Apps" Style="{StaticResource ActionButton}" Margin="0,0,8,0" Command="{Binding RefreshAppsCommand}"/>
+                <Button Content="{Binding SyncButtonText}" Style="{StaticResource ActionButton}" Width="120" HorizontalContentAlignment="Center" Margin="0,0,8,0" Command="{Binding RefreshAppsCommand}"/>
                 <Button Content="Enable All" Style="{StaticResource ActionButton}" Margin="0,0,8,0" Command="{Binding EnableAllCommand}"/>
                 <Button Content="Disable All" Style="{StaticResource ActionButton}" Command="{Binding DisableAllCommand}"/>
             </StackPanel>
         </Grid>
 
         <!-- Apps List -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
             <ItemsControl ItemsSource="{Binding Apps}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>

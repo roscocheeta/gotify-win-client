@@ -104,6 +104,20 @@ public class AppsViewModel : ViewModelBase
 
     public event Action? AppFilterChanged;
 
+    private string _syncButtonText = "🔄 Sync Apps";
+    public string SyncButtonText
+    {
+        get => _syncButtonText;
+        set => SetProperty(ref _syncButtonText, value);
+    }
+
+    private bool _isSyncing;
+    public bool IsSyncing
+    {
+        get => _isSyncing;
+        set => SetProperty(ref _isSyncing, value);
+    }
+
     public ICommand RefreshAppsCommand { get; }
     public ICommand EnableAllCommand { get; }
     public ICommand DisableAllCommand { get; }
@@ -113,7 +127,23 @@ public class AppsViewModel : ViewModelBase
         _apiService = apiService;
         _configService = configService;
 
-        RefreshAppsCommand = new RelayCommand(async () => await LoadAppsAsync());
+        RefreshAppsCommand = new RelayCommand(async () =>
+        {
+            if (_isSyncing) return;
+            _isSyncing = true;
+            SyncButtonText = "⏳ Syncing...";
+            try
+            {
+                await LoadAppsAsync();
+                SyncButtonText = "✓ Synced";
+                await Task.Delay(1400);
+            }
+            finally
+            {
+                SyncButtonText = "🔄 Sync Apps";
+                _isSyncing = false;
+            }
+        });
         EnableAllCommand = new RelayCommand(() => SetAllEnabled(true));
         DisableAllCommand = new RelayCommand(() => SetAllEnabled(false));
     }

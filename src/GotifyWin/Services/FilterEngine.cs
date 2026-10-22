@@ -158,6 +158,19 @@ public class FilterEngine : IFilterEngine
 
     public static bool MatchesRule(GotifyMessage message, NotificationRule rule)
     {
+        // 1. Check App Scope: if rule is scoped to a specific app, it must match
+        if (rule.AppFilterId.HasValue && rule.AppFilterId.Value > 0)
+        {
+            if (message.AppId != rule.AppFilterId.Value)
+                return false;
+        }
+        else if (!string.IsNullOrWhiteSpace(rule.AppFilterName) &&
+                 !string.Equals(rule.AppFilterName, "All Apps", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.Equals(message.ApplicationName, rule.AppFilterName, StringComparison.OrdinalIgnoreCase))
+                return false;
+        }
+
         if (string.IsNullOrEmpty(rule.Pattern))
             return false;
 
