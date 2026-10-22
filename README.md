@@ -11,7 +11,7 @@ Unlike legacy tray wrappers, GotifyWin brings **Windows 11 Fluent 2 aesthetics**
 ## Key Features
 
 ### 📱 Selective App Management
-* **Homelab Auto-Discovery**: Automatically syncs applications from your Gotify server (`GET /application`).
+* **App Auto-Discovery**: Automatically syncs applications from your Gotify server (`GET /application`).
 * **Per-App Controls**: Toggle notifications per application on/off with one click.
 * **Local Icon Caching**: Automatically downloads and caches application icons (`/application/{id}/image`) so notifications display service logos (Home Assistant, Docker, Uptime Kuma, etc.).
 * **Per-App Priority Thresholds**: Configure individual minimum priority filters per application.
@@ -70,7 +70,7 @@ Unlike legacy tray wrappers, GotifyWin brings **Windows 11 Fluent 2 aesthetics**
 |  | Washing machine cycle completed.                                            |  |
 |  +-----------------------------------------------------------------------------+  |
 +-----------------------------------------------------------------------------------+
-|  Tabs: [Notifications] [Homelab Apps] [Filter Rules] [Settings]                    |
+|  Tabs: [Notifications] [Apps] [Filter Rules] [Settings]                            |
 +-----------------------------------------------------------------------------------+
 ```
 

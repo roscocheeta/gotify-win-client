@@ -340,7 +340,7 @@ public class SettingsViewModel : ViewModelBase
         {
             Id = 9999,
             AppId = 1,
-            Title = "Homelab Test Alert",
+            Title = "Gotify Test Alert",
             Message = "This is a preview of your Windows 11 notification style & sound settings.",
             Priority = 6,
             Date = DateTime.UtcNow,

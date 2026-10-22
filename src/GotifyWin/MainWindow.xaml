@@ -92,7 +92,7 @@
                         <TextBlock Text="🔔" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Gotify Homelab" FontSize="15" FontWeight="Bold" Foreground="#F8FAFC"/>
+                        <TextBlock Text="Gotify" FontSize="15" FontWeight="Bold" Foreground="#F8FAFC"/>
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <Ellipse Width="8" Height="8" Fill="{Binding ConnectionStatusColor, Converter={StaticResource HexToBrush}}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding ConnectionStatusText}" FontSize="11" Foreground="#94A3B8"/>
@@ -105,7 +105,7 @@
                     <RadioButton Content="Notifications" Style="{StaticResource NavRadioButton}"
                                  IsChecked="{Binding SelectedTabIndex, Converter={StaticResource BoolToVis}, ConverterParameter=0, Mode=OneWay}"
                                  Checked="NavFeed_Checked" Margin="0,0,4,0"/>
-                    <RadioButton Content="Homelab Apps" Style="{StaticResource NavRadioButton}"
+                    <RadioButton Content="Apps" Style="{StaticResource NavRadioButton}"
                                  IsChecked="{Binding SelectedTabIndex, Converter={StaticResource BoolToVis}, ConverterParameter=1, Mode=OneWay}"
                                  Checked="NavApps_Checked" Margin="0,0,4,0"/>
                     <RadioButton Content="Filter Rules" Style="{StaticResource NavRadioButton}"

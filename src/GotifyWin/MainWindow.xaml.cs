@@ -36,7 +36,7 @@ public partial class MainWindow : Window
         _notifyIcon = new NotifyIcon
         {
             Icon = SystemIcons.Information,
-            Text = "Gotify Homelab Client",
+            Text = "Gotify Client",
             Visible = true
         };
 
@@ -52,7 +52,7 @@ public partial class MainWindow : Window
         dndMenu.DropDownItems.Add("Snooze until Tomorrow (8am)", null, (s, e) => _viewModel.SetDndUntilTomorrow());
         contextMenu.Items.Add(dndMenu);
 
-        contextMenu.Items.Add("Sync Homelab Apps", null, async (s, e) => await _viewModel.Apps.LoadAppsAsync());
+        contextMenu.Items.Add("Sync Apps", null, async (s, e) => await _viewModel.Apps.LoadAppsAsync());
         contextMenu.Items.Add(new ToolStripSeparator());
         contextMenu.Items.Add("Quit", null, (s, e) => QuitApplication());
 

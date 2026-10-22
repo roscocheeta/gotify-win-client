@@ -126,7 +126,7 @@ public class AppsViewModel : ViewModelBase
         }
 
         IsLoading = true;
-        StatusMessage = "Discovering homelab apps...";
+        StatusMessage = "Discovering apps...";
 
         try
         {
