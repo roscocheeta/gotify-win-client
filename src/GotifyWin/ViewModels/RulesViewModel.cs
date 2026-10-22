@@ -72,6 +72,20 @@ public class RulesViewModel : ViewModelBase
     private readonly ObservableCollection<NotificationRule> _rules = new();
     private readonly ObservableCollection<RecommendationItemViewModel> _recommendations = new();
 
+    private bool _isRecommendationsExpanded = true;
+    public bool IsRecommendationsExpanded
+    {
+        get => _isRecommendationsExpanded;
+        set => SetProperty(ref _isRecommendationsExpanded, value);
+    }
+
+    private bool _isConfiguredRulesExpanded = true;
+    public bool IsConfiguredRulesExpanded
+    {
+        get => _isConfiguredRulesExpanded;
+        set => SetProperty(ref _isConfiguredRulesExpanded, value);
+    }
+
     private bool _isAdvancedExpanded;
     public bool IsAdvancedExpanded
     {
@@ -124,13 +138,22 @@ public class RulesViewModel : ViewModelBase
     public ObservableCollection<NotificationRule> Rules => _rules;
     public ObservableCollection<RecommendationItemViewModel> Recommendations => _recommendations;
     public bool HasRecommendations => _recommendations.Count > 0;
-    public int ActiveRulesCount => _rules.Count;
+
+    public int RecommendationsCount => _recommendations.Count;
+    public string RecommendationsSummaryText => $"{RecommendationsCount} suggestion{(RecommendationsCount == 1 ? "" : "s")} ready";
+
+    public int ActiveRulesCount => _rules.Count(r => r.Enabled);
+    public int PausedRulesCount => _rules.Count(r => !r.Enabled);
+    public int TotalRulesCount => _rules.Count;
     public bool HasActiveRules => _rules.Count > 0;
+    public string RulesSummaryText => _rules.Count == 0 ? "0 rules" : PausedRulesCount == 0 ? $"{ActiveRulesCount} active" : $"{ActiveRulesCount} active • {PausedRulesCount} paused";
 
     public ICommand AddRuleCommand { get; }
     public ICommand DeleteRuleCommand { get; }
     public ICommand ToggleRuleCommand { get; }
     public ICommand ToggleAdvancedCommand { get; }
+    public ICommand ToggleRecommendationsCommand { get; }
+    public ICommand ToggleConfiguredRulesCommand { get; }
     public ICommand ReanalyzeCommand { get; }
 
     public RulesViewModel(
@@ -148,9 +171,19 @@ public class RulesViewModel : ViewModelBase
         DeleteRuleCommand = new RelayCommand<NotificationRule>(DeleteRule);
         ToggleRuleCommand = new RelayCommand<NotificationRule>(ToggleRule);
         ToggleAdvancedCommand = new RelayCommand(() => IsAdvancedExpanded = !IsAdvancedExpanded);
+        ToggleRecommendationsCommand = new RelayCommand(() => IsRecommendationsExpanded = !IsRecommendationsExpanded);
+        ToggleConfiguredRulesCommand = new RelayCommand(() => IsConfiguredRulesExpanded = !IsConfiguredRulesExpanded);
         ReanalyzeCommand = new RelayCommand(async () => await ReanalyzeHistoryAsync());
 
         LoadRules();
+    }
+
+    public void PrepareManualRuleFromNotification(GotifyMessage message)
+    {
+        PrepopulateFromMessage(message);
+        IsRecommendationsExpanded = false;
+        IsConfiguredRulesExpanded = false;
+        IsAdvancedExpanded = true;
     }
 
     public void PrepopulateFromMessage(GotifyMessage message)
@@ -176,7 +209,7 @@ public class RulesViewModel : ViewModelBase
         {
             _recommendations.Add(new RecommendationItemViewModel(rec, ApplyRecommendation, DismissRecommendation));
         }
-        OnPropertyChanged(nameof(HasRecommendations));
+        NotifyRecommendationsCountChanged();
     }
 
     public async Task ReanalyzeHistoryAsync()
@@ -229,18 +262,18 @@ public class RulesViewModel : ViewModelBase
             CaseSensitive = false
         };
 
+        AttachRuleListener(rule);
         _rules.Add(rule);
         _configService.Config.Rules.Add(rule);
         _configService.Save();
-        OnPropertyChanged(nameof(ActiveRulesCount));
-        OnPropertyChanged(nameof(HasActiveRules));
+        NotifyRulesCountChanged();
 
         // Remove from recommendations
         var match = _recommendations.FirstOrDefault(r => r.Id == recommendation.Id);
         if (match != null)
         {
             _recommendations.Remove(match);
-            OnPropertyChanged(nameof(HasRecommendations));
+            NotifyRecommendationsCountChanged();
         }
     }
 
@@ -250,7 +283,7 @@ public class RulesViewModel : ViewModelBase
         if (match != null)
         {
             _recommendations.Remove(match);
-            OnPropertyChanged(nameof(HasRecommendations));
+            NotifyRecommendationsCountChanged();
         }
     }
 
@@ -259,10 +292,22 @@ public class RulesViewModel : ViewModelBase
         _rules.Clear();
         foreach (var rule in _configService.Config.Rules)
         {
+            AttachRuleListener(rule);
             _rules.Add(rule);
         }
-        OnPropertyChanged(nameof(ActiveRulesCount));
-        OnPropertyChanged(nameof(HasActiveRules));
+        NotifyRulesCountChanged();
+    }
+
+    private void AttachRuleListener(NotificationRule rule)
+    {
+        rule.PropertyChanged += (s, e) =>
+        {
+            if (e?.PropertyName == nameof(NotificationRule.Enabled))
+            {
+                _configService.Save();
+                NotifyRulesCountChanged();
+            }
+        };
     }
 
     private void AddRule()
@@ -285,11 +330,11 @@ public class RulesViewModel : ViewModelBase
             CaseSensitive = NewRuleCaseSensitive
         };
 
+        AttachRuleListener(rule);
         _rules.Add(rule);
         _configService.Config.Rules.Add(rule);
         _configService.Save();
-        OnPropertyChanged(nameof(ActiveRulesCount));
-        OnPropertyChanged(nameof(HasActiveRules));
+        NotifyRulesCountChanged();
 
         // Reset inputs
         NewRuleName = string.Empty;
@@ -302,8 +347,7 @@ public class RulesViewModel : ViewModelBase
         _rules.Remove(rule);
         _configService.Config.Rules.Remove(rule);
         _configService.Save();
-        OnPropertyChanged(nameof(ActiveRulesCount));
-        OnPropertyChanged(nameof(HasActiveRules));
+        NotifyRulesCountChanged();
     }
 
     private void ToggleRule(NotificationRule? rule)
@@ -311,6 +355,23 @@ public class RulesViewModel : ViewModelBase
         if (rule == null) return;
         rule.Enabled = !rule.Enabled;
         _configService.Save();
+        NotifyRulesCountChanged();
         OnPropertyChanged(nameof(Rules));
+    }
+
+    private void NotifyRulesCountChanged()
+    {
+        OnPropertyChanged(nameof(ActiveRulesCount));
+        OnPropertyChanged(nameof(PausedRulesCount));
+        OnPropertyChanged(nameof(TotalRulesCount));
+        OnPropertyChanged(nameof(RulesSummaryText));
+        OnPropertyChanged(nameof(HasActiveRules));
+    }
+
+    private void NotifyRecommendationsCountChanged()
+    {
+        OnPropertyChanged(nameof(RecommendationsCount));
+        OnPropertyChanged(nameof(RecommendationsSummaryText));
+        OnPropertyChanged(nameof(HasRecommendations));
     }
 }

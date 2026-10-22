@@ -255,17 +255,26 @@
                     <CheckBox Content="Allow critical emergencies to break through active DND"
                               IsChecked="{Binding EnableEmergencyBypass}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,8"/>
 
-                    <Grid Margin="0,0,0,14" Visibility="{Binding EnableEmergencyBypass, Converter={StaticResource BoolToVis}}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="220"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Emergency Breakthrough Minimum Priority" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Slider Minimum="5" Maximum="10" Value="{Binding EmergencyBypassPriority}" Width="160" TickFrequency="1" IsSnapToTickEnabled="True"/>
-                            <TextBlock Text="{Binding EmergencyBypassPriorityText}" FontSize="12" Foreground="{DynamicResource ThemeTextPrimary}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                    <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                            CornerRadius="8" Padding="14,12" Margin="0,4,0,14"
+                            Visibility="{Binding EnableEmergencyBypass, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Breakthrough Priority Threshold" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                    <TextBlock Text="Alerts with this priority or higher will bypass DND and sound immediately." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Border Grid.Column="1" Background="#DC2626" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding EmergencyBypassPriorityText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </Grid>
+                            <Slider Minimum="5" Maximum="10" Value="{Binding EmergencyBypassPriority}" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
                         </StackPanel>
-                    </Grid>
+                    </Border>
 
                     <!-- Scheduled Quiet Hours -->
                     <CheckBox Content="Enable scheduled quiet hours (e.g. sleep/work focus)"

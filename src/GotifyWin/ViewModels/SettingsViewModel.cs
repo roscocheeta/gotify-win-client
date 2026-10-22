@@ -197,12 +197,23 @@ public class SettingsViewModel : ViewModelBase
                 _configService.Config.Dnd.EmergencyBypassPriority = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(BypassText));
+                OnPropertyChanged(nameof(EmergencyBypassPriorityText));
                 _configService.Save();
             }
         }
     }
 
-    public string BypassText => $"Priority \u2265 {EmergencyBypassPriority}";
+    public string EmergencyBypassPriorityText => $"Priority \u2265 {EmergencyBypassPriority} ({GetPriorityLabel(EmergencyBypassPriority)})";
+    public string BypassText => EmergencyBypassPriorityText;
+
+    private static string GetPriorityLabel(int p) => p switch
+    {
+        <= 4 => "Low",
+        5 or 6 => "Normal",
+        7 => "High",
+        8 => "Urgent",
+        _ => "Critical"
+    };
 
     public bool QuietHoursEnabled
     {

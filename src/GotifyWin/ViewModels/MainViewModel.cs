@@ -112,10 +112,11 @@ public class MainViewModel : ViewModelBase
             await LoadRecentHistoryAsync();
             await ReconnectAsync();
         };
+        Apps.AppFilterChanged += () => Feed.RefreshFilter();
         Feed.UrlOpenRequested += (s, url) => _presenter.OpenUrl(url);
         Feed.CreateRuleRequested += (s, msg) =>
         {
-            Rules.PrepopulateFromMessage(msg);
+            Rules.PrepareManualRuleFromNotification(msg);
             SelectedTabIndex = 2;
         };
 
@@ -153,7 +154,15 @@ public class MainViewModel : ViewModelBase
             {
                 var recent = await _apiService.GetRecentMessagesAsync(cfg.ServerUrl, cfg.ClientToken, 50);
                 EnrichMessages(recent);
-                Feed.SetInitialMessages(recent);
+
+                var isDnd = _dndManager.IsDndActive(cfg.Dnd);
+                var allowed = recent.Where(m =>
+                {
+                    var d = _filterEngine.Evaluate(m, cfg, isDnd);
+                    return d.Decision != FilterDecision.Drop;
+                }).ToList();
+
+                Feed.SetInitialMessages(allowed);
 
                 var recs = _patternAnalyzer.Analyze(recent, _configService.Config, threshold: 5);
                 Application.Current?.Dispatcher?.Invoke(() =>

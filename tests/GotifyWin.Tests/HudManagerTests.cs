@@ -15,11 +15,6 @@ public class HudManagerTests
     {
         var thread = new Thread(() =>
         {
-            if (Application.Current == null)
-            {
-                new Application();
-            }
-
             var manager = new HudManager();
             var settings = new PresentationSettings
             {

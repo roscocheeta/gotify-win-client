@@ -112,7 +112,7 @@ public class FeedViewModel : ViewModelBase
 
     public void AddMessage(GotifyMessage message)
     {
-        Application.Current?.Dispatcher?.Invoke(() =>
+        UiDispatcher.RunOnUI(() =>
         {
             _messages.Insert(0, message);
 
@@ -136,7 +136,7 @@ public class FeedViewModel : ViewModelBase
 
     public void SetInitialMessages(IEnumerable<GotifyMessage> messages)
     {
-        Application.Current?.Dispatcher?.Invoke(() =>
+        UiDispatcher.RunOnUI(() =>
         {
             _messages.Clear();
             foreach (var m in messages.OrderByDescending(x => x.Date))
@@ -152,11 +152,26 @@ public class FeedViewModel : ViewModelBase
         });
     }
 
+    public void RefreshFilter()
+    {
+        UiDispatcher.RunOnUI(() =>
+        {
+            _filteredView.Refresh();
+            OnPropertyChanged(nameof(HasMessages));
+        });
+    }
+
     private bool FilterMessagePredicate(object obj)
     {
         if (obj is not GotifyMessage msg) return false;
 
-        // App filter
+        // App-level enablement: Hide notifications from apps that the user has disabled
+        if (_configService.Config.AppFilters.TryGetValue(msg.AppId, out var appSetting) && !appSetting.Enabled)
+        {
+            return false;
+        }
+
+        // App filter dropdown
         if (_selectedAppFilter != "All Apps" && !string.Equals(msg.ApplicationName, _selectedAppFilter, StringComparison.OrdinalIgnoreCase))
         {
             return false;

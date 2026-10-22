@@ -102,6 +102,8 @@ public class AppsViewModel : ViewModelBase
 
     public ObservableCollection<AppItemViewModel> Apps => _apps;
 
+    public event Action? AppFilterChanged;
+
     public ICommand RefreshAppsCommand { get; }
     public ICommand EnableAllCommand { get; }
     public ICommand DisableAllCommand { get; }
@@ -114,6 +116,12 @@ public class AppsViewModel : ViewModelBase
         RefreshAppsCommand = new RelayCommand(async () => await LoadAppsAsync());
         EnableAllCommand = new RelayCommand(() => SetAllEnabled(true));
         DisableAllCommand = new RelayCommand(() => SetAllEnabled(false));
+    }
+
+    private void OnFilterChanged()
+    {
+        _configService.Save();
+        AppFilterChanged?.Invoke();
     }
 
     public async Task LoadAppsAsync()
@@ -154,7 +162,7 @@ public class AppsViewModel : ViewModelBase
                         filter.AppName = app.Name; // keep sync
                     }
 
-                    var itemVm = new AppItemViewModel(filter, () => _configService.Save())
+                    var itemVm = new AppItemViewModel(filter, OnFilterChanged)
                     {
                         Description = app.Description,
                         IconPath = app.LocalIconPath
@@ -164,6 +172,7 @@ public class AppsViewModel : ViewModelBase
                 }
 
                 _configService.Save();
+                AppFilterChanged?.Invoke();
                 StatusMessage = $"Discovered {_apps.Count} apps from Gotify.";
             });
 
@@ -204,5 +213,6 @@ public class AppsViewModel : ViewModelBase
             app.IsEnabled = enabled;
         }
         _configService.Save();
+        AppFilterChanged?.Invoke();
     }
 }

@@ -155,19 +155,38 @@
                 <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                     <StackPanel>
                         <!-- Section Header -->
-                        <Grid Margin="0,0,0,12">
+                        <Grid Cursor="Hand">
+                            <Grid.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleRecommendationsCommand}"/>
+                            </Grid.InputBindings>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="💡 Smart Noise Recommendations" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                <Border CornerRadius="10" Background="{DynamicResource ThemeBrandAccent}" Padding="6,1" Margin="8,0,0,0"
+                                <Border CornerRadius="10" Background="{DynamicResource ThemeBrandAccent}" Padding="7,2" Margin="10,0,0,0"
                                         Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="{Binding Recommendations.Count, StringFormat='{}{0} suggestions'}" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock Text="{Binding RecommendationsSummaryText}" FontSize="10" FontWeight="Bold" Foreground="White"/>
                                 </Border>
                             </StackPanel>
+
+                            <Button Grid.Column="1" Padding="10,5" Command="{Binding ToggleRecommendationsCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                        <Setter Property="Content" Value="Expand ▼"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRecommendationsExpanded}" Value="True">
+                                                <Setter Property="Content" Value="Collapse ▲"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
+
+                        <!-- Collapsible Content -->
+                        <StackPanel Visibility="{Binding IsRecommendationsExpanded, Converter={StaticResource BoolToVis}}" Margin="0,12,0,0">
 
                         <!-- Empty State: No recommendations detected -->
                         <Border Background="{DynamicResource ThemeCardInnerBackground}" CornerRadius="6" Padding="14,12" Margin="0,0,0,4"
@@ -263,34 +282,53 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
                 <!-- ========================================== -->
-                <!-- 2. ACTIVE RULES SECTION                    -->
+                <!-- 2. CONFIGURED RULES SECTION                -->
                 <!-- ========================================== -->
                 <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                     <StackPanel>
                         <!-- Section Header -->
-                        <Grid Margin="0,0,0,12">
+                        <Grid Cursor="Hand">
+                            <Grid.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleConfiguredRulesCommand}"/>
+                            </Grid.InputBindings>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="🛡️ Active Rules" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                <Border CornerRadius="10" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="6,1" Margin="8,0,0,0">
-                                    <TextBlock Text="{Binding ActiveRulesCount}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Configured Rules" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                <Border CornerRadius="10" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="7,2" Margin="10,0,0,0">
+                                    <TextBlock Text="{Binding RulesSummaryText}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                 </Border>
                             </StackPanel>
+
+                            <Button Grid.Column="1" Padding="10,5" Command="{Binding ToggleConfiguredRulesCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                        <Setter Property="Content" Value="Expand ▼"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsConfiguredRulesExpanded}" Value="True">
+                                                <Setter Property="Content" Value="Collapse ▲"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
 
-                        <!-- Empty State: No active rules -->
-                        <Border Background="{DynamicResource ThemeCardInnerBackground}" CornerRadius="6" Padding="14,12" Margin="0,0,0,4"
-                                Visibility="{Binding HasActiveRules, Converter={StaticResource InverseBoolToVis}}">
-                            <TextBlock Text="No active filter rules configured. Use recommendations above or expand the advanced builder below."
-                                       FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                        </Border>
+                        <!-- Collapsible Content -->
+                        <StackPanel Visibility="{Binding IsConfiguredRulesExpanded, Converter={StaticResource BoolToVis}}" Margin="0,12,0,0">
+                            <!-- Empty State: No configured rules -->
+                            <Border Background="{DynamicResource ThemeCardInnerBackground}" CornerRadius="6" Padding="14,12" Margin="0,0,0,4"
+                                    Visibility="{Binding HasActiveRules, Converter={StaticResource InverseBoolToVis}}">
+                                <TextBlock Text="No filter rules configured. Use recommendations above or expand the advanced builder below."
+                                           FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                            </Border>
 
                         <!-- Active Rules List -->
                         <ItemsControl ItemsSource="{Binding Rules}"
@@ -308,8 +346,27 @@
 
                                             <!-- Rule Details -->
                                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" VerticalAlignment="Center"/>
+                                                    <!-- Active/Paused Status Badge -->
+                                                    <Border CornerRadius="8" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#10B981"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Enabled}" Value="False">
+                                                                        <Setter Property="Background" Value="#64748B"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="● " FontSize="8" Foreground="White" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding StatusLabel}" FontSize="9" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding TargetField}" FontSize="11" Foreground="{DynamicResource ThemeBrandAccent}"/>
                                                     <TextBlock Text=" " FontSize="11"/>
                                                     <TextBlock Text="{Binding Operator}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
@@ -340,11 +397,27 @@
                                                 <TextBlock Text="{Binding Action}" FontSize="10" FontWeight="Bold" Foreground="White"/>
                                             </Border>
 
-                                            <!-- Enabled Toggle -->
-                                            <CheckBox Grid.Column="2" IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,14,0"
-                                                      ToolTip="Toggle rule active state"
-                                                      Command="{Binding DataContext.ToggleRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                      CommandParameter="{Binding}"/>
+                                            <!-- Enabled Fluent Toggle Switch -->
+                                            <CheckBox Grid.Column="2" IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0"
+                                                      ToolTip="Toggle rule active state">
+                                                <CheckBox.Template>
+                                                    <ControlTemplate TargetType="CheckBox">
+                                                        <Border x:Name="SwitchBorder" Width="44" Height="24" CornerRadius="12" Background="#475569" Cursor="Hand" Padding="2">
+                                                            <Ellipse x:Name="SwitchThumb" Width="20" Height="20" Fill="White" HorizontalAlignment="Left">
+                                                                <Ellipse.RenderTransform>
+                                                                    <TranslateTransform x:Name="ThumbTransform" X="0"/>
+                                                                </Ellipse.RenderTransform>
+                                                            </Ellipse>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsChecked" Value="True">
+                                                                <Setter TargetName="SwitchBorder" Property="Background" Value="#10B981"/>
+                                                                <Setter TargetName="SwitchThumb" Property="HorizontalAlignment" Value="Right"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </CheckBox.Template>
+                                            </CheckBox>
 
                                             <!-- Delete Button -->
                                             <Button Grid.Column="3" Content="✕" Width="26" Height="26" Background="Transparent" BorderThickness="0"
@@ -356,6 +429,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -366,6 +440,9 @@
                     <StackPanel>
                         <!-- Clickable Accordion Header -->
                         <Grid Cursor="Hand">
+                            <Grid.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleAdvancedCommand}"/>
+                            </Grid.InputBindings>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>

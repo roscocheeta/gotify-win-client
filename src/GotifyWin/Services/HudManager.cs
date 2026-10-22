@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media.Animation;
 using Application = System.Windows.Application;
@@ -15,9 +17,9 @@ public interface IHudManager
 public class HudManager : IHudManager
 {
     public const int MaxConcurrentVisible = 3;
-    private const double HudSpacing = 10.0;
+    private const double HudSpacing = 12.0;
     private const double Margin = 20.0;
-    private const double StandardSlotHeight = 125.0;
+    private const double DefaultSlotHeight = 160.0;
 
     private readonly List<NotificationHudWindow> _activeWindows = new();
     private readonly Queue<(GotifyMessage Message, PresentationSettings Settings, Action<string>? OnUrlOpen)> _pendingQueue = new();
@@ -35,7 +37,7 @@ public class HudManager : IHudManager
 
     public void ShowNotification(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
     {
-        Application.Current?.Dispatcher?.Invoke(() =>
+        UiDispatcher.RunOnUI(() =>
         {
             lock (_lock)
             {
@@ -68,7 +70,7 @@ public class HudManager : IHudManager
 
         hud.Closed += (s, e) =>
         {
-            Application.Current?.Dispatcher?.Invoke(() =>
+            UiDispatcher.RunOnUI(() =>
             {
                 lock (_lock)
                 {
@@ -90,21 +92,37 @@ public class HudManager : IHudManager
         hud.Show();
     }
 
+    private double GetWindowHeight(NotificationHudWindow window)
+    {
+        return window.ActualHeight > 50.0 ? window.ActualHeight : DefaultSlotHeight;
+    }
+
     private double CalculateSlotTop(int slotIndex, HudPosition position)
     {
         var workArea = SystemParameters.WorkArea;
-        double slotOffset = slotIndex * (StandardSlotHeight + HudSpacing);
 
-        switch (position)
+        if (position == HudPosition.TopRight || position == HudPosition.TopCenter)
         {
-            case HudPosition.TopRight:
-            case HudPosition.TopCenter:
-                return workArea.Top + Margin + slotOffset;
+            double currentTop = workArea.Top + Margin;
+            for (int i = 0; i < slotIndex; i++)
+            {
+                double h = i < _activeWindows.Count ? GetWindowHeight(_activeWindows[i]) : DefaultSlotHeight;
+                currentTop += h + HudSpacing;
+            }
+            return currentTop;
+        }
+        else // BottomRight / BottomCenter
+        {
+            double hCurrent = slotIndex < _activeWindows.Count ? GetWindowHeight(_activeWindows[slotIndex]) : DefaultSlotHeight;
+            double currentBottom = workArea.Bottom - Margin;
 
-            case HudPosition.BottomRight:
-            case HudPosition.BottomCenter:
-            default:
-                return workArea.Bottom - StandardSlotHeight - Margin - slotOffset;
+            for (int i = 0; i < slotIndex; i++)
+            {
+                double hPrev = i < _activeWindows.Count ? GetWindowHeight(_activeWindows[i]) : DefaultSlotHeight;
+                currentBottom -= (hPrev + HudSpacing);
+            }
+
+            return currentBottom - hCurrent;
         }
     }
 

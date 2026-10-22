@@ -199,4 +199,114 @@ public class RuleWorkflowTests
         Assert.Single(rulesVm.Recommendations);
         Assert.Equal("Mute routine Notion-Backup alerts", rulesVm.Recommendations[0].Title);
     }
+
+    [Fact]
+    public void PrepareManualRuleFromNotification_CollapsesOtherSectionsAndExpandsAdvanced()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        rulesVm.IsRecommendationsExpanded = true;
+        rulesVm.IsConfiguredRulesExpanded = true;
+        rulesVm.IsAdvancedExpanded = false;
+
+        var msg = new GotifyMessage
+        {
+            Id = 888,
+            AppId = 4,
+            ApplicationName = "Profiler",
+            Title = "High CPU Detected",
+            Message = "CPU usage at 99% for 5 minutes",
+            Priority = 6
+        };
+
+        rulesVm.PrepareManualRuleFromNotification(msg);
+
+        // Sections must be collapsed except Advanced
+        Assert.False(rulesVm.IsRecommendationsExpanded);
+        Assert.False(rulesVm.IsConfiguredRulesExpanded);
+        Assert.True(rulesVm.IsAdvancedExpanded);
+
+        // Advanced fields must be prefilled
+        Assert.Equal("Filter Profiler: High CPU Detected", rulesVm.NewRuleName);
+        Assert.Equal(RuleField.Title, rulesVm.NewRuleField);
+        Assert.Equal("High CPU Detected", rulesVm.NewRulePattern);
+    }
+
+    [Fact]
+    public void RulesSummaryText_ReflectsActiveAndPausedCounts()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        Assert.Equal("0 rules", rulesVm.RulesSummaryText);
+
+        var r1 = new NotificationRule { Name = "Rule 1", Enabled = true };
+        var r2 = new NotificationRule { Name = "Rule 2", Enabled = false };
+
+        configService.Config.Rules.Add(r1);
+        configService.Config.Rules.Add(r2);
+
+        // Re-init VM or add via VM
+        var rulesVm2 = new RulesViewModel(configService);
+
+        Assert.Equal(1, rulesVm2.ActiveRulesCount);
+        Assert.Equal(1, rulesVm2.PausedRulesCount);
+        Assert.Equal("1 active • 1 paused", rulesVm2.RulesSummaryText);
+
+        // Toggle r2 to active
+        r2.Enabled = true;
+        Assert.Equal(2, rulesVm2.ActiveRulesCount);
+        Assert.Equal(0, rulesVm2.PausedRulesCount);
+        Assert.Equal("2 active", rulesVm2.RulesSummaryText);
+    }
+
+    [Fact]
+    public void NotificationRule_StatusLabel_UpdatesOnEnableToggle()
+    {
+        var rule = new NotificationRule { Name = "Backup Warning", Enabled = true };
+        Assert.Equal("Active", rule.StatusLabel);
+
+        rule.Enabled = false;
+        Assert.Equal("Paused", rule.StatusLabel);
+    }
+
+    [Fact]
+    public void FeedViewModel_HidesMessagesWhenAppIsDisabled()
+    {
+        var configService = new DummyConfigService();
+        var feedVm = new FeedViewModel(null!, configService);
+
+        var msgAllowed = new GotifyMessage
+        {
+            Id = 1,
+            AppId = 10,
+            ApplicationName = "Docker",
+            Title = "Container restarted",
+            Message = "redis restarted"
+        };
+        var msgDisabledApp = new GotifyMessage
+        {
+            Id = 2,
+            AppId = 20,
+            ApplicationName = "Profiler",
+            Title = "Trace collected",
+            Message = "Profile trace #402"
+        };
+
+        // Disable Profiler app (AppId 20)
+        configService.Config.AppFilters[20] = new AppFilterSetting
+        {
+            AppId = 20,
+            AppName = "Profiler",
+            Enabled = false
+        };
+
+        feedVm.SetInitialMessages(new[] { msgAllowed, msgDisabledApp });
+
+        // FilteredMessages should only contain the allowed message
+        var items = feedVm.FilteredMessages.Cast<GotifyMessage>().ToList();
+        Assert.Single(items);
+        Assert.Equal("Docker", items[0].ApplicationName);
+    }
 }
