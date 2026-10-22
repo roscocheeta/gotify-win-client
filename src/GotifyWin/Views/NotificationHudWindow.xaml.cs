@@ -91,6 +91,16 @@ public partial class NotificationHudWindow : Window
             }
             catch { }
         }
+        else
+        {
+            try
+            {
+                var bitmap = new BitmapImage(new Uri("pack://application:,,,/Assets/app-32.png"));
+                bitmap.Freeze();
+                AppIconImage.Source = bitmap;
+            }
+            catch { }
+        }
 
         // Load Notification Image (Thumbnail)
         if (message.HasImage && Uri.TryCreate(message.ImageUrl, UriKind.Absolute, out var imgUri))

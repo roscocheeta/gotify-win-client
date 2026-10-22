@@ -76,9 +76,10 @@ public class ThemeManager : IThemeManager
                 res["ThemeInputBorder"] = ToBrush("#334155");
                 res["ThemePopupBackground"] = ToBrush("#1E293B");
                 res["ThemeItemHover"] = ToBrush("#334155");
-                res["ThemeBrandAccent"] = ToBrush("#38BDF8");
-                res["ThemePrimaryButton"] = ToBrush("#3B82F6");
-                res["ThemePrimaryButtonHover"] = ToBrush("#2563EB");
+                res["ThemeBrandAccent"] = ToBrush("#6EC1F8");
+                res["ThemePrimaryButton"] = ToBrush("#0A58CA");
+                res["ThemePrimaryButtonHover"] = ToBrush("#053285");
+                res["ThemeBadge"] = ToBrush("#FF5C39");
                 res["ThemeSecondaryButtonBg"] = ToBrush("#1E293B");
                 res["ThemeSecondaryButtonBorder"] = ToBrush("#334155");
                 res["ThemeSecondaryButtonText"] = ToBrush("#F8FAFC");
@@ -100,9 +101,10 @@ public class ThemeManager : IThemeManager
                 res["ThemeInputBorder"] = ToBrush("#CBD5E1");
                 res["ThemePopupBackground"] = ToBrush("#FFFFFF");
                 res["ThemeItemHover"] = ToBrush("#F1F5F9");
-                res["ThemeBrandAccent"] = ToBrush("#0284C7");
-                res["ThemePrimaryButton"] = ToBrush("#2563EB");
-                res["ThemePrimaryButtonHover"] = ToBrush("#1D4ED8");
+                res["ThemeBrandAccent"] = ToBrush("#0A58CA");
+                res["ThemePrimaryButton"] = ToBrush("#0A58CA");
+                res["ThemePrimaryButtonHover"] = ToBrush("#053285");
+                res["ThemeBadge"] = ToBrush("#FF5C39");
                 res["ThemeSecondaryButtonBg"] = ToBrush("#F1F5F9");
                 res["ThemeSecondaryButtonBorder"] = ToBrush("#CBD5E1");
                 res["ThemeSecondaryButtonText"] = ToBrush("#0F172A");

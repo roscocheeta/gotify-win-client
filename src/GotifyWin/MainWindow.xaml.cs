@@ -41,9 +41,24 @@ public partial class MainWindow : Window
 
     private void InitializeSystemTray()
     {
+        System.Drawing.Icon? trayIcon = null;
+        try
+        {
+            var streamInfo = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico"));
+            if (streamInfo != null)
+            {
+                using var stream = streamInfo.Stream;
+                trayIcon = new System.Drawing.Icon(stream);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Could not load tray icon resource: {ex.Message}");
+        }
+
         _notifyIcon = new NotifyIcon
         {
-            Icon = SystemIcons.Information,
+            Icon = trayIcon ?? SystemIcons.Information,
             Text = "Gotify Client",
             Visible = true
         };

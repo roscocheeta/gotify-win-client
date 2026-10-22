@@ -50,6 +50,7 @@ public class NotificationPresenter : INotificationPresenter
                         {
                             var shortcut = shell.CreateShortcut(shortcutPath);
                             shortcut.TargetPath = exePath;
+                            shortcut.IconLocation = $"{exePath},0";
                             shortcut.Description = "Gotify Desktop Client";
                             shortcut.Save();
                         }
