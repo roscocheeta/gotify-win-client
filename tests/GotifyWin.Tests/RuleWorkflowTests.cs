@@ -170,4 +170,33 @@ public class RuleWorkflowTests
         Assert.True(msg.IsFiltered);
         Assert.Equal("Ignore Health Check", msg.FilteredByRuleName);
     }
+
+    [Fact]
+    public async Task ReanalyzeHistory_WhenHistoryInsufficient_RetainsExistingRecommendations()
+    {
+        var configService = new DummyConfigService();
+        var analyzer = new NotificationPatternAnalyzer();
+        var currentMessages = new List<GotifyMessage>(); // Empty history (e.g. cleared by user)
+
+        var rulesVm = new RulesViewModel(configService, analyzer, () => currentMessages);
+
+        var existingRec = new RuleRecommendation
+        {
+            AppId = 7,
+            AppName = "Notion-Backup",
+            Title = "Mute routine Notion-Backup alerts",
+            MatchCount = 10
+        };
+
+        rulesVm.SetRecommendations(new[] { existingRec });
+        Assert.True(rulesVm.HasRecommendations);
+
+        // Act: re-scan when history is cleared (< 5 items)
+        await rulesVm.ReanalyzeHistoryAsync();
+
+        // Assert: must NOT clear the existing recommendation!
+        Assert.True(rulesVm.HasRecommendations);
+        Assert.Single(rulesVm.Recommendations);
+        Assert.Equal("Mute routine Notion-Backup alerts", rulesVm.Recommendations[0].Title);
+    }
 }

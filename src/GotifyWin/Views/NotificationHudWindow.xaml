@@ -115,10 +115,23 @@
                 </Grid>
 
                 <!-- Content Area -->
-                <StackPanel Grid.Row="1" Margin="14,4,14,10">
-                    <TextBlock x:Name="TitleTextBlock" Text="Notification Title" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryText}" TextWrapping="Wrap" Margin="0,0,0,4"/>
-                    <TextBlock x:Name="MessageTextBlock" Text="Notification message body goes here..." FontSize="12" Foreground="{StaticResource SecondaryText}" TextWrapping="Wrap" MaxHeight="80" TextTrimming="CharacterEllipsis"/>
-                </StackPanel>
+                <Grid Grid.Row="1" Margin="14,4,14,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Name="TitleTextBlock" Text="Notification Title" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryText}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                        <TextBlock x:Name="MessageTextBlock" Text="Notification message body goes here..." FontSize="12" Foreground="{StaticResource SecondaryText}" TextWrapping="Wrap" MaxHeight="80" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <!-- Optional Thumbnail Preview -->
+                    <Border Grid.Column="1" x:Name="NotificationImageBorder" Width="52" Height="52" CornerRadius="6" ClipToBounds="True"
+                            Margin="10,0,0,0" VerticalAlignment="Top" Visibility="Collapsed" Background="#0F172A">
+                        <Image x:Name="NotificationImage" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+                </Grid>
 
                 <!-- Actions Area -->
                 <Grid Grid.Row="2" x:Name="ActionsGrid" Margin="14,0,14,10" Visibility="Collapsed">

@@ -14,13 +14,15 @@ public class NotificationPresenter : INotificationPresenter
 {
     private const string AppUserModelId = "GotifyWin.DesktopClient";
     private readonly ISoundService _soundService;
+    private readonly IHudManager _hudManager;
     private bool _aumidInitialized;
 
     public event EventHandler<string>? UrlOpenRequested;
 
-    public NotificationPresenter(ISoundService soundService)
+    public NotificationPresenter(ISoundService soundService, IHudManager? hudManager = null)
     {
         _soundService = soundService;
+        _hudManager = hudManager ?? new HudManager();
         InitializeAumidShortcut();
     }
 
@@ -86,19 +88,7 @@ public class NotificationPresenter : INotificationPresenter
 
     private void ShowCustomHud(GotifyMessage message, PresentationSettings settings)
     {
-        Application.Current?.Dispatcher?.Invoke(() =>
-        {
-            try
-            {
-                var hud = new NotificationHudWindow();
-                hud.Setup(message, settings, OpenUrl);
-                hud.Show();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[NotificationPresenter] HUD display error: {ex.Message}");
-            }
-        });
+        _hudManager.ShowNotification(message, settings, OpenUrl);
     }
 
     // SEC-06: Strip invalid XML 1.0 characters and escape XML entities

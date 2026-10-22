@@ -74,7 +74,8 @@ public class MainViewModel : ViewModelBase
         IDndManager dndManager,
         INotificationPresenter presenter,
         IStartupManager startupManager,
-        INotificationPatternAnalyzer? patternAnalyzer = null)
+        INotificationPatternAnalyzer? patternAnalyzer = null,
+        IThemeManager? themeManager = null)
     {
         _configService = configService;
         _apiService = apiService;
@@ -86,8 +87,13 @@ public class MainViewModel : ViewModelBase
 
         Feed = new FeedViewModel(_apiService, _configService, _presenter);
         Apps = new AppsViewModel(_apiService, _configService);
-        Rules = new RulesViewModel(_configService, _patternAnalyzer, () => Feed.Messages);
-        Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter);
+        Rules = new RulesViewModel(
+            _configService,
+            _patternAnalyzer,
+            () => Feed.Messages,
+            async () => await FetchRecentMessagesAsync()
+        );
+        Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter, themeManager);
 
         ToggleDndCommand = new RelayCommand(ToggleDnd);
         Snooze30mCommand = new RelayCommand(() => SetDnd(TimeSpan.FromMinutes(30)));
@@ -160,6 +166,22 @@ public class MainViewModel : ViewModelBase
                 System.Diagnostics.Debug.WriteLine($"[MainVM] Failed to load recent history: {ex.Message}");
             }
         }
+    }
+
+    private async Task<IEnumerable<GotifyMessage>> FetchRecentMessagesAsync()
+    {
+        var cfg = _configService.Config;
+        if (!string.IsNullOrEmpty(cfg.ServerUrl) && !string.IsNullOrEmpty(cfg.ClientToken))
+        {
+            try
+            {
+                var recent = await _apiService.GetRecentMessagesAsync(cfg.ServerUrl, cfg.ClientToken, 50);
+                EnrichMessages(recent);
+                return recent;
+            }
+            catch { }
+        }
+        return Enumerable.Empty<GotifyMessage>();
     }
 
     private void EnrichMessages(IEnumerable<GotifyMessage> messages)

@@ -23,6 +23,8 @@ public partial class App : System.Windows.Application
         var presenter = new NotificationPresenter(soundService);
         var startupManager = new StartupManager();
         var patternAnalyzer = new NotificationPatternAnalyzer();
+        var themeManager = new ThemeManager();
+        themeManager.ApplyTheme(configService.Config.Theme);
 
         var mainViewModel = new MainViewModel(
             configService,
@@ -32,7 +34,8 @@ public partial class App : System.Windows.Application
             dndManager,
             presenter,
             startupManager,
-            patternAnalyzer
+            patternAnalyzer,
+            themeManager
         );
 
         _mainWindow = new MainWindow(mainViewModel, configService);

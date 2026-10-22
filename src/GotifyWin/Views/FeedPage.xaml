@@ -5,24 +5,26 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="800"
-             Background="#0B1120">
+             Background="{DynamicResource ThemeBackground}">
     <UserControl.Resources>
         <conv:HexColorToBrushConverter x:Key="HexToBrush"/>
         <conv:BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <conv:BooleanToVisibilityConverter x:Key="InverseBoolToVis" Invert="True"/>
 
-        <!-- Modern Button Style -->
+        <!-- Modern Secondary Button Style -->
         <Style x:Key="SecondaryButton" TargetType="Button">
-            <Setter Property="Background" Value="#2D3748"/>
-            <Setter Property="Foreground" Value="#E2E8F0"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Background" Value="{DynamicResource ThemeSecondaryButtonBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSecondaryButtonText}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeSecondaryButtonBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -30,14 +32,14 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#3E4C63"/>
+                    <Setter Property="Background" Value="{DynamicResource ThemeItemHover}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="CardActionButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeTextSecondary}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="6,4"/>
             <Setter Property="FontSize" Value="11"/>
@@ -53,8 +55,8 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#334155"/>
-                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="Background" Value="{DynamicResource ThemeItemHover}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource ThemeTextPrimary}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -75,22 +77,23 @@
             </Grid.ColumnDefinitions>
 
             <!-- Search Box -->
-            <Border Grid.Column="0" Background="#1E293B" CornerRadius="6" BorderBrush="#334155" BorderThickness="1" Padding="8,4" Margin="0,0,12,0">
+            <Border Grid.Column="0" Background="{DynamicResource ThemeCardBackground}" CornerRadius="6"
+                    BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="8,4" Margin="0,0,12,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="🔍" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="#64748B"/>
+                    <TextBlock Grid.Column="0" Text="🔍" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{DynamicResource ThemeTextMuted}"/>
                     <TextBox Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             Background="Transparent" BorderThickness="0" Foreground="#F8FAFC" FontSize="13"
-                             VerticalAlignment="Center" CaretBrush="White"/>
+                             Background="Transparent" BorderThickness="0" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="13"
+                             VerticalAlignment="Center" CaretBrush="{DynamicResource ThemeTextPrimary}"/>
                 </Grid>
             </Border>
 
             <!-- App Filter Dropdown -->
             <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableAppFilters}" SelectedItem="{Binding SelectedAppFilter}"
-                      Width="160" Height="34" Margin="0,0,12,0" Background="#1E293B" Foreground="#F8FAFC" BorderBrush="#334155"/>
+                      Width="160" Height="34" Margin="0,0,12,0"/>
 
             <!-- Actions -->
             <StackPanel Grid.Column="2" Orientation="Horizontal">
@@ -103,8 +106,8 @@
         <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
                     Visibility="{Binding HasMessages, Converter={StaticResource InverseBoolToVis}}">
             <TextBlock Text="🔔" FontSize="44" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.5"/>
-            <TextBlock Text="All caught up!" FontSize="18" FontWeight="SemiBold" Foreground="#F8FAFC" HorizontalAlignment="Center"/>
-            <TextBlock Text="No notifications in your feed right now." FontSize="13" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+            <TextBlock Text="All caught up!" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" HorizontalAlignment="Center"/>
+            <TextBlock Text="No notifications in your feed right now." FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
         </StackPanel>
 
         <!-- Messages Feed List -->
@@ -113,7 +116,7 @@
             <ItemsControl ItemsSource="{Binding FilteredMessages}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" ClipToBounds="True">
+                        <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" ClipToBounds="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="4"/>
@@ -129,6 +132,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
                                     <!-- Top Meta Bar: App Name, Time, Priority Badge -->
@@ -139,15 +143,15 @@
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DisplayAppName}" FontSize="12" FontWeight="SemiBold" Foreground="#38BDF8"/>
-                                            <TextBlock Text=" • " FontSize="12" Foreground="#64748B"/>
-                                            <TextBlock Text="{Binding RelativeTime}" FontSize="11" Foreground="#94A3B8"/>
-                                            <TextBlock Text="{Binding FormattedDate, StringFormat=' ({0})'}" FontSize="10" Foreground="#64748B"/>
+                                            <TextBlock Text="{Binding DisplayAppName}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                                            <TextBlock Text=" • " FontSize="12" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                            <TextBlock Text="{Binding RelativeTime}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                            <TextBlock Text="{Binding FormattedDate, StringFormat=' ({0})'}" FontSize="10" Foreground="{DynamicResource ThemeTextMuted}"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                                             <!-- Filtered by Rule Badge -->
-                                            <Border CornerRadius="3" Background="#0F2744" BorderBrush="#2563EB" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
+                                            <Border CornerRadius="3" Background="#1E3A5F" BorderBrush="#3B82F6" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
                                                     Visibility="{Binding IsFiltered, Converter={StaticResource BoolToVis}}"
                                                     ToolTip="{Binding FilteredByRuleName, StringFormat='Automatically filtered: {0}'}">
                                                 <StackPanel Orientation="Horizontal">
@@ -157,9 +161,9 @@
                                             </Border>
 
                                             <!-- Debounce duplicate badge -->
-                                            <Border CornerRadius="3" Background="#475569" Padding="5,1" Margin="0,0,6,0"
+                                            <Border CornerRadius="3" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
                                                     Visibility="{Binding DuplicateCount, Converter={StaticResource BoolToVis}}">
-                                                <TextBlock Text="{Binding DuplicateCount, StringFormat='x{0}'}" FontSize="10" FontWeight="Bold" Foreground="#F8FAFC"/>
+                                                <TextBlock Text="{Binding DuplicateCount, StringFormat='x{0}'}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                             </Border>
 
                                             <!-- Priority Badge -->
@@ -170,13 +174,25 @@
                                     </Grid>
 
                                     <!-- Title -->
-                                    <TextBlock Grid.Row="1" Text="{Binding DisplayTitle}" FontSize="14" FontWeight="Bold" Foreground="#F8FAFC" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding DisplayTitle}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" TextWrapping="Wrap" Margin="0,0,0,4"/>
 
                                     <!-- Body -->
-                                    <TextBlock Grid.Row="2" Text="{Binding Message}" FontSize="13" Foreground="#CBD5E1" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="2" Text="{Binding Message}" FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,8"/>
+
+                                    <!-- Attached Image Thumbnail Preview -->
+                                    <Border Grid.Row="3" CornerRadius="6" Background="{DynamicResource ThemeCardInnerBackground}"
+                                            BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                            Margin="0,0,0,10" MaxHeight="180" HorizontalAlignment="Left" ClipToBounds="True"
+                                            Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}">
+                                        <Image Source="{Binding ImageUrl}" MaxHeight="180" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    </Border>
 
                                     <!-- Action Bar -->
-                                    <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Content="🖼 View Image" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
+                                                Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding ImageUrl}"/>
                                         <Button Content="🔗 Open Link" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
                                                 Visibility="{Binding HasClickUrl, Converter={StaticResource BoolToVis}}"
                                                 Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"

@@ -71,6 +71,64 @@ public class GotifyMessage
     public bool HasClickUrl => !string.IsNullOrWhiteSpace(ClickUrl);
 
     [JsonIgnore]
+    public string? ImageUrl
+    {
+        get
+        {
+            // 1. Check Gotify Android/Web client notification extras
+            if (Extras != null && Extras.TryGetValue("client::notification", out var clientNotif))
+            {
+                if (clientNotif.ValueKind == JsonValueKind.Object)
+                {
+                    if (clientNotif.TryGetProperty("bigImageUrl", out var bigProp) &&
+                        bigProp.ValueKind == JsonValueKind.String &&
+                        !string.IsNullOrWhiteSpace(bigProp.GetString()))
+                    {
+                        return bigProp.GetString();
+                    }
+
+                    if (clientNotif.TryGetProperty("image", out var imgProp) &&
+                        imgProp.ValueKind == JsonValueKind.String &&
+                        !string.IsNullOrWhiteSpace(imgProp.GetString()))
+                    {
+                        return imgProp.GetString();
+                    }
+                }
+            }
+
+            // 2. Check for markdown image link: ![...](https://...)
+            if (!string.IsNullOrWhiteSpace(Message))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    Message,
+                    @"!\[.*?\]\((https?://[^\s\)]+)\)",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+                if (match.Success)
+                {
+                    return match.Groups[1].Value;
+                }
+
+                // 3. Check for standalone image URL ending with common image extension
+                var directMatch = System.Text.RegularExpressions.Regex.Match(
+                    Message,
+                    @"(https?://\S+\.(?:png|jpe?g|gif|webp|bmp))(?:\?\S*)?",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+                if (directMatch.Success)
+                {
+                    return directMatch.Groups[1].Value;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    [JsonIgnore]
+    public bool HasImage => !string.IsNullOrWhiteSpace(ImageUrl);
+
+    [JsonIgnore]
     public string PriorityLabel => Priority switch
     {
         >= 8 => "Urgent",

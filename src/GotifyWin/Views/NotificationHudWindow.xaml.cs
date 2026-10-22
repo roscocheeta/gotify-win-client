@@ -39,7 +39,10 @@ public partial class NotificationHudWindow : Window
 
     private void NotificationHudWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        PositionWindow(_position);
+        if (double.IsNaN(Left) || Left == 0)
+        {
+            PositionWindow(_position);
+        }
 
         var fadeIn = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(200))
         {
@@ -89,6 +92,22 @@ public partial class NotificationHudWindow : Window
             catch { }
         }
 
+        // Load Notification Image (Thumbnail)
+        if (message.HasImage && Uri.TryCreate(message.ImageUrl, UriKind.Absolute, out var imgUri))
+        {
+            try
+            {
+                var imgBitmap = new BitmapImage();
+                imgBitmap.BeginInit();
+                imgBitmap.UriSource = imgUri;
+                imgBitmap.CacheOption = BitmapCacheOption.OnLoad;
+                imgBitmap.EndInit();
+                NotificationImage.Source = imgBitmap;
+                NotificationImageBorder.Visibility = Visibility.Visible;
+            }
+            catch { }
+        }
+
         // Action Link
         if (message.HasClickUrl)
         {
@@ -101,8 +120,6 @@ public partial class NotificationHudWindow : Window
         // Display Duration
         _durationMs = Math.Max(2.0, settings.DisplayDurationSeconds) * 1000.0;
         _elapsedMs = 0;
-
-        PositionWindow(_position);
     }
 
     private void PositionWindow(HudPosition position)

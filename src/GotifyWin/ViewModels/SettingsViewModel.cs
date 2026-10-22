@@ -11,6 +11,7 @@ public class SettingsViewModel : ViewModelBase
     private readonly IGotifyApiService _apiService;
     private readonly IStartupManager _startupManager;
     private readonly INotificationPresenter _presenter;
+    private readonly IThemeManager? _themeManager;
 
     // Connection
     private string _serverUrl = string.Empty;
@@ -24,8 +25,33 @@ public class SettingsViewModel : ViewModelBase
     public string ClientToken
     {
         get => _clientToken;
-        set => SetProperty(ref _clientToken, value);
+        set
+        {
+            if (SetProperty(ref _clientToken, value))
+            {
+                OnPropertyChanged(nameof(MaskedDisplayToken));
+            }
+        }
     }
+
+    public string MaskedDisplayToken => string.IsNullOrEmpty(_clientToken) ? "(No token set)" : new string('●', Math.Min(32, _clientToken.Length));
+
+    private bool _isTokenRevealed;
+    public bool IsTokenRevealed
+    {
+        get => _isTokenRevealed;
+        set
+        {
+            if (SetProperty(ref _isTokenRevealed, value))
+            {
+                OnPropertyChanged(nameof(TokenEyeIcon));
+                OnPropertyChanged(nameof(TokenEyeTooltip));
+            }
+        }
+    }
+
+    public string TokenEyeIcon => IsTokenRevealed ? "🙈" : "👁";
+    public string TokenEyeTooltip => IsTokenRevealed ? "Hide Token" : "Reveal Token";
 
     private string _testStatus = string.Empty;
     public string TestStatus
@@ -264,9 +290,26 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    public AppThemeMode SelectedTheme
+    {
+        get => _configService.Config.Theme;
+        set
+        {
+            if (_configService.Config.Theme != value)
+            {
+                _configService.Config.Theme = value;
+                OnPropertyChanged();
+                _configService.Save();
+                _themeManager?.ApplyTheme(value);
+            }
+        }
+    }
+
     public ICommand TestConnectionCommand { get; }
     public ICommand SaveConnectionCommand { get; }
     public ICommand SendTestNotificationCommand { get; }
+    public ICommand ToggleTokenVisibilityCommand { get; }
+    public ICommand CopyTokenCommand { get; }
 
     public event EventHandler? ConnectionConfigSaved;
 
@@ -274,12 +317,14 @@ public class SettingsViewModel : ViewModelBase
         IConfigService configService,
         IGotifyApiService apiService,
         IStartupManager startupManager,
-        INotificationPresenter presenter)
+        INotificationPresenter presenter,
+        IThemeManager? themeManager = null)
     {
         _configService = configService;
         _apiService = apiService;
         _startupManager = startupManager;
         _presenter = presenter;
+        _themeManager = themeManager;
 
         ServerUrl = _configService.Config.ServerUrl;
         ClientToken = _configService.Config.ClientToken;
@@ -287,6 +332,14 @@ public class SettingsViewModel : ViewModelBase
         TestConnectionCommand = new RelayCommand(async () => await TestConnectionAsync());
         SaveConnectionCommand = new RelayCommand(SaveConnection);
         SendTestNotificationCommand = new RelayCommand(SendTestNotification);
+        ToggleTokenVisibilityCommand = new RelayCommand(() => IsTokenRevealed = !IsTokenRevealed);
+        CopyTokenCommand = new RelayCommand(() =>
+        {
+            if (!string.IsNullOrEmpty(ClientToken))
+            {
+                try { System.Windows.Clipboard.SetText(ClientToken); } catch { }
+            }
+        });
     }
 
     private async Task TestConnectionAsync()

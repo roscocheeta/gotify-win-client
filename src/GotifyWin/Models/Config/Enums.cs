@@ -53,3 +53,10 @@ public enum ConnectionState
     Connected = 2,
     Reconnecting = 3
 }
+
+public enum AppThemeMode
+{
+    System = 0,
+    Dark = 1,
+    Light = 2
+}

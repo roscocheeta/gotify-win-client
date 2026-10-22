@@ -80,4 +80,58 @@ public class GotifyMessageParsingTests
         Assert.Equal("Low", low.PriorityLabel);
         Assert.Equal("#6B7280", low.PriorityColor);
     }
+
+    [Fact]
+    public void ImageUrl_FromExtrasBigImageUrl_ExtractsCorrectly()
+    {
+        var json = @"{
+            ""id"": 201,
+            ""appid"": 5,
+            ""message"": ""Front door motion detected"",
+            ""title"": ""Security"",
+            ""priority"": 5,
+            ""extras"": {
+                ""client::notification"": {
+                    ""bigImageUrl"": ""https://homeassistant.homelab.lan/api/camera/snapshot.jpg""
+                }
+            }
+        }";
+
+        var msg = JsonSerializer.Deserialize<GotifyMessage>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        Assert.NotNull(msg);
+        Assert.True(msg.HasImage);
+        Assert.Equal("https://homeassistant.homelab.lan/api/camera/snapshot.jpg", msg.ImageUrl);
+    }
+
+    [Fact]
+    public void ImageUrl_FromMarkdownSyntax_ExtractsCorrectly()
+    {
+        var msg = new GotifyMessage
+        {
+            Id = 202,
+            Title = "Snapshot",
+            Message = "Motion detected at front gate: ![snapshot](https://frigate.lan/api/events/123/snapshot.jpg)"
+        };
+
+        Assert.True(msg.HasImage);
+        Assert.Equal("https://frigate.lan/api/events/123/snapshot.jpg", msg.ImageUrl);
+    }
+
+    [Fact]
+    public void ImageUrl_FromDirectLink_ExtractsCorrectly()
+    {
+        var msg = new GotifyMessage
+        {
+            Id = 203,
+            Title = "Plot generated",
+            Message = "Network utilization plot: https://graphs.lan/daily_bandwidth.png"
+        };
+
+        Assert.True(msg.HasImage);
+        Assert.Equal("https://graphs.lan/daily_bandwidth.png", msg.ImageUrl);
+    }
 }

@@ -67,6 +67,7 @@ public class RulesViewModel : ViewModelBase
     private readonly IConfigService _configService;
     private readonly INotificationPatternAnalyzer? _patternAnalyzer;
     private readonly Func<IEnumerable<GotifyMessage>>? _messageSource;
+    private readonly Func<Task<IEnumerable<GotifyMessage>>>? _historyFetcher;
 
     private readonly ObservableCollection<NotificationRule> _rules = new();
     private readonly ObservableCollection<RecommendationItemViewModel> _recommendations = new();
@@ -135,17 +136,19 @@ public class RulesViewModel : ViewModelBase
     public RulesViewModel(
         IConfigService configService,
         INotificationPatternAnalyzer? patternAnalyzer = null,
-        Func<IEnumerable<GotifyMessage>>? messageSource = null)
+        Func<IEnumerable<GotifyMessage>>? messageSource = null,
+        Func<Task<IEnumerable<GotifyMessage>>>? historyFetcher = null)
     {
         _configService = configService;
         _patternAnalyzer = patternAnalyzer;
         _messageSource = messageSource;
+        _historyFetcher = historyFetcher;
 
         AddRuleCommand = new RelayCommand(AddRule);
         DeleteRuleCommand = new RelayCommand<NotificationRule>(DeleteRule);
         ToggleRuleCommand = new RelayCommand<NotificationRule>(ToggleRule);
         ToggleAdvancedCommand = new RelayCommand(() => IsAdvancedExpanded = !IsAdvancedExpanded);
-        ReanalyzeCommand = new RelayCommand(ReanalyzeHistory);
+        ReanalyzeCommand = new RelayCommand(async () => await ReanalyzeHistoryAsync());
 
         LoadRules();
     }
@@ -176,12 +179,37 @@ public class RulesViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasRecommendations));
     }
 
-    public void ReanalyzeHistory()
+    public async Task ReanalyzeHistoryAsync()
     {
-        if (_patternAnalyzer == null || _messageSource == null) return;
-        var messages = _messageSource();
+        if (_patternAnalyzer == null) return;
+
+        IEnumerable<GotifyMessage> messages = _messageSource != null ? _messageSource().ToList() : Enumerable.Empty<GotifyMessage>();
+
+        // If local feed has fewer than 5 messages (e.g. cleared by user), try to fetch from server if available
+        if (messages.Count() < 5 && _historyFetcher != null)
+        {
+            try
+            {
+                var fetched = await _historyFetcher();
+                if (fetched != null && fetched.Any())
+                {
+                    messages = fetched.ToList();
+                }
+            }
+            catch { }
+        }
+
+        // If still fewer than 5 messages, RETAIN current recommendations so they are not wiped out
+        if (messages.Count() < 5)
+        {
+            return;
+        }
+
         var recs = _patternAnalyzer.Analyze(messages, _configService.Config, threshold: 5);
-        SetRecommendations(recs);
+        if (recs.Count > 0 || messages.Count() >= 5)
+        {
+            SetRecommendations(recs);
+        }
     }
 
     public void ApplyRecommendation(RuleRecommendation recommendation, RuleAction action)

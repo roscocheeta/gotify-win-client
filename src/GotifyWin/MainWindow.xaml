@@ -7,18 +7,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Gotify Client"
-        Height="720" Width="960"
-        MinHeight="550" MinWidth="780"
+        Height="720" Width="980"
+        MinHeight="550" MinWidth="800"
         WindowStartupLocation="CenterScreen"
-        Background="#0B1120"
-        Foreground="#F8FAFC">
+        Background="{DynamicResource ThemeBackground}"
+        Foreground="{DynamicResource ThemeTextPrimary}">
     <Window.Resources>
         <conv:HexColorToBrushConverter x:Key="HexToBrush"/>
         <conv:BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
         <Style x:Key="NavRadioButton" TargetType="RadioButton">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeTextSecondary}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="16,8"/>
@@ -31,12 +31,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="NavBorder" Property="Background" Value="#1E293B"/>
-                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                                <Setter TargetName="NavBorder" Property="Background" Value="{DynamicResource ThemeNavHover}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ThemeTextPrimary}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="NavBorder" Property="Background" Value="#1E293B"/>
-                                <Setter Property="Foreground" Value="#38BDF8"/>
+                                <Setter TargetName="NavBorder" Property="Background" Value="{DynamicResource ThemeNavChecked}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ThemeBrandAccent}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -45,10 +45,10 @@
         </Style>
 
         <Style x:Key="HeaderActionButton" TargetType="Button">
-            <Setter Property="Background" Value="#1E293B"/>
-            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="Background" Value="{DynamicResource ThemeSecondaryButtonBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSecondaryButtonText}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeSecondaryButtonBorder}"/>
             <Setter Property="Padding" Value="10,5"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -64,7 +64,34 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#334155"/>
+                    <Setter Property="Background" Value="{DynamicResource ThemeItemHover}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="HeaderIconButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ThemeSecondaryButtonBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSecondaryButtonText}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeSecondaryButtonBorder}"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ThemeItemHover}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -73,12 +100,11 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="64"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Top Header Bar -->
-        <Border Grid.Row="0" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="0,0,0,1" Padding="24,0">
+        <Border Grid.Row="0" Background="{DynamicResource ThemeHeaderBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="0,0,0,1" Padding="24,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -88,14 +114,14 @@
 
                 <!-- Brand & Status -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="34" Height="34" CornerRadius="8" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" Margin="0,0,12,0">
+                    <Border Width="34" Height="34" CornerRadius="8" Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Margin="0,0,12,0">
                         <TextBlock Text="🔔" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Gotify" FontSize="15" FontWeight="Bold" Foreground="#F8FAFC"/>
+                        <TextBlock Text="Gotify" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <Ellipse Width="8" Height="8" Fill="{Binding ConnectionStatusColor, Converter={StaticResource HexToBrush}}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding ConnectionStatusText}" FontSize="11" Foreground="#94A3B8"/>
+                            <TextBlock Text="{Binding ConnectionStatusText}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
@@ -117,9 +143,9 @@
                     <!-- DND Quick Button with Context Menu -->
                     <Button Content="{Binding DndStatusText}" Style="{StaticResource HeaderActionButton}" Margin="0,0,8,0" Click="DndButton_Click">
                         <Button.ContextMenu>
-                            <ContextMenu Background="#1E293B" Foreground="#F8FAFC" BorderBrush="#334155">
+                            <ContextMenu Background="{DynamicResource ThemePopupBackground}" Foreground="{DynamicResource ThemeTextPrimary}" BorderBrush="{DynamicResource ThemeCardBorder}">
                                 <MenuItem Header="Disable DND" Command="{Binding DisableDndCommand}"/>
-                                <Separator Background="#334155"/>
+                                <Separator Background="{DynamicResource ThemeCardBorder}"/>
                                 <MenuItem Header="Snooze 30 minutes" Command="{Binding Snooze30mCommand}"/>
                                 <MenuItem Header="Snooze 1 hour" Command="{Binding Snooze1hCommand}"/>
                                 <MenuItem Header="Snooze 4 hours" Command="{Binding Snooze4hCommand}"/>
@@ -128,14 +154,14 @@
                         </Button.ContextMenu>
                     </Button>
 
-                    <Button Content="🔄" Width="32" Height="32" Style="{StaticResource HeaderActionButton}"
+                    <Button Content="🔄" Style="{StaticResource HeaderIconButton}"
                             ToolTip="Reconnect WebSocket" Command="{Binding ReconnectCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Main Content Area -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <!-- Feed Page -->
             <views:FeedPage x:Name="FeedPageView" DataContext="{Binding Feed}"/>
 
