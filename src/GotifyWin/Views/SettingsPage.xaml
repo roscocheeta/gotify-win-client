@@ -203,7 +203,11 @@
 
                     <!-- Sound Toggle -->
                     <CheckBox Content="Play notification chime"
-                              IsChecked="{Binding PlaySound}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,8"/>
+                              IsChecked="{Binding PlaySound}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
+
+                    <!-- Smart Fullscreen Gaming & Presentation Suppression -->
+                    <CheckBox Content="Smart Fullscreen Mode: Automatically suppress alert popups while gaming, presenting, or playing fullscreen videos"
+                              IsChecked="{Binding SuppressOnFullscreen}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
                 </StackPanel>
             </Border>
 
@@ -212,37 +216,53 @@
                 <StackPanel>
                     <TextBlock Text="Filtering &amp; Anti-Spam Debounce" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" Margin="0,0,0,12"/>
 
-                    <!-- Global Min Priority -->
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="220"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Global Minimum Priority" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="Ignore all messages with a priority lower than this threshold (0-10)." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                    <!-- Card A: Global Minimum Priority -->
+                    <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                            CornerRadius="8" Padding="14,12" Margin="0,0,0,12">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Global Minimum Priority" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                    <TextBlock Text="Silently log messages with a priority lower than this threshold directly into history without triggering a popup or chime."
+                                               FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Border Grid.Column="1" Background="{DynamicResource ThemePrimaryButton}" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding GlobalMinPriorityText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </Grid>
+                            <Slider Minimum="0" Maximum="10" Value="{Binding GlobalMinPriority}" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Slider Minimum="0" Maximum="10" Value="{Binding GlobalMinPriority}" Width="160" TickFrequency="1" IsSnapToTickEnabled="True"/>
-                            <TextBlock Text="{Binding GlobalMinPriorityText}" FontSize="12" Foreground="{DynamicResource ThemeTextPrimary}" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Grid>
+                    </Border>
 
-                    <!-- Anti-Flap Debounce -->
-                    <CheckBox Content="Enable anti-flap debounce (combines duplicate rapid alerts into one)"
-                              IsChecked="{Binding EnableDebounce}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,10"/>
+                    <!-- Card B: Anti-Flap Debounce -->
+                    <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                            CornerRadius="8" Padding="14,12" Margin="0,0,0,4">
+                        <StackPanel>
+                            <CheckBox Content="Enable anti-flap debounce (combines duplicate rapid alerts into one)"
+                                      IsChecked="{Binding EnableDebounce}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                            <TextBlock Text="Prevents notification storms by combining identical consecutive alerts from the same app within a short window."
+                                       FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="24,0,0,0"/>
 
-                    <Grid Margin="0,0,0,8" Visibility="{Binding EnableDebounce, Converter={StaticResource BoolToVis}}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="220"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Debounce Window (Seconds)" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Slider Minimum="3" Maximum="60" Value="{Binding DebounceWindowSeconds}" Width="160" TickFrequency="1" IsSnapToTickEnabled="True"/>
-                            <TextBlock Text="{Binding DebounceText}" FontSize="12" Foreground="{DynamicResource ThemeTextPrimary}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            <!-- Debounce Window Slider -->
+                            <StackPanel Margin="0,12,0,0" Visibility="{Binding EnableDebounce, Converter={StaticResource BoolToVis}}">
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Debounce Window Duration" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                    <Border Grid.Column="1" Background="#475569" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding DebounceText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                                    </Border>
+                                </Grid>
+                                <Slider Minimum="3" Maximum="60" Value="{Binding DebounceWindowSeconds}" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
+                            </StackPanel>
                         </StackPanel>
-                    </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 
@@ -280,7 +300,7 @@
                     <CheckBox Content="Enable scheduled quiet hours (e.g. sleep/work focus)"
                               IsChecked="{Binding EnableQuietHours}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,10"/>
 
-                    <Grid Margin="0,0,0,14" Visibility="{Binding EnableQuietHours, Converter={StaticResource BoolToVis}}">
+                    <Grid Margin="0,0,0,4" Visibility="{Binding EnableQuietHours, Converter={StaticResource BoolToVis}}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="100"/>
@@ -292,10 +312,6 @@
                         <TextBlock Grid.Column="2" Text="End:" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <TextBox Grid.Column="3" Style="{StaticResource SettingsTextBox}" Text="{Binding QuietHoursEnd}"/>
                     </Grid>
-
-                    <!-- Fullscreen Suppression -->
-                    <CheckBox Content="Automatically suppress alerts when running full-screen games or presentations"
-                              IsChecked="{Binding SuppressOnFullscreen}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12"/>
                 </StackPanel>
             </Border>
 

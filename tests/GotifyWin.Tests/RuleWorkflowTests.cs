@@ -309,4 +309,45 @@ public class RuleWorkflowTests
         Assert.Single(items);
         Assert.Equal("Docker", items[0].ApplicationName);
     }
+
+    [Fact]
+    public void SettingsViewModel_GlobalMinPriority_UpdatesConfigAndFormatsText()
+    {
+        var configService = new DummyConfigService();
+        var settingsVm = new SettingsViewModel(configService, null!, null!, null!);
+
+        settingsVm.GlobalMinPriority = 0;
+        Assert.Equal("All Alerts (0+)", settingsVm.GlobalMinPriorityText);
+        Assert.Equal(0, configService.Config.GlobalMinPriority);
+
+        settingsVm.GlobalMinPriority = 6;
+        Assert.Equal("Priority \u2265 6 (Normal)", settingsVm.GlobalMinPriorityText);
+        Assert.Equal(6, configService.Config.GlobalMinPriority);
+
+        settingsVm.GlobalMinPriority = 8;
+        Assert.Equal("Priority \u2265 8 (Urgent)", settingsVm.GlobalMinPriorityText);
+        Assert.Equal(8, configService.Config.GlobalMinPriority);
+    }
+
+    [Fact]
+    public async Task RulesViewModel_Reanalyze_TransitionsButtonStateProperly()
+    {
+        var configService = new DummyConfigService();
+        var analyzer = new NotificationPatternAnalyzer();
+        var rulesVm = new RulesViewModel(configService, analyzer, () => Enumerable.Empty<GotifyMessage>());
+
+        Assert.Equal("⚡ Re-scan History", rulesVm.ReanalyzeButtonText);
+        Assert.True(rulesVm.CanReanalyze);
+
+        var task = rulesVm.ReanalyzeHistoryAsync();
+        // Right after start, button indicates scanning
+        Assert.True(rulesVm.IsReanalyzing);
+        Assert.Equal("⏳ Scanning...", rulesVm.ReanalyzeButtonText);
+
+        await task;
+
+        // After completion, resets to initial state
+        Assert.False(rulesVm.IsReanalyzing);
+        Assert.Equal("⚡ Re-scan History", rulesVm.ReanalyzeButtonText);
+    }
 }

@@ -171,13 +171,13 @@
         <Border Grid.Row="0" Background="{DynamicResource ThemeHeaderBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="0,0,0,1" Padding="24,0">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Brand & Status -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
                     <Border Width="44" Height="44" CornerRadius="10" Background="Transparent" Margin="0,0,12,0" ClipToBounds="True">
                         <Image Source="pack://application:,,,/Assets/app.png" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
@@ -203,14 +203,15 @@
                 </StackPanel>
 
                 <!-- Right Quick Controls -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
                     <!-- Modern Fluent DND Flyout -->
                     <Grid Margin="0,0,8,0">
                         <Button x:Name="DndHeaderButton" Style="{StaticResource DndHeaderButtonStyle}" Click="DndButton_Click"
-                                ToolTip="Configure Do Not Disturb &amp; Snooze">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                MinWidth="104" HorizontalContentAlignment="Center"
+                                ToolTip="{Binding DndStatusText}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <TextBlock Text="{Binding IsDndActive, Converter={StaticResource DndGlyphConverter}}" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding DndStatusText}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding DndButtonLabel}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
 

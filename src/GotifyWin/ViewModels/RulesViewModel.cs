@@ -72,6 +72,28 @@ public class RulesViewModel : ViewModelBase
     private readonly ObservableCollection<NotificationRule> _rules = new();
     private readonly ObservableCollection<RecommendationItemViewModel> _recommendations = new();
 
+    private bool _isReanalyzing;
+    public bool IsReanalyzing
+    {
+        get => _isReanalyzing;
+        set
+        {
+            if (SetProperty(ref _isReanalyzing, value))
+            {
+                OnPropertyChanged(nameof(CanReanalyze));
+            }
+        }
+    }
+
+    public bool CanReanalyze => !IsReanalyzing;
+
+    private string _reanalyzeButtonText = "⚡ Re-scan History";
+    public string ReanalyzeButtonText
+    {
+        get => _reanalyzeButtonText;
+        set => SetProperty(ref _reanalyzeButtonText, value);
+    }
+
     private bool _isRecommendationsExpanded = true;
     public bool IsRecommendationsExpanded
     {
@@ -214,34 +236,57 @@ public class RulesViewModel : ViewModelBase
 
     public async Task ReanalyzeHistoryAsync()
     {
-        if (_patternAnalyzer == null) return;
+        if (_patternAnalyzer == null || IsReanalyzing) return;
 
-        IEnumerable<GotifyMessage> messages = _messageSource != null ? _messageSource().ToList() : Enumerable.Empty<GotifyMessage>();
+        IsReanalyzing = true;
+        ReanalyzeButtonText = "⏳ Scanning...";
 
-        // If local feed has fewer than 5 messages (e.g. cleared by user), try to fetch from server if available
-        if (messages.Count() < 5 && _historyFetcher != null)
+        try
         {
-            try
+            // Brief visual pause so the user perceives the scanning feedback state
+            await Task.Delay(400);
+
+            IEnumerable<GotifyMessage> messages = _messageSource != null ? _messageSource().ToList() : Enumerable.Empty<GotifyMessage>();
+
+            // If local feed has fewer than 5 messages (e.g. cleared by user), try to fetch from server if available
+            if (messages.Count() < 5 && _historyFetcher != null)
             {
-                var fetched = await _historyFetcher();
-                if (fetched != null && fetched.Any())
+                try
                 {
-                    messages = fetched.ToList();
+                    var fetched = await _historyFetcher();
+                    if (fetched != null && fetched.Any())
+                    {
+                        messages = fetched.ToList();
+                    }
                 }
+                catch { }
             }
-            catch { }
-        }
 
-        // If still fewer than 5 messages, RETAIN current recommendations so they are not wiped out
-        if (messages.Count() < 5)
-        {
-            return;
-        }
+            // If still fewer than 5 messages, RETAIN current recommendations so they are not wiped out
+            if (messages.Count() < 5)
+            {
+                ReanalyzeButtonText = "✓ Up to date";
+                await Task.Delay(1400);
+                return;
+            }
 
-        var recs = _patternAnalyzer.Analyze(messages, _configService.Config, threshold: 5);
-        if (recs.Count > 0 || messages.Count() >= 5)
+            var recs = _patternAnalyzer.Analyze(messages, _configService.Config, threshold: 5);
+            if (recs.Count > 0 || messages.Count() >= 5)
+            {
+                SetRecommendations(recs);
+                ReanalyzeButtonText = recs.Count > 0 ? $"✓ Found {recs.Count}" : "✓ Up to date";
+            }
+            else
+            {
+                ReanalyzeButtonText = "✓ Up to date";
+            }
+
+            await Task.Delay(1400);
+        }
+        finally
         {
-            SetRecommendations(recs);
+            ReanalyzeButtonText = "⚡ Re-scan History";
+            IsReanalyzing = false;
         }
     }
 

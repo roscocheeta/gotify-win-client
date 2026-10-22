@@ -141,6 +141,25 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    public int GlobalMinPriority
+    {
+        get => _configService.Config.GlobalMinPriority;
+        set
+        {
+            if (_configService.Config.GlobalMinPriority != value)
+            {
+                _configService.Config.GlobalMinPriority = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(GlobalMinPriorityText));
+                _configService.Save();
+            }
+        }
+    }
+
+    public string GlobalMinPriorityText => GlobalMinPriority == 0
+        ? "All Alerts (0+)"
+        : $"Priority \u2265 {GlobalMinPriority} ({GetPriorityLabel(GlobalMinPriority)})";
+
     public bool EnableDebounce
     {
         get => _configService.Config.Presentation.EnableDebounce;

@@ -46,6 +46,13 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _dndStatusText, value);
     }
 
+    private string _dndButtonLabel = "DND: Off";
+    public string DndButtonLabel
+    {
+        get => _dndButtonLabel;
+        set => SetProperty(ref _dndButtonLabel, value);
+    }
+
     private bool _isDndActive;
     public bool IsDndActive
     {
@@ -323,7 +330,48 @@ public class MainViewModel : ViewModelBase
 
     private void UpdateDndStatus()
     {
-        IsDndActive = _dndManager.IsDndActive(_configService.Config.Dnd);
-        DndStatusText = _dndManager.GetStatusDescription(_configService.Config.Dnd);
+        var dnd = _configService.Config.Dnd;
+        IsDndActive = _dndManager.IsDndActive(dnd);
+        DndStatusText = _dndManager.GetStatusDescription(dnd);
+
+        if (!IsDndActive)
+        {
+            DndButtonLabel = "DND: Off";
+        }
+        else if (dnd.IsManualDndActive)
+        {
+            if (dnd.ManualDndUntilUtc.HasValue)
+            {
+                var remaining = dnd.ManualDndUntilUtc.Value - DateTime.UtcNow;
+                if (remaining.TotalMinutes > 0 && remaining.TotalMinutes <= 60)
+                {
+                    DndButtonLabel = $"DND: {(int)Math.Ceiling(remaining.TotalMinutes)}m left";
+                }
+                else if (remaining.TotalMinutes > 60)
+                {
+                    DndButtonLabel = $"DND: {dnd.ManualDndUntilUtc.Value.ToLocalTime():HH:mm}";
+                }
+                else
+                {
+                    DndButtonLabel = "DND: Active";
+                }
+            }
+            else
+            {
+                DndButtonLabel = "DND: Active";
+            }
+        }
+        else if (dnd.QuietHoursEnabled && _dndManager.IsQuietHours(dnd))
+        {
+            DndButtonLabel = "DND: Quiet";
+        }
+        else if (dnd.SuppressOnFullscreenApps && _dndManager.IsFullscreenAppRunning())
+        {
+            DndButtonLabel = "DND: Gaming";
+        }
+        else
+        {
+            DndButtonLabel = "DND: Active";
+        }
     }
 }
