@@ -94,7 +94,7 @@
                                     <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
                                 </StackPanel>
 
-                                <!-- Alert Priority Threshold & DND Override -->
+                                <!-- Notification Priority Threshold & DND Override -->
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,20,0" IsEnabled="{Binding IsEnabled}">
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel">
@@ -107,9 +107,9 @@
                                     </StackPanel.Style>
                                     <Grid Margin="0,0,0,4">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Alert Threshold" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                            <TextBlock Text="Notification Threshold" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                             <TextBlock Text="ℹ️" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center" Cursor="Help"
-                                                       ToolTip="Only deliver notifications with priority at or above this level. Alerts below this threshold are silenced."/>
+                                                       ToolTip="Only show desktop notifications for messages with priority at or above this level. Messages below this threshold are logged silently in history."/>
                                         </StackPanel>
                                         <Border HorizontalAlignment="Right" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
                                                 BorderThickness="1" CornerRadius="4" Padding="6,2">
@@ -120,13 +120,13 @@
                                             ToolTip="{Binding MinPriorityDescription}"/>
                                     <CheckBox Content="Bypass Do Not Disturb" IsChecked="{Binding OverrideGlobalDnd}" FontSize="12"
                                               Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,5,0,0"
-                                              ToolTip="Deliver notifications from this app even when Do Not Disturb or Quiet Hours are active."/>
+                                              ToolTip="Show notifications from this app even when Do Not Disturb or Quiet Hours are active."/>
                                 </StackPanel>
 
                                 <!-- Enable / Mute Toggle Switch with Explicit Label -->
                                 <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center">
                                     <CheckBox IsChecked="{Binding IsEnabled}" HorizontalAlignment="Center" Cursor="Hand"
-                                              ToolTip="Enable or mute all notifications from this application.">
+                                              ToolTip="Enable or mute desktop notifications from this application.">
                                         <CheckBox.Template>
                                             <ControlTemplate TargetType="CheckBox">
                                                 <Border x:Name="SwitchBorder" Width="44" Height="24" CornerRadius="12" Background="#475569" Cursor="Hand" Padding="2">

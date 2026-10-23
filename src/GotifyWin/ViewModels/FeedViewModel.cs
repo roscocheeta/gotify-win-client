@@ -99,7 +99,7 @@ public class FeedViewModel : ViewModelBase
             Id = DateTime.UtcNow.Ticks,
             AppId = 2,
             Title = "Test Gotify Notification",
-            Message = "This is a live test notification from GotifyWin verifying desktop popup and audio alerts.",
+            Message = "This is a live test notification from GotifyWin verifying desktop popup and sound.",
             Priority = 6,
             Date = DateTime.UtcNow,
             ApplicationName = "GotifyWin",

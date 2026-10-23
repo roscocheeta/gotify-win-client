@@ -242,7 +242,7 @@ public class MainViewModel : ViewModelBase
                 Feed.AddMessage(message);
                 break;
 
-            case FilterDecision.Alert:
+            case FilterDecision.Notify:
                 Feed.AddMessage(message);
                 _presenter.Present(message, _configService.Config);
                 break;

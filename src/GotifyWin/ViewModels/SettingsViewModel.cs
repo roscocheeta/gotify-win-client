@@ -262,7 +262,7 @@ public class SettingsViewModel : ViewModelBase
     }
 
     public string GlobalMinPriorityText => GlobalMinPriority == 0
-        ? "All Alerts (0+)"
+        ? "All Messages (0+)"
         : $"Priority \u2265 {GlobalMinPriority} ({GetPriorityLabel(GlobalMinPriority)})";
 
     public bool EnableDebounce
@@ -563,7 +563,7 @@ public class SettingsViewModel : ViewModelBase
         {
             Id = 9999,
             AppId = 1,
-            Title = "Gotify Test Alert",
+            Title = "Gotify Test Message",
             Message = "This is a preview of your Windows 11 notification style & sound settings.",
             Priority = 6,
             Date = DateTime.UtcNow,

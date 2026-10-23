@@ -44,7 +44,7 @@ public class AppItemViewModel : ViewModelBase
         }
     }
 
-    public string StatusLabel => IsEnabled ? "Alerts Active" : "Alerts Muted";
+    public string StatusLabel => IsEnabled ? "Notifications On" : "Notifications Muted";
     public string StatusColor => IsEnabled ? "#10B981" : "#94A3B8";
 
     public int MinPriority
@@ -65,7 +65,7 @@ public class AppItemViewModel : ViewModelBase
 
     public string MinPriorityText => MinPriority switch
     {
-        0 => "All (0+)",
+        0 => "All Messages (0+)",
         <= 3 => $"\u2265 {MinPriority} (Low+)",
         <= 6 => $"\u2265 {MinPriority} (Normal+)",
         7 => $"\u2265 7 (High+)",
@@ -73,8 +73,8 @@ public class AppItemViewModel : ViewModelBase
     };
 
     public string MinPriorityDescription => MinPriority == 0
-        ? "All notifications from this application will be delivered."
-        : $"Notifications below priority {MinPriority} will be dropped and silenced.";
+        ? "All messages from this application will show desktop notifications."
+        : $"Messages below priority {MinPriority} will be logged silently without desktop notifications.";
 
     public bool OverrideGlobalDnd
     {

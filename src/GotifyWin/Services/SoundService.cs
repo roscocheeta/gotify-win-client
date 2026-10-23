@@ -5,7 +5,7 @@ namespace GotifyWin.Services;
 
 public class SoundService : ISoundService
 {
-    public void PlayAlert(string? customSoundPath = null, bool isMuted = false)
+    public void PlayNotification(string? customSoundPath = null, bool isMuted = false)
     {
         if (isMuted) return;
 
@@ -22,7 +22,9 @@ public class SoundService : ISoundService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[SoundService] Failed to play audio alert: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[SoundService] Failed to play audio notification: {ex.Message}");
         }
     }
+
+    public void PlayAlert(string? customSoundPath = null, bool isMuted = false) => PlayNotification(customSoundPath, isMuted);
 }

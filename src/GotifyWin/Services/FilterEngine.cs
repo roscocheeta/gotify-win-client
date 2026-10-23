@@ -62,9 +62,9 @@ public class FilterEngine : IFilterEngine
                     case RuleAction.SilentLog:
                         message.FilteredByRuleName = rule.Name;
                         return new FilterResult(FilterDecision.SilentLog, $"Matched rule '{rule.Name}' (Action: SilentLog).");
-                    case RuleAction.UrgentAlert:
-                        // Urgent alert forces display and bypasses DND
-                        return new FilterResult(FilterDecision.Alert, $"Matched rule '{rule.Name}' (Action: UrgentAlert).");
+                    case RuleAction.AlwaysNotify:
+                        // AlwaysNotify forces desktop notification and bypasses DND
+                        return new FilterResult(FilterDecision.Notify, $"Matched rule '{rule.Name}' (Action: AlwaysNotify).");
                 }
             }
         }
@@ -137,14 +137,14 @@ public class FilterEngine : IFilterEngine
             // Check Emergency Breakthrough
             if (config.Dnd.EnableEmergencyBypass && message.Priority >= config.Dnd.EmergencyBypassPriority)
             {
-                return new FilterResult(FilterDecision.Alert,
+                return new FilterResult(FilterDecision.Notify,
                     $"Emergency breakthrough: Priority ({message.Priority}) >= Bypass threshold ({config.Dnd.EmergencyBypassPriority}).");
             }
 
             // Check if app has DND override
             if (appSetting != null && appSetting.OverrideGlobalDnd)
             {
-                return new FilterResult(FilterDecision.Alert,
+                return new FilterResult(FilterDecision.Notify,
                     $"App '{appSetting.AppName}' has DND override enabled.");
             }
 
@@ -153,7 +153,7 @@ public class FilterEngine : IFilterEngine
         }
 
         // 5. Default Pass
-        return new FilterResult(FilterDecision.Alert, "Passed all filter gates.");
+        return new FilterResult(FilterDecision.Notify, "Passed all filter gates.");
     }
 
     public static bool MatchesRule(GotifyMessage message, NotificationRule rule)

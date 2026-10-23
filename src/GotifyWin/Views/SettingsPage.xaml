@@ -88,7 +88,7 @@
             <!-- Page Header -->
             <StackPanel Margin="0,0,0,18">
                 <TextBlock Text="Settings" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                <TextBlock Text="Configure server connection, alert popups, quiet hours, and app preferences."
+                <TextBlock Text="Configure server connection, notification popups, quiet hours, and app preferences."
                            FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,3,0,0"/>
             </StackPanel>
 
@@ -224,7 +224,7 @@
                     <StackPanel Visibility="{Binding IsNotificationsExpanded, Converter={StaticResource BoolToVis}}" Margin="0,14,0,0">
                         <Grid Margin="0,0,0,14">
                             <TextBlock Text="Presentation Options" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <Button Content="🔔 Preview Alert" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Right" Command="{Binding SendTestNotificationCommand}"/>
+                            <Button Content="🔔 Test Notification" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Right" Command="{Binding SendTestNotificationCommand}"/>
                         </Grid>
 
                         <!-- Presentation Mode -->
@@ -235,7 +235,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Popup Style" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                <TextBlock Text="Choose how incoming alerts appear on your desktop." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                <TextBlock Text="Choose how incoming message notifications appear on your desktop." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
                             </StackPanel>
                             <ComboBox Grid.Column="1" Height="34"
                                       SelectedValue="{Binding SelectedMode}" SelectedValuePath="Tag">
@@ -299,7 +299,7 @@
                                   IsChecked="{Binding PlaySound}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
 
                         <!-- Smart Fullscreen Gaming & Presentation Suppression -->
-                        <CheckBox Content="Mute alert popups while gaming, watching fullscreen video, or presenting"
+                        <CheckBox Content="Mute notification popups while gaming, watching fullscreen video, or presenting"
                                   IsChecked="{Binding SuppressOnFullscreen}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
                     </StackPanel>
                 </StackPanel>
@@ -320,7 +320,7 @@
 
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                             <TextBlock Text="🛡️ Filtering &amp; Anti-Spam Debounce" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="Suppress noise by throttling rapid duplicates and low priority alerts." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                            <TextBlock Text="Suppress noise by throttling rapid duplicate messages and low priority notifications." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
                         </StackPanel>
 
                         <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
@@ -370,9 +370,9 @@
                         <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
                                 CornerRadius="8" Padding="14,12" Margin="0,0,0,4">
                             <StackPanel>
-                                <CheckBox Content="Enable anti-flap debounce (combines duplicate rapid alerts into one)"
+                                <CheckBox Content="Enable anti-flap debounce (combines duplicate rapid messages into one)"
                                           IsChecked="{Binding EnableDebounce}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                                <TextBlock Text="Prevents notification storms by combining identical consecutive alerts from the same app within a short window."
+                                <TextBlock Text="Prevents notification storms by combining identical consecutive messages from the same app within a short window."
                                            FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="24,0,0,0"/>
 
                                 <!-- Debounce Window Slider -->
@@ -449,7 +449,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="Breakthrough Priority Threshold" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                        <TextBlock Text="Alerts with this priority or higher will bypass DND and sound immediately." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                                        <TextBlock Text="Messages with this priority or higher will bypass DND and notify immediately." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
                                     </StackPanel>
                                     <Border Grid.Column="1" Background="#DC2626" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding EmergencyBypassPriorityText}" FontSize="11" FontWeight="Bold" Foreground="White"/>

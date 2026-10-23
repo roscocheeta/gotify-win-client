@@ -36,16 +36,19 @@ public enum RuleOperator
 
 public enum RuleAction
 {
-    Drop = 0,       // Discard completely, do not show or log
-    SilentLog = 1,  // Store in history feed without showing popup or playing sound
-    UrgentAlert = 2 // Show popup and play sound even if DND or app threshold would otherwise block it
+    Drop = 0,               // Discard message completely, do not show notification or log
+    SilentLog = 1,          // Store message in history without showing notification popup or playing sound
+    AlwaysNotify = 2,       // Show notification popup and play sound even if DND or app threshold would otherwise mute it
+    UrgentNotification = 2, // Alias for AlwaysNotify
+    UrgentAlert = 2         // Alias for backward compatibility with existing saved config files
 }
 
 public enum FilterDecision
 {
-    Alert = 0,      // Show notification popup & play sound
-    SilentLog = 1,  // Save in history, but no popup/sound
-    Drop = 2        // Drop completely
+    Notify = 0,     // Show notification popup & play sound
+    Alert = 0,      // Alias for backward compatibility
+    SilentLog = 1,  // Save in message history, but no popup/sound
+    Drop = 2        // Discard message completely
 }
 
 public enum ConnectionState

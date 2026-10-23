@@ -435,7 +435,7 @@
                                                             <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.SilentLog}">
                                                                 <Setter Property="Background" Value="#1E3A8A"/>
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.UrgentAlert}">
+                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.AlwaysNotify}">
                                                                 <Setter Property="Background" Value="#B45309"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
@@ -608,7 +608,7 @@
                                         <ComboBox SelectedValue="{Binding NewRuleAction}" SelectedValuePath="Tag" Height="34">
                                             <ComboBoxItem Content="Silent Log" Tag="{x:Static cfg:RuleAction.SilentLog}" IsSelected="True"/>
                                             <ComboBoxItem Content="Drop (Discard)" Tag="{x:Static cfg:RuleAction.Drop}"/>
-                                            <ComboBoxItem Content="Urgent Alert" Tag="{x:Static cfg:RuleAction.UrgentAlert}"/>
+                                            <ComboBoxItem Content="Always Notify" Tag="{x:Static cfg:RuleAction.AlwaysNotify}"/>
                                         </ComboBox>
                                     </StackPanel>
                                 </Grid>
@@ -734,7 +734,7 @@
                                                             <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.SilentLog}">
                                                                 <Setter Property="Background" Value="#1E3A8A"/>
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.UrgentAlert}">
+                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.AlwaysNotify}">
                                                                 <Setter Property="Background" Value="#B45309"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>

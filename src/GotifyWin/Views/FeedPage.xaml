@@ -97,7 +97,7 @@
 
             <!-- Actions -->
             <StackPanel Grid.Column="2" Orientation="Horizontal">
-                <Button Content="🔔 Test Alert" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding TestNotificationCommand}"/>
+                <Button Content="🔔 Test Notification" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding TestNotificationCommand}"/>
                 <Button Content="Clear All" Style="{StaticResource SecondaryButton}" Command="{Binding ClearAllCommand}"/>
             </StackPanel>
         </Grid>
@@ -107,7 +107,7 @@
                     Visibility="{Binding HasMessages, Converter={StaticResource InverseBoolToVis}}">
             <TextBlock Text="🔔" FontSize="44" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.5"/>
             <TextBlock Text="All caught up!" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" HorizontalAlignment="Center"/>
-            <TextBlock Text="No notifications in your feed right now." FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+            <TextBlock Text="No messages in your history right now." FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
         </StackPanel>
 
         <!-- Messages Feed List -->

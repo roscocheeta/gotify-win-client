@@ -87,8 +87,8 @@ public class NotificationPatternAnalyzer : INotificationPatternAnalyzer
                 {
                     AppId = appId,
                     AppName = appName,
-                    Title = $"Mute routine {appName} alerts",
-                    Description = $"Detected repetitive pattern '{pattern}' in notification titles.",
+                    Title = $"Mute routine {appName} notifications",
+                    Description = $"Detected repetitive pattern '{pattern}' in message titles.",
                     SuggestedField = RuleField.Title,
                     SuggestedOperator = op,
                     SuggestedPattern = pattern,

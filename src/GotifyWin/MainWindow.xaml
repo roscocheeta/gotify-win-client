@@ -192,7 +192,7 @@
 
                 <!-- Navigation Tabs in Center -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <RadioButton x:Name="NavFeedRadio" GroupName="MainNav" Content="Notifications" Style="{StaticResource NavRadioButton}"
+                    <RadioButton x:Name="NavFeedRadio" GroupName="MainNav" Content="Messages" Style="{StaticResource NavRadioButton}"
                                  Checked="NavFeed_Checked" Margin="0,0,4,0"/>
                     <RadioButton x:Name="NavAppsRadio" GroupName="MainNav" Content="Apps" Style="{StaticResource NavRadioButton}"
                                  Checked="NavApps_Checked" Margin="0,0,4,0"/>

@@ -47,7 +47,7 @@ public class HudManager : IHudManager
                 }
                 else
                 {
-                    // Queue excess alerts so active notifications are not instantly destroyed
+                    // Queue excess notifications so active banners are not instantly destroyed
                     if (_pendingQueue.Count < 30)
                     {
                         _pendingQueue.Enqueue((message, settings, onUrlOpen));

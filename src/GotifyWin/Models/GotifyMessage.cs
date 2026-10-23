@@ -43,7 +43,7 @@ public class GotifyMessage
     public bool IsFiltered => !string.IsNullOrEmpty(FilteredByRuleName);
 
     [JsonIgnore]
-    public string DisplayTitle => string.IsNullOrWhiteSpace(Title) ? (string.IsNullOrWhiteSpace(ApplicationName) ? "Gotify Alert" : ApplicationName) : Title;
+    public string DisplayTitle => string.IsNullOrWhiteSpace(Title) ? (string.IsNullOrWhiteSpace(ApplicationName) ? "Gotify Message" : ApplicationName) : Title;
 
     [JsonIgnore]
     public string DisplayAppName => string.IsNullOrWhiteSpace(ApplicationName) ? $"App #{AppId}" : ApplicationName;

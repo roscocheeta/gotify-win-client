@@ -75,7 +75,7 @@ public partial class MainWindow : Window
         contextMenu.Items.Add(new ToolStripSeparator());
 
         var dndMenu = new ToolStripMenuItem("Do Not Disturb");
-        dndMenu.DropDownItems.Add("Off (Allow Alerts)", null, (s, e) => _viewModel.DisableDnd());
+        dndMenu.DropDownItems.Add("Off (Show Notifications)", null, (s, e) => _viewModel.DisableDnd());
         dndMenu.DropDownItems.Add("Snooze 30 minutes", null, (s, e) => _viewModel.SetDnd(TimeSpan.FromMinutes(30)));
         dndMenu.DropDownItems.Add("Snooze 1 hour", null, (s, e) => _viewModel.SetDnd(TimeSpan.FromHours(1)));
         dndMenu.DropDownItems.Add("Snooze 4 hours", null, (s, e) => _viewModel.SetDnd(TimeSpan.FromHours(4)));

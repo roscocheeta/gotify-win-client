@@ -70,7 +70,7 @@ public class NotificationPresenter : INotificationPresenter
         // 1. Play Sound (if enabled)
         if (config.Presentation.PlaySound)
         {
-            _soundService.PlayAlert(config.Presentation.CustomSoundFilePath);
+            _soundService.PlayNotification(config.Presentation.CustomSoundFilePath);
         }
 
         // 2. Present according to mode

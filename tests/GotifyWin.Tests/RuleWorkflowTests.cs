@@ -322,7 +322,7 @@ public class RuleWorkflowTests
         var settingsVm = new SettingsViewModel(configService, null!, null!, null!);
 
         settingsVm.GlobalMinPriority = 0;
-        Assert.Equal("All Alerts (0+)", settingsVm.GlobalMinPriorityText);
+        Assert.Equal("All Messages (0+)", settingsVm.GlobalMinPriorityText);
         Assert.Equal(0, configService.Config.GlobalMinPriority);
 
         settingsVm.GlobalMinPriority = 6;
@@ -756,21 +756,21 @@ public class RuleWorkflowTests
         var appVm = new AppItemViewModel(setting, () => { });
 
         Assert.True(appVm.IsEnabled);
-        Assert.Equal("Alerts Active", appVm.StatusLabel);
+        Assert.Equal("Notifications On", appVm.StatusLabel);
         Assert.Equal("#10B981", appVm.StatusColor);
         Assert.Equal("\u2265 4 (Normal+)", appVm.MinPriorityText);
-        Assert.Contains("below priority 4 will be dropped", appVm.MinPriorityDescription);
+        Assert.Contains("below priority 4 will be logged silently", appVm.MinPriorityDescription);
 
         // Toggle disabled
         appVm.IsEnabled = false;
         Assert.False(appVm.IsEnabled);
-        Assert.Equal("Alerts Muted", appVm.StatusLabel);
+        Assert.Equal("Notifications Muted", appVm.StatusLabel);
         Assert.Equal("#94A3B8", appVm.StatusColor);
 
         // Test threshold scale
         appVm.MinPriority = 0;
-        Assert.Equal("All (0+)", appVm.MinPriorityText);
-        Assert.Contains("All notifications from this application", appVm.MinPriorityDescription);
+        Assert.Equal("All Messages (0+)", appVm.MinPriorityText);
+        Assert.Contains("All messages from this application", appVm.MinPriorityDescription);
 
         appVm.MinPriority = 8;
         Assert.Equal("\u2265 8 (Urgent)", appVm.MinPriorityText);

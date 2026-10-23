@@ -42,7 +42,7 @@ public class NotificationRule : INotifyPropertyChanged
     {
         RuleAction.SilentLog => "Silent Log",
         RuleAction.Drop => "Drop",
-        RuleAction.UrgentAlert => "Urgent Alert",
+        RuleAction.AlwaysNotify => "Always Notify",
         _ => Action.ToString()
     };
 
