@@ -14,7 +14,12 @@ public class GotifyApiService : IGotifyApiService
 
     public GotifyApiService(HttpClient? httpClient = null, string? cacheDirectory = null)
     {
-        _httpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        // SEC: Never follow redirects automatically; .NET forwards custom headers (X-Gotify-Key) across hosts,
+        // which would leak the client token to a redirect target.
+        _httpClient = httpClient ?? new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
+        {
+            Timeout = TimeSpan.FromSeconds(10)
+        };
         _cacheDirectory = cacheDirectory ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "GotifyWin", "cache", "icons"

@@ -42,6 +42,10 @@ public class GotifyWebSocketService : IGotifyWebSocketService
         if (string.IsNullOrWhiteSpace(serverUrl) || string.IsNullOrWhiteSpace(clientToken))
             throw new ArgumentException("Server URL and Client Token must not be empty.");
 
+        var validation = ServerUrlValidator.Validate(serverUrl);
+        if (!validation.IsValid)
+            throw new ArgumentException(validation.Error);
+
         await _connectionLock.WaitAsync();
         try
         {
@@ -124,19 +128,24 @@ public class GotifyWebSocketService : IGotifyWebSocketService
                 _webSocket = new ClientWebSocket();
                 _webSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
 
-                // Send token in both query string and header for 100% proxy & Gotify compatibility
+                // SEC: Authenticate via header only so the token never appears in URLs (proxy/access logs).
+                // Query-string token is used solely as a fallback if the header cannot be set.
+                var useQueryFallback = false;
                 try
                 {
                     _webSocket.Options.SetRequestHeader("X-Gotify-Key", _clientToken!);
                 }
-                catch { }
+                catch
+                {
+                    useQueryFallback = true;
+                }
 
-                var wsUri = new Uri($"{wsBase}/stream?token={Uri.EscapeDataString(_clientToken!)}");
-                Console.WriteLine($"[GotifyWebSocket] Connecting to {wsBase}/stream...");
+                var wsUri = useQueryFallback
+                    ? new Uri($"{wsBase}/stream?token={Uri.EscapeDataString(_clientToken!)}")
+                    : new Uri($"{wsBase}/stream");
                 await _webSocket.ConnectAsync(wsUri, ct);
 
                 State = ConnectionState.Connected;
-                Console.WriteLine($"[GotifyWebSocket] Successfully connected to {wsBase}/stream!");
                 backoffSeconds = 2.0; // Reset backoff on successful connect
 
                 await ReceiveLoopAsync(_webSocket, ct);

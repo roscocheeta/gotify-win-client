@@ -520,6 +520,13 @@ public class SettingsViewModel : ViewModelBase
             return;
         }
 
+        var urlCheck = ServerUrlValidator.Validate(ServerUrl);
+        if (!urlCheck.IsValid)
+        {
+            TestStatus = urlCheck.Error!;
+            return;
+        }
+
         IsTesting = true;
         TestStatus = "Testing connection...";
 
@@ -531,6 +538,10 @@ public class SettingsViewModel : ViewModelBase
                 TestStatus = $"Connected! Authenticated as: {user.Name}";
                 // Automatically save connection and trigger WebSocket reconnect on successful test
                 SaveConnection();
+                if (urlCheck.Warning != null)
+                {
+                    TestStatus = $"Settings saved. ⚠️ {urlCheck.Warning}";
+                }
             }
             else
             {
@@ -574,6 +585,13 @@ public class SettingsViewModel : ViewModelBase
         _presenter.Present(testMsg, _configService.Config);
     }
 
+    public static GotifyClientConfig BuildExportConfig(GotifyClientConfig source)
+    {
+        var clone = JsonSerializer.Deserialize<GotifyClientConfig>(JsonSerializer.Serialize(source)) ?? new GotifyClientConfig();
+        clone.ClientToken = string.Empty;
+        return clone;
+    }
+
     public void ExportSettings()
     {
         try
@@ -596,9 +614,10 @@ public class SettingsViewModel : ViewModelBase
                     Converters = { new JsonStringEnumConverter() }
                 };
 
-                var json = JsonSerializer.Serialize(_configService.Config, options);
+                // SEC: Never write the client token to backup files; re-enter it after restoring on a new machine.
+                var json = JsonSerializer.Serialize(BuildExportConfig(_configService.Config), options);
                 File.WriteAllText(dlg.FileName, json);
-                BackupStatusText = $"✓ Settings successfully exported to {Path.GetFileName(dlg.FileName)}";
+                BackupStatusText = $"✓ Settings exported to {Path.GetFileName(dlg.FileName)} (client token not included)";
             }
         }
         catch (Exception ex)
@@ -633,8 +652,15 @@ public class SettingsViewModel : ViewModelBase
                     return;
                 }
 
-                _configService.Config.ServerUrl = loaded.ServerUrl ?? string.Empty;
-                _configService.Config.ClientToken = loaded.ClientToken ?? string.Empty;
+                // SEC: Only accept a valid http(s) server URL; keep existing connection values if the file has none.
+                if (ServerUrlValidator.Validate(loaded.ServerUrl).IsValid)
+                {
+                    _configService.Config.ServerUrl = loaded.ServerUrl!.Trim().TrimEnd('/');
+                }
+                if (!string.IsNullOrWhiteSpace(loaded.ClientToken))
+                {
+                    _configService.Config.ClientToken = loaded.ClientToken;
+                }
                 _configService.Config.Theme = loaded.Theme;
                 _configService.Config.GlobalMinPriority = loaded.GlobalMinPriority;
                 _configService.Config.StartWithWindows = loaded.StartWithWindows;
