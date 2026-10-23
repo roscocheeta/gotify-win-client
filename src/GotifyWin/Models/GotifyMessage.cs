@@ -131,29 +131,25 @@ public class GotifyMessage
     [JsonIgnore]
     public string PriorityLabel => Priority switch
     {
-        >= 8 => "Urgent",
-        >= 5 => "High",
-        >= 3 => "Normal",
-        _ => "Low"
+        >= 9 => "Urgent",
+        >= 7 => "High",
+        >= 4 => "Normal",
+        >= 1 => "Low",
+        _ => "Silent"
     };
 
     [JsonIgnore]
     public string PriorityColor => Priority switch
     {
-        >= 8 => "#EF4444", // Red
-        >= 5 => "#F59E0B", // Amber
-        >= 3 => "#3B82F6", // Blue
-        _ => "#6B7280"     // Muted Gray
+        >= 9 => "#DC2626", // Crimson Red
+        >= 7 => "#D97706", // Deep Amber (passes WCAG AA 4.5:1 with white text)
+        >= 4 => "#0284C7", // Sky / Cerulean Blue
+        >= 1 => "#64748B", // Slate
+        _ => "#475569"     // Muted Slate
     };
 
     [JsonIgnore]
-    public string PriorityTextColor => Priority switch
-    {
-        >= 8 => "#FFFFFF", // White on Red (4.5:1 contrast)
-        >= 5 => "#0F172A", // Dark Slate on Amber (9.8:1 contrast, crystal clear in dark & light mode)
-        >= 3 => "#FFFFFF", // White on Blue (4.6:1 contrast)
-        _ => "#FFFFFF"     // White on Gray (4.6:1 contrast)
-    };
+    public string PriorityTextColor => "#FFFFFF";
 
     [JsonIgnore]
     public string PriorityDisplay => $"{PriorityLabel} ({Priority})";

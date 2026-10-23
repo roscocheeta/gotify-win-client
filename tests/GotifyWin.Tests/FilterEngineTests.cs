@@ -155,6 +155,70 @@ public class FilterEngineTests
     }
 
     [Fact]
+    public void Evaluate_WhenCustomRuleIsAppScoped_MatchesTargetAppOnly()
+    {
+        var config = CreateDefaultConfig();
+        // Scoped specifically to Sonarr (AppId: 2)
+        config.Rules.Add(new NotificationRule
+        {
+            Name = "Silence Sonarr Import",
+            AppFilterId = 2,
+            AppFilterName = "Sonarr",
+            TargetField = RuleField.Title,
+            Operator = RuleOperator.Contains,
+            Pattern = "Import Complete",
+            Action = RuleAction.SilentLog,
+            Enabled = true
+        });
+
+        // Message 1 from Sonarr: should match rule and be Silently Logged
+        var sonarrMsg = new GotifyMessage
+        {
+            AppId = 2,
+            ApplicationName = "Sonarr",
+            Title = "Import Complete: Series S01E01",
+            Priority = 5
+        };
+        var sonarrResult = _engine.Evaluate(sonarrMsg, config, isDndActive: false);
+        Assert.Equal(FilterDecision.SilentLog, sonarrResult.Decision);
+        Assert.Contains("Silence Sonarr Import", sonarrResult.Reason);
+
+        // Message 2 from Radarr: same pattern but different app, must NOT be silenced by the rule
+        var radarrMsg = new GotifyMessage
+        {
+            AppId = 3,
+            ApplicationName = "Radarr",
+            Title = "Import Complete: Movie (2024)",
+            Priority = 5
+        };
+        var radarrResult = _engine.Evaluate(radarrMsg, config, isDndActive: false);
+        Assert.Equal(FilterDecision.Alert, radarrResult.Decision);
+    }
+
+    [Fact]
+    public void Evaluate_WhenCustomRuleHasNoAppScope_MatchesAcrossAllApps()
+    {
+        var config = CreateDefaultConfig();
+        // Global scope (AppFilterId is null)
+        config.Rules.Add(new NotificationRule
+        {
+            Name = "Global Mute",
+            AppFilterId = null,
+            TargetField = RuleField.Title,
+            Operator = RuleOperator.Contains,
+            Pattern = "Heartbeat",
+            Action = RuleAction.Drop,
+            Enabled = true
+        });
+
+        var app1Msg = new GotifyMessage { AppId = 1, Title = "Heartbeat Check", Priority = 5 };
+        var app2Msg = new GotifyMessage { AppId = 2, Title = "Node Heartbeat", Priority = 5 };
+
+        Assert.Equal(FilterDecision.Drop, _engine.Evaluate(app1Msg, config, isDndActive: false).Decision);
+        Assert.Equal(FilterDecision.Drop, _engine.Evaluate(app2Msg, config, isDndActive: false).Decision);
+    }
+
+    [Fact]
     public void Evaluate_InvalidRegexPattern_FailsGracefullyWithoutThrowing()
     {
         var config = CreateDefaultConfig();

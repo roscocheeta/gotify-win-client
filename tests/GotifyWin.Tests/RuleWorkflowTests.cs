@@ -40,6 +40,9 @@ public class RuleWorkflowTests
         Assert.Equal("Episode Downloaded", rulesVm.NewRulePattern);
         Assert.Equal(RuleAction.SilentLog, rulesVm.NewRuleAction);
         Assert.Contains("Sonarr", rulesVm.NewRuleName);
+        Assert.NotNull(rulesVm.SelectedAppFilterOption);
+        Assert.Equal(2, rulesVm.SelectedAppFilterOption.Id);
+        Assert.Equal("Sonarr", rulesVm.SelectedAppFilterOption.Name);
     }
 
     [Fact]
@@ -115,6 +118,8 @@ public class RuleWorkflowTests
         Assert.Single(rulesVm.Rules);
         Assert.Equal("Subtitle Downloaded", rulesVm.Rules[0].Pattern);
         Assert.Equal(RuleAction.SilentLog, rulesVm.Rules[0].Action);
+        Assert.Equal(8, rulesVm.Rules[0].AppFilterId);
+        Assert.Equal("Bazarr", rulesVm.Rules[0].AppFilterName);
         Assert.Single(configService.Config.Rules);
     }
 

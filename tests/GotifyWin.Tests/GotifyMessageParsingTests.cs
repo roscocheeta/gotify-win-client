@@ -42,7 +42,7 @@ public class GotifyMessageParsingTests
         Assert.Equal("https://portainer.homelab.lan/containers", msg.ClickUrl);
         Assert.True(msg.HasClickUrl);
         Assert.Equal("High", msg.PriorityLabel);
-        Assert.Equal("#F59E0B", msg.PriorityColor);
+        Assert.Equal("#D97706", msg.PriorityColor);
     }
 
     [Fact]
@@ -66,19 +66,24 @@ public class GotifyMessageParsingTests
     {
         var urgent = new GotifyMessage { Priority = 9 };
         Assert.Equal("Urgent", urgent.PriorityLabel);
-        Assert.Equal("#EF4444", urgent.PriorityColor);
+        Assert.Equal("#DC2626", urgent.PriorityColor);
 
-        var high = new GotifyMessage { Priority = 6 };
+        var high = new GotifyMessage { Priority = 7 };
         Assert.Equal("High", high.PriorityLabel);
-        Assert.Equal("#F59E0B", high.PriorityColor);
+        Assert.Equal("#D97706", high.PriorityColor);
 
-        var normal = new GotifyMessage { Priority = 4 };
+        // Gotify server default priority 5 is now mapped to Normal (relieving alert fatigue)
+        var normal = new GotifyMessage { Priority = 5 };
         Assert.Equal("Normal", normal.PriorityLabel);
-        Assert.Equal("#3B82F6", normal.PriorityColor);
+        Assert.Equal("#0284C7", normal.PriorityColor);
 
-        var low = new GotifyMessage { Priority = 1 };
+        var low = new GotifyMessage { Priority = 2 };
         Assert.Equal("Low", low.PriorityLabel);
-        Assert.Equal("#6B7280", low.PriorityColor);
+        Assert.Equal("#64748B", low.PriorityColor);
+
+        var silent = new GotifyMessage { Priority = 0 };
+        Assert.Equal("Silent", silent.PriorityLabel);
+        Assert.Equal("#475569", silent.PriorityColor);
     }
 
     [Fact]
