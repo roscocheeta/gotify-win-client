@@ -71,6 +71,26 @@ public class GotifyMessage
     public bool HasClickUrl => !string.IsNullOrWhiteSpace(ClickUrl);
 
     [JsonIgnore]
+    public string? ClickUrlHost
+    {
+        get
+        {
+            if (HasClickUrl &&
+                Uri.TryCreate(ClickUrl, UriKind.Absolute, out var uri) &&
+                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            {
+                return uri.Host;
+            }
+            return null;
+        }
+    }
+
+    [JsonIgnore]
+    public string ClickUrlButtonText => string.IsNullOrWhiteSpace(ClickUrlHost)
+        ? "🔗 Open Link"
+        : $"🔗 Open {ClickUrlHost}";
+
+    [JsonIgnore]
     public string? ImageUrl
     {
         get

@@ -8,4 +8,5 @@ public interface IConfigService
     void Load();
     void Save();
     string ConfigFilePath { get; }
+    bool HasDecryptionFailed { get; }
 }

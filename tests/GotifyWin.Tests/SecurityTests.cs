@@ -195,6 +195,110 @@ public class SecurityTests
         }
     }
 
+    [Theory]
+    [InlineData("https://status.github.com:8443/issues/42", "status.github.com", "🔗 Open status.github.com")]
+    [InlineData("http://192.168.1.100/admin", "192.168.1.100", "🔗 Open 192.168.1.100")]
+    [InlineData("https://alerts.homelab.lan", "alerts.homelab.lan", "🔗 Open alerts.homelab.lan")]
+    [InlineData("file:///C:/malicious.exe", null, "🔗 Open Link")]
+    [InlineData("powershell.exe -c calc", null, "🔗 Open Link")]
+    [InlineData("", null, "🔗 Open Link")]
+    [InlineData(null, null, "🔗 Open Link")]
+    public void GotifyMessage_ClickUrlHost_ExtractsSafeHostAndButtonText(string? url, string? expectedHost, string expectedButtonText)
+    {
+        var msg = new GotifyMessage
+        {
+            Id = 1,
+            Title = "Test",
+            Message = "Test body"
+        };
+
+        if (url != null)
+        {
+            var json = $"{{\"click\": {{\"url\": \"{url}\"}}}}";
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            msg.Extras = new Dictionary<string, System.Text.Json.JsonElement>
+            {
+                ["client::notification"] = doc.RootElement.Clone()
+            };
+        }
+
+        Assert.Equal(expectedHost, msg.ClickUrlHost);
+        Assert.Equal(expectedButtonText, msg.ClickUrlButtonText);
+    }
+
+    [Fact]
+    public void NotificationPresenter_GenerateToastXml_IncludesHostInActionLabel()
+    {
+        var msg = new GotifyMessage
+        {
+            Id = 101,
+            Title = "Disk Alert",
+            Message = "Storage pool 1 is 95% full"
+        };
+
+        var json = "{\"click\": {\"url\": \"https://nas.homelab.lan/storage/pools\"}}";
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        msg.Extras = new Dictionary<string, System.Text.Json.JsonElement>
+        {
+            ["client::notification"] = doc.RootElement.Clone()
+        };
+
+        var xml = NotificationPresenter.GenerateToastXml(msg);
+
+        Assert.Contains("content=\"Open nas.homelab.lan\"", xml);
+        Assert.Contains("arguments=\"https://nas.homelab.lan/storage/pools\"", xml);
+        Assert.Contains("activationType=\"protocol\"", xml);
+    }
+
+    [Fact]
+    public void NotificationPresenter_GenerateToastXml_RejectsUnsafeProtocolsFromAction()
+    {
+        var msg = new GotifyMessage
+        {
+            Id = 102,
+            Title = "Dangerous Link",
+            Message = "Do not run"
+        };
+
+        var json = "{\"click\": {\"url\": \"ms-msdt:/id PCWDiagnostic\"}}";
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        msg.Extras = new Dictionary<string, System.Text.Json.JsonElement>
+        {
+            ["client::notification"] = doc.RootElement.Clone()
+        };
+
+        var xml = NotificationPresenter.GenerateToastXml(msg);
+
+        // Must NOT contain action buttons for unsafe non-HTTP/HTTPS protocols
+        Assert.DoesNotContain("<actions>", xml);
+        Assert.DoesNotContain("ms-msdt", xml);
+    }
+
+    [Fact]
+    public void FilterEngine_ComputeDebounceKey_ProducesCollisionResistantSha256()
+    {
+        // 1. Valid 32-hex character length (16 bytes)
+        var key1 = FilterEngine.ComputeDebounceKey(1, "Service Down", "Container exited 137");
+        Assert.Equal(32, key1.Length);
+        Assert.Matches("^[0-9A-F]{32}$", key1);
+
+        // 2. Whitespace trimming produces identical key for effective anti-spam
+        var keyTrimmed = FilterEngine.ComputeDebounceKey(1, "  Service Down  ", "Container exited 137\n");
+        Assert.Equal(key1, keyTrimmed);
+
+        // 3. Different apps with identical title/message do NOT collide
+        var keyDifferentApp = FilterEngine.ComputeDebounceKey(2, "Service Down", "Container exited 137");
+        Assert.NotEqual(key1, keyDifferentApp);
+
+        // 4. Distinct messages do NOT collide
+        var keyDistinct = FilterEngine.ComputeDebounceKey(1, "Service Restored", "Container exited 137");
+        Assert.NotEqual(key1, keyDistinct);
+
+        // 5. Null titles and messages are safely handled
+        var keyNulls = FilterEngine.ComputeDebounceKey(1, null, null);
+        Assert.Equal(32, keyNulls.Length);
+    }
+
     private class MockHttpMessageHandler : System.Net.Http.HttpMessageHandler
     {
         private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;

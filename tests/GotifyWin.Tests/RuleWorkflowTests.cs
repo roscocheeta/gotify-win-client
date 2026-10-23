@@ -12,6 +12,7 @@ public class RuleWorkflowTests
     {
         public GotifyClientConfig Config { get; set; } = new();
         public string ConfigFilePath => string.Empty;
+        public bool HasDecryptionFailed => false;
         public event EventHandler<GotifyClientConfig>? ConfigChanged;
         public void Load() { }
         public void Save() { ConfigChanged?.Invoke(this, Config); }

@@ -12,6 +12,9 @@ public class ConfigService : IConfigService
     private readonly string _configDirectory;
     private readonly string _configFilePath;
     private readonly object _lock = new();
+    private string? _rawEncryptedTokenFallback;
+
+    public bool HasDecryptionFailed { get; private set; }
 
     public GotifyClientConfig Config { get; private set; } = new();
 
@@ -59,12 +62,13 @@ public class ConfigService : IConfigService
                 {
                     Config = loaded;
 
-                    // Unprotect token if encrypted (SEC-03)
+                    // Unprotect token if encrypted (SEC-03 & SEC-10)
                     if (Config.ClientToken.StartsWith("enc:", StringComparison.OrdinalIgnoreCase))
                     {
+                        var rawEncrypted = Config.ClientToken;
                         try
                         {
-                            var cipherBytes = Convert.FromBase64String(Config.ClientToken[4..]);
+                            var cipherBytes = Convert.FromBase64String(rawEncrypted[4..]);
                             byte[] plainBytes;
                             try
                             {
@@ -77,13 +81,22 @@ public class ConfigService : IConfigService
                                 plainBytes = ProtectedData.Unprotect(cipherBytes, null, DataProtectionScope.CurrentUser);
                             }
                             Config.ClientToken = Encoding.UTF8.GetString(plainBytes);
+                            HasDecryptionFailed = false;
+                            _rawEncryptedTokenFallback = null;
                         }
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine($"[ConfigService] DPAPI decryption failed: {ex.Message}");
-                            // Clear token so we don't attempt requests with encrypted garbage
+                            // SEC-10: Preserve raw ciphertext to prevent accidental deletion on subsequent Save() calls
+                            HasDecryptionFailed = true;
+                            _rawEncryptedTokenFallback = rawEncrypted;
                             Config.ClientToken = string.Empty;
                         }
+                    }
+                    else
+                    {
+                        HasDecryptionFailed = false;
+                        _rawEncryptedTokenFallback = null;
                     }
                 }
             }
@@ -111,10 +124,20 @@ public class ConfigService : IConfigService
                     JsonSerializer.Serialize(Config)
                 ) ?? new GotifyClientConfig();
 
-                // SEC-03: Protect token with DPAPI and user-specific entropy
-                if (!string.IsNullOrEmpty(persistConfig.ClientToken) &&
+                // SEC-03 & SEC-10: Protect token with DPAPI and user-specific entropy.
+                // If in-memory token is empty but decryption had previously failed on a stored cipher blob,
+                // preserve the existing ciphertext on disk so saving unrelated settings does not permanently wipe the token.
+                if (string.IsNullOrEmpty(persistConfig.ClientToken) && !string.IsNullOrEmpty(_rawEncryptedTokenFallback))
+                {
+                    persistConfig.ClientToken = _rawEncryptedTokenFallback;
+                }
+                else if (!string.IsNullOrEmpty(persistConfig.ClientToken) &&
                     !persistConfig.ClientToken.StartsWith("enc:", StringComparison.OrdinalIgnoreCase))
                 {
+                    // User supplied or modified the token; clear fallback and encrypt
+                    _rawEncryptedTokenFallback = null;
+                    HasDecryptionFailed = false;
+
                     try
                     {
                         var plainBytes = Encoding.UTF8.GetBytes(persistConfig.ClientToken);

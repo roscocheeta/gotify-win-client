@@ -108,33 +108,31 @@ public class NotificationPresenter : INotificationPresenter
         return System.Security.SecurityElement.Escape(sanitized) ?? string.Empty;
     }
 
-    // SEC-02 & SEC-06: Validates scheme before protocol execution and cleans XML
-    private void ShowNativeToast(GotifyMessage message)
+    // SEC-02 & SEC-06 & SEC-08: Validates scheme before protocol execution, cleans XML, and builds toast XML
+    public static string GenerateToastXml(GotifyMessage message)
     {
-        try
+        var title = CleanXmlString(message.DisplayTitle);
+        var body = CleanXmlString(message.Message);
+        var iconXml = "";
+
+        if (!string.IsNullOrEmpty(message.ApplicationIconPath) && File.Exists(message.ApplicationIconPath))
         {
-            var toastXml = new XmlDocument();
-            var title = CleanXmlString(message.DisplayTitle);
-            var body = CleanXmlString(message.Message);
-            var iconXml = "";
+            var iconUri = CleanXmlString(new Uri(message.ApplicationIconPath).AbsoluteUri);
+            iconXml = $"<image placement=\"appLogoOverride\" src=\"{iconUri}\" hint-crop=\"circle\"/>";
+        }
 
-            if (!string.IsNullOrEmpty(message.ApplicationIconPath) && File.Exists(message.ApplicationIconPath))
-            {
-                var iconUri = CleanXmlString(new Uri(message.ApplicationIconPath).AbsoluteUri);
-                iconXml = $"<image placement=\"appLogoOverride\" src=\"{iconUri}\" hint-crop=\"circle\"/>";
-            }
+        var actionXml = "";
+        // SEC-02 & SEC-08: Strictly validate that ClickUrl is a valid HTTP/HTTPS protocol and display target host
+        if (message.HasClickUrl &&
+            Uri.TryCreate(message.ClickUrl, UriKind.Absolute, out var clickUri) &&
+            (clickUri.Scheme == Uri.UriSchemeHttp || clickUri.Scheme == Uri.UriSchemeHttps))
+        {
+            var safeUrl = CleanXmlString(message.ClickUrl);
+            var hostLabel = string.IsNullOrWhiteSpace(clickUri.Host) ? "Open Link" : $"Open {CleanXmlString(clickUri.Host)}";
+            actionXml = $"<actions><action content=\"{hostLabel}\" arguments=\"{safeUrl}\" activationType=\"protocol\"/></actions>";
+        }
 
-            var actionXml = "";
-            // SEC-02: Strictly validate that ClickUrl is a valid HTTP/HTTPS protocol before exposing in toast action
-            if (message.HasClickUrl &&
-                Uri.TryCreate(message.ClickUrl, UriKind.Absolute, out var clickUri) &&
-                (clickUri.Scheme == Uri.UriSchemeHttp || clickUri.Scheme == Uri.UriSchemeHttps))
-            {
-                var safeUrl = CleanXmlString(message.ClickUrl);
-                actionXml = $"<actions><action content=\"Open Link\" arguments=\"{safeUrl}\" activationType=\"protocol\"/></actions>";
-            }
-
-            var xmlString = $@"
+        return $@"
 <toast duration=""short"" scenario=""default"">
     <visual>
         <binding template=""ToastGeneric"">
@@ -146,7 +144,14 @@ public class NotificationPresenter : INotificationPresenter
     {actionXml}
     <audio silent=""true"" />
 </toast>";
+    }
 
+    private void ShowNativeToast(GotifyMessage message)
+    {
+        try
+        {
+            var toastXml = new XmlDocument();
+            var xmlString = GenerateToastXml(message);
             toastXml.LoadXml(xmlString);
             var toast = new ToastNotification(toastXml);
 

@@ -133,6 +133,8 @@ public partial class NotificationHudWindow : Window
         if (message.HasClickUrl)
         {
             ActionsGrid.Visibility = Visibility.Visible;
+            OpenLinkButton.Content = message.ClickUrlButtonText;
+            OpenLinkButton.ToolTip = message.ClickUrl;
         }
 
         // Countdown Progress Bar visibility

@@ -193,7 +193,7 @@
                                                     Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
                                                     Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding ImageUrl}"/>
-                                            <Button Content="🔗 Open Link" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                            <Button Content="{Binding ClickUrlButtonText}" ToolTip="{Binding ClickUrl}" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
                                                     Visibility="{Binding HasClickUrl, Converter={StaticResource BoolToVis}}"
                                                     Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding ClickUrl}"/>

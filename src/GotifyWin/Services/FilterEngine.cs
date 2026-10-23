@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using GotifyWin.Models;
 using GotifyWin.Models.Config;
@@ -70,15 +72,11 @@ public class FilterEngine : IFilterEngine
             }
         }
 
-        // 3. Debounce / Anti-Flap Check (SEC-05 & SEC-07)
+        // 3. Debounce / Anti-Flap Check (SEC-05 & SEC-07 & SEC-09)
         if (config.Presentation.EnableDebounce && config.Presentation.DebounceWindowSeconds > 0)
         {
-            // SEC-07: Null-safe title and body trimming
-            var title = message.Title?.Trim() ?? string.Empty;
-            var body = message.Message?.Trim() ?? string.Empty;
-
-            // SEC-05: Hash-based key to prevent heap bloat and unbounded string concatenation
-            var debounceKey = $"{message.AppId}:{title.GetHashCode():X8}:{body.GetHashCode():X8}";
+            // SEC-05 & SEC-09: Collision-resistant hash key to prevent false-positive suppression from 32-bit hash collisions
+            var debounceKey = ComputeDebounceKey(message.AppId, message.Title, message.Message);
             var now = DateTime.UtcNow;
 
             lock (_lock)
@@ -247,5 +245,20 @@ public class FilterEngine : IFilterEngine
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Computes a collision-resistant debounce key using SHA-256 (SEC-09).
+    /// Truncated to 16 bytes (32 hex characters) to ensure zero memory bloat while
+    /// eliminating false-positive debounce suppression caused by 32-bit hash collisions.
+    /// </summary>
+    public static string ComputeDebounceKey(long appId, string? title, string? message)
+    {
+        var safeTitle = title?.Trim() ?? string.Empty;
+        var safeBody = message?.Trim() ?? string.Empty;
+        var combined = $"{appId}\0{safeTitle}\0{safeBody}";
+        Span<byte> hash = stackalloc byte[32];
+        SHA256.HashData(Encoding.UTF8.GetBytes(combined), hash);
+        return Convert.ToHexString(hash[..16]);
     }
 }

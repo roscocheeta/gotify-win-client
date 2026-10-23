@@ -504,6 +504,11 @@ public class SettingsViewModel : ViewModelBase
         ServerUrl = _configService.Config.ServerUrl;
         ClientToken = _configService.Config.ClientToken;
 
+        if (_configService.HasDecryptionFailed)
+        {
+            TestStatus = "⚠️ Stored token could not be decrypted (profile change). Please re-enter your client token.";
+        }
+
         TestConnectionCommand = new RelayCommand(async () => await TestConnectionAsync());
         SaveConnectionCommand = new RelayCommand(SaveConnection);
         SendTestNotificationCommand = new RelayCommand(SendTestNotification);
@@ -512,7 +517,13 @@ public class SettingsViewModel : ViewModelBase
         {
             if (!string.IsNullOrEmpty(ClientToken))
             {
-                try { System.Windows.Clipboard.SetText(ClientToken); } catch { }
+                try
+                {
+                    System.Windows.Clipboard.SetText(ClientToken);
+                    TestStatus = "✓ Token copied to clipboard (will auto-clear in 30s).";
+                    ScheduleClipboardClear(ClientToken);
+                }
+                catch { }
             }
         });
         ExportSettingsCommand = new RelayCommand(ExportSettings);
@@ -580,6 +591,26 @@ public class SettingsViewModel : ViewModelBase
 
         TestStatus = "Settings saved successfully.";
         ConnectionConfigSaved?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static void ScheduleClipboardClear(string copiedToken)
+    {
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30));
+            try
+            {
+                System.Windows.Application.Current?.Dispatcher?.Invoke(() =>
+                {
+                    if (System.Windows.Clipboard.ContainsText() &&
+                        System.Windows.Clipboard.GetText() == copiedToken)
+                    {
+                        System.Windows.Clipboard.Clear();
+                    }
+                });
+            }
+            catch { }
+        });
     }
 
     private void SendTestNotification()

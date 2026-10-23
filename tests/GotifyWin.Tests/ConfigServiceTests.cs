@@ -109,4 +109,57 @@ public class ConfigServiceTests
             }
         }
     }
+
+    [Fact]
+    public void Load_WhenDpapiDecryptionFails_PreservesRawCiphertextOnSaveAndFlagsHasDecryptionFailed()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), $"gotify_dpapi_fail_{Guid.NewGuid():N}.json");
+
+        try
+        {
+            // Simulate an encrypted token created by another user or corrupted payload
+            var invalidCiphertext = "enc:VGhpcyBpcyBub3QgdmFsaWQgRFBBUEkgY2lwaGVydGV4dA=="; // valid base64 of non-DPAPI data
+            var initialJson = $@"{{
+  ""ServerUrl"": ""https://gotify.example.com"",
+  ""ClientToken"": ""{invalidCiphertext}"",
+  ""GlobalMinPriority"": 2
+}}";
+            File.WriteAllText(tempFile, initialJson);
+
+            var service = new ConfigService(tempFile);
+            service.Load();
+
+            // Decryption must be flagged as failed and token cleared in memory to avoid sending garbage
+            Assert.True(service.HasDecryptionFailed);
+            Assert.Equal(string.Empty, service.Config.ClientToken);
+            Assert.Equal("https://gotify.example.com", service.Config.ServerUrl);
+
+            // User modifies an unrelated setting and saves
+            service.Config.GlobalMinPriority = 5;
+            service.Save();
+
+            // Verify that the original encrypted token was NOT wiped from disk!
+            var savedJson = File.ReadAllText(tempFile);
+            Assert.Contains(invalidCiphertext, savedJson);
+
+            // Now simulate user providing a brand new valid token
+            service.Config.ClientToken = "replacement-token-999";
+            service.Save();
+
+            Assert.False(service.HasDecryptionFailed);
+
+            // Load anew and verify new token was saved and encrypted
+            var reloaded = new ConfigService(tempFile);
+            reloaded.Load();
+            Assert.False(reloaded.HasDecryptionFailed);
+            Assert.Equal("replacement-token-999", reloaded.Config.ClientToken);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                try { File.Delete(tempFile); } catch { }
+            }
+        }
+    }
 }
