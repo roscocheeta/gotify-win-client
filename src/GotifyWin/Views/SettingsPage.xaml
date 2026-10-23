@@ -298,6 +298,11 @@
                         <CheckBox Content="Play notification chime"
                                   IsChecked="{Binding PlaySound}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
 
+                        <!-- External Images (privacy) -->
+                        <CheckBox Content="Load images hosted on other websites (may reveal your IP address)"
+                                  IsChecked="{Binding AllowExternalImages}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"
+                                  ToolTip="Off: only images from your Gotify server are shown. On: images linked in messages are downloaded from any website."/>
+
                         <!-- Smart Fullscreen Gaming & Presentation Suppression -->
                         <CheckBox Content="Mute notification popups while gaming, watching fullscreen video, or presenting"
                                   IsChecked="{Binding SuppressOnFullscreen}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,4"/>

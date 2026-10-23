@@ -18,7 +18,8 @@ public class GotifyApiService : IGotifyApiService
         // which would leak the client token to a redirect target.
         _httpClient = httpClient ?? new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
         {
-            Timeout = TimeSpan.FromSeconds(10)
+            Timeout = TimeSpan.FromSeconds(10),
+            MaxResponseContentBufferSize = 8 * 1024 * 1024 // cap buffered JSON/API responses
         };
         _cacheDirectory = cacheDirectory ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -112,31 +113,26 @@ public class GotifyApiService : IGotifyApiService
             var serverUri = new Uri(normalizedServer);
 
             string targetUrl;
-            bool isSameOrigin;
 
             if (Uri.TryCreate(app.Image, UriKind.Absolute, out var parsedUri))
             {
-                // Only allow HTTP/HTTPS
+                // SEC: Only fetch icons from the configured Gotify server origin (prevents SSRF/IP leaks to third parties)
                 if (parsedUri.Scheme != Uri.UriSchemeHttp && parsedUri.Scheme != Uri.UriSchemeHttps)
+                    return null;
+                if (!ImageSafety.IsSameOrigin(parsedUri, serverUri))
                     return null;
 
                 targetUrl = parsedUri.ToString();
-                isSameOrigin = string.Equals(parsedUri.Host, serverUri.Host, StringComparison.OrdinalIgnoreCase)
-                               && parsedUri.Port == serverUri.Port;
             }
             else
             {
                 // Relative URL -> strictly same origin
                 targetUrl = $"{normalizedServer}/{app.Image.TrimStart('/')}";
-                isSameOrigin = true;
             }
 
             using var request = new HttpRequestMessage(HttpMethod.Get, targetUrl);
-            // SEC-01: ONLY send authentication token to the configured Gotify server origin!
-            if (isSameOrigin)
-            {
-                request.Headers.Add("X-Gotify-Key", clientToken);
-            }
+            // SEC-01: Token is only ever sent to the configured Gotify server origin (enforced above)
+            request.Headers.Add("X-Gotify-Key", clientToken);
 
             using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
@@ -166,7 +162,12 @@ public class GotifyApiService : IGotifyApiService
                 ms.Write(buffer, 0, bytesRead);
             }
 
-            await File.WriteAllBytesAsync(localPath, ms.ToArray(), ct);
+            var iconBytes = ms.ToArray();
+            // SEC: Verify the payload is really a supported raster image before persisting it
+            if (!ImageSafety.HasKnownImageSignature(iconBytes))
+                return null;
+
+            await File.WriteAllBytesAsync(localPath, iconBytes, ct);
             app.LocalIconPath = localPath;
             return localPath;
         }

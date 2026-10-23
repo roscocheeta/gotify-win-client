@@ -231,7 +231,7 @@ public class MainViewModel : ViewModelBase
         var isDnd = _dndManager.IsDndActive(_configService.Config.Dnd);
         var decision = _filterEngine.Evaluate(message, _configService.Config, isDnd);
 
-        Console.WriteLine($"[GotifyWin] Message #{message.Id} from '{message.DisplayAppName}' (Priority: {message.Priority}) -> {decision.Decision}: {decision.Reason}");
+        System.Diagnostics.Debug.WriteLine($"[GotifyWin] Message #{message.Id} from '{message.DisplayAppName}' (Priority: {message.Priority}) -> {decision.Decision}: {decision.Reason}");
 
         switch (decision.Decision)
         {
@@ -251,7 +251,7 @@ public class MainViewModel : ViewModelBase
 
     private void OnConnectionStateChanged(object? sender, ConnectionState state)
     {
-        Console.WriteLine($"[GotifyWin] WebSocket state: {state}");
+        System.Diagnostics.Debug.WriteLine($"[GotifyWin] WebSocket state: {state}");
         Application.Current?.Dispatcher?.Invoke(() =>
         {
             switch (state)

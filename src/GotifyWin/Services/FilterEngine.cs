@@ -14,6 +14,7 @@ public class FilterEngine : IFilterEngine
     }
 
     private const int MaxDebounceEntries = 1000;
+    private const int MaxRegexCacheEntries = 200;
     private readonly Dictionary<string, DebounceEntry> _debounceCache = new();
     private readonly object _lock = new();
 
@@ -212,13 +213,21 @@ public class FilterEngine : IFilterEngine
     private static bool MatchesRegexCached(string input, string pattern, bool caseSensitive)
     {
         var cacheKey = $"{pattern}:{(caseSensitive ? "1" : "0")}";
+
+        // SEC: Bound the cache so imported/edited rules can't grow memory without limit
+        if (RegexCache.Count >= MaxRegexCacheEntries && !RegexCache.ContainsKey(cacheKey))
+        {
+            RegexCache.Clear();
+        }
+
         var regex = RegexCache.GetOrAdd(cacheKey, k =>
         {
             try
             {
+                // Not RegexOptions.Compiled: compilation emits IL per pattern and is costly for rarely-hit rules
                 return new Regex(
                     pattern,
-                    caseSensitive ? RegexOptions.Compiled : (RegexOptions.Compiled | RegexOptions.IgnoreCase),
+                    caseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase,
                     TimeSpan.FromMilliseconds(50)
                 );
             }

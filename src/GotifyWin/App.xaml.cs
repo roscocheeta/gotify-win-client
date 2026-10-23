@@ -26,6 +26,9 @@ public partial class App : System.Windows.Application
         var themeManager = new ThemeManager();
         themeManager.ApplyTheme(configService.Config.Theme);
 
+        SecureImageLoader.PolicyProvider = () =>
+            (configService.Config.ServerUrl, configService.Config.Presentation.AllowExternalImages);
+
         var mainViewModel = new MainViewModel(
             configService,
             apiService,

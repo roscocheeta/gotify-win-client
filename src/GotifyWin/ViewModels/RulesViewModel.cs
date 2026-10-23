@@ -799,6 +799,7 @@ public class RulesViewModel : ViewModelBase
 
             if (dlg.ShowDialog() == true)
             {
+                ImportValidator.EnsureFileSizeAllowed(dlg.FileName);
                 var json = File.ReadAllText(dlg.FileName);
                 List<NotificationRule>? incomingRules = null;
 
@@ -829,9 +830,18 @@ public class RulesViewModel : ViewModelBase
                     catch { }
                 }
 
+                // SEC: Drop malformed/oversized/invalid-regex rules and cap the total count
+                var skippedRules = 0;
+                if (incomingRules != null)
+                {
+                    incomingRules = ImportValidator.SanitizeRules(incomingRules, out skippedRules);
+                }
+
                 if (incomingRules == null || incomingRules.Count == 0)
                 {
-                    SetTransientFeedback("⚠️ No valid filter rules found in selected file.");
+                    SetTransientFeedback(skippedRules > 0
+                        ? $"⚠️ No valid rules found ({skippedRules} skipped as invalid)."
+                        : "⚠️ No valid filter rules found in selected file.");
                     return;
                 }
 

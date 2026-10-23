@@ -231,6 +231,20 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    public bool AllowExternalImages
+    {
+        get => _configService.Config.Presentation.AllowExternalImages;
+        set
+        {
+            if (_configService.Config.Presentation.AllowExternalImages != value)
+            {
+                _configService.Config.Presentation.AllowExternalImages = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
+
     public bool PlaySound
     {
         get => _configService.Config.Presentation.PlaySound;
@@ -638,6 +652,7 @@ public class SettingsViewModel : ViewModelBase
 
             if (dlg.ShowDialog() == true)
             {
+                ImportValidator.EnsureFileSizeAllowed(dlg.FileName);
                 var json = File.ReadAllText(dlg.FileName);
                 var options = new JsonSerializerOptions
                 {
@@ -652,12 +667,19 @@ public class SettingsViewModel : ViewModelBase
                     return;
                 }
 
-                // SEC: Only accept a valid http(s) server URL; keep existing connection values if the file has none.
-                if (ServerUrlValidator.Validate(loaded.ServerUrl).IsValid)
+                // SEC: Clamp all imported values into the ranges the UI itself allows.
+                ImportValidator.ClampConfig(loaded);
+
+                // SEC: Only accept a valid http(s) server URL. Never let an imported file redirect the
+                // existing token to a different server: adopt the URL only if the file brings its own
+                // token, or if no server is configured yet.
+                var hasImportedToken = !string.IsNullOrWhiteSpace(loaded.ClientToken);
+                if (ServerUrlValidator.Validate(loaded.ServerUrl).IsValid &&
+                    (hasImportedToken || string.IsNullOrWhiteSpace(_configService.Config.ServerUrl)))
                 {
                     _configService.Config.ServerUrl = loaded.ServerUrl!.Trim().TrimEnd('/');
                 }
-                if (!string.IsNullOrWhiteSpace(loaded.ClientToken))
+                if (hasImportedToken)
                 {
                     _configService.Config.ClientToken = loaded.ClientToken;
                 }
@@ -694,12 +716,16 @@ public class SettingsViewModel : ViewModelBase
 
                 if (loaded.AppFilters != null)
                 {
-                    _configService.Config.AppFilters = loaded.AppFilters;
+                    _configService.Config.AppFilters = ImportValidator.SanitizeAppFilters(loaded.AppFilters);
                 }
 
                 if (loaded.Rules != null && loaded.Rules.Count > 0)
                 {
-                    _configService.Config.Rules = loaded.Rules;
+                    var safeRules = ImportValidator.SanitizeRules(loaded.Rules, out _);
+                    if (safeRules.Count > 0)
+                    {
+                        _configService.Config.Rules = safeRules;
+                    }
                 }
 
                 _configService.Save();

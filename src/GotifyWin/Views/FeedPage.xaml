@@ -9,6 +9,7 @@
     <UserControl.Resources>
         <conv:HexColorToBrushConverter x:Key="HexToBrush"/>
         <conv:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:SecureImageConverter x:Key="SecureImage"/>
         <conv:BooleanToVisibilityConverter x:Key="InverseBoolToVis" Invert="True"/>
 
         <!-- Modern Secondary Button Style -->
@@ -224,7 +225,7 @@
                                                         BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
                                                         ClipToBounds="True">
                                                     <Grid>
-                                                        <Image Source="{Binding ImageUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                         <Image Source="{Binding ImageUrl, Converter={StaticResource SecureImage}, IsAsync=True}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
                                                         <Border Background="#55000000" VerticalAlignment="Bottom" Padding="4,2">
                                                             <TextBlock Text="🔍 View" FontSize="10" Foreground="White" HorizontalAlignment="Center"/>
                                                         </Border>

@@ -12,6 +12,9 @@ public class PresentationSettings
     public double Width { get; set; } = 360.0;
     public int MaxBodyLines { get; set; } = 4;
 
+    // Privacy: images hosted outside the Gotify server reveal your IP address to that host. Off by default.
+    public bool AllowExternalImages { get; set; } = false;
+
     // Audio Settings
     public bool PlaySound { get; set; } = true;
     public string? CustomSoundFilePath { get; set; } = null;

@@ -107,7 +107,7 @@ public class SecurityTests
     }
 
     [Fact]
-    public async Task GotifyApiService_ExternalIconUrl_DoesNotSendTokenHeader()
+    public async Task GotifyApiService_ExternalIconUrl_IsNeverFetched()
     {
         HttpRequestMessage? capturedRequest = null;
 
@@ -135,11 +135,11 @@ public class SecurityTests
                 Image = "https://external-attacker.com/avatar.png"
             };
 
-            await service.CacheApplicationIconAsync("https://gotify.myhomelab.lan", "secret-token-12345", app);
+            var result = await service.CacheApplicationIconAsync("https://gotify.myhomelab.lan", "secret-token-12345", app);
 
-            Assert.NotNull(capturedRequest);
-            // SEC-01 verification: X-Gotify-Key must NOT be sent to external-attacker.com!
-            Assert.False(capturedRequest.Headers.Contains("X-Gotify-Key"));
+            // SEC: cross-origin icon URLs are never fetched at all (no SSRF / IP leak), let alone with the token
+            Assert.Null(result);
+            Assert.Null(capturedRequest);
         }
         finally
         {

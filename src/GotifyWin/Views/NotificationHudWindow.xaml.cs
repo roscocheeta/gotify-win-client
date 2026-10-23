@@ -53,6 +53,20 @@ public partial class NotificationHudWindow : Window
         _dismissTimer.Start();
     }
 
+    private async Task LoadNotificationImageAsync(string url)
+    {
+        try
+        {
+            var bitmap = await GotifyWin.Services.SecureImageLoader.LoadAsync(url);
+            if (bitmap != null && !_isClosing)
+            {
+                NotificationImage.Source = bitmap;
+                NotificationImageBorder.Visibility = Visibility.Visible;
+            }
+        }
+        catch { }
+    }
+
     public void Setup(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
     {
         _message = message;
@@ -108,20 +122,11 @@ public partial class NotificationHudWindow : Window
             catch { }
         }
 
-        // Load Notification Image (Thumbnail)
-        if (message.HasImage && Uri.TryCreate(message.ImageUrl, UriKind.Absolute, out var imgUri))
+        // Load Notification Image (Thumbnail) - secure, origin-restricted, async (never blocks UI)
+        if (message.HasImage && GotifyWin.Services.SecureImageLoader.IsAllowed(message.ImageUrl))
         {
-            try
-            {
-                var imgBitmap = new BitmapImage();
-                imgBitmap.BeginInit();
-                imgBitmap.UriSource = imgUri;
-                imgBitmap.CacheOption = BitmapCacheOption.OnLoad;
-                imgBitmap.EndInit();
-                NotificationImage.Source = imgBitmap;
-                NotificationImageBorder.Visibility = Visibility.Visible;
-            }
-            catch { }
+            var imageUrl = message.ImageUrl;
+            _ = LoadNotificationImageAsync(imageUrl!);
         }
 
         // Action Link

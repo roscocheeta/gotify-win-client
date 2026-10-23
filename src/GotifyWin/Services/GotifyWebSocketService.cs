@@ -157,7 +157,6 @@ public class GotifyWebSocketService : IGotifyWebSocketService
             catch (Exception ex)
             {
                 LastError = ex.Message;
-                Console.WriteLine($"[GotifyWebSocket] Connection error: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[GotifyWebSocket] Connection error: {ex.Message}");
             }
 
@@ -227,7 +226,7 @@ public class GotifyWebSocketService : IGotifyWebSocketService
 
                     if (message != null)
                     {
-                        Console.WriteLine($"[GotifyWebSocket] Received message #{message.Id}: '{message.Title}'");
+                        System.Diagnostics.Debug.WriteLine($"[GotifyWebSocket] Received message #{message.Id}");
                         MessageReceived?.Invoke(this, message);
                     }
                 }
