@@ -48,8 +48,14 @@ public partial class MainWindow : Window
             if (streamInfo != null)
             {
                 using var stream = streamInfo.Stream;
-                var iconSize = System.Windows.Forms.SystemInformation.SmallIconSize;
-                trayIcon = new System.Drawing.Icon(stream, iconSize.Width, iconSize.Height);
+                // Windows 11 system tray renders at 24x24 or 32x32 (and up to 48x48 on high-DPI displays).
+                // Using legacy SmallIconSize (16x16) forces Windows to render a tiny 16px icon centered in a 32px slot.
+                // Using IconSize (minimum 32x32, scaling to 48x48 on high DPI) extracts the crisp, high-res frame
+                // and lets the Windows Shell display a prominent, fully visible tray icon matching other modern apps.
+                var iconSize = System.Windows.Forms.SystemInformation.IconSize;
+                var targetWidth = Math.Max(32, iconSize.Width);
+                var targetHeight = Math.Max(32, iconSize.Height);
+                trayIcon = new System.Drawing.Icon(stream, targetWidth, targetHeight);
             }
         }
         catch (Exception ex)
