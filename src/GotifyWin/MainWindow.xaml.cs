@@ -81,8 +81,6 @@ public partial class MainWindow : Window
         dndMenu.DropDownItems.Add("Snooze 4 hours", null, (s, e) => _viewModel.SetDnd(TimeSpan.FromHours(4)));
         dndMenu.DropDownItems.Add("Snooze until Tomorrow (8am)", null, (s, e) => _viewModel.SetDndUntilTomorrow());
         contextMenu.Items.Add(dndMenu);
-
-        contextMenu.Items.Add("Sync Apps", null, async (s, e) => await _viewModel.Apps.LoadAppsAsync());
         contextMenu.Items.Add(new ToolStripSeparator());
         contextMenu.Items.Add("Quit", null, (s, e) => QuitApplication());
 
