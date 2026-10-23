@@ -140,7 +140,7 @@
             <Border Style="{StaticResource SectionBorder}">
                 <StackPanel>
                     <Grid Margin="0,0,0,12">
-                        <TextBlock Text="Notification Presentation" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                        <TextBlock Text="Alerts &amp; Popups" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                         <Button Content="🔔 Preview Alert" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Right" Command="{Binding SendTestNotificationCommand}"/>
                     </Grid>
 
@@ -151,14 +151,14 @@
                             <ColumnDefinition Width="220"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Delivery Mode" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="Choose between ultra-sleek floating HUD overlay or Windows 11 Action Center toasts." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                            <TextBlock Text="Popup Style" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="Choose how incoming alerts appear on your desktop." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
                         </StackPanel>
                         <ComboBox Grid.Column="1" Height="34"
                                   SelectedValue="{Binding SelectedMode}" SelectedValuePath="Tag">
-                            <ComboBoxItem Content="Custom Fluent HUD (Recommended)" Tag="{x:Static cfg:NotificationMode.CustomHud}"/>
-                            <ComboBoxItem Content="Windows 11 Native Toasts" Tag="{x:Static cfg:NotificationMode.NativeToast}"/>
-                            <ComboBoxItem Content="Hybrid (Both HUD + Toast)" Tag="{x:Static cfg:NotificationMode.Both}"/>
+                            <ComboBoxItem Content="Minimal Floating Banner (Recommended)" Tag="{x:Static cfg:NotificationMode.CustomHud}"/>
+                            <ComboBoxItem Content="Windows Notification Center (Standard)" Tag="{x:Static cfg:NotificationMode.NativeToast}"/>
+                            <ComboBoxItem Content="Both (Floating Banner + Windows)" Tag="{x:Static cfg:NotificationMode.Both}"/>
                         </ComboBox>
                     </Grid>
 
@@ -169,8 +169,8 @@
                             <ColumnDefinition Width="220"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="HUD Overlay Position" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="Screen location where floating HUD alerts appear." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                            <TextBlock Text="Banner Position" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="Screen location where floating banners appear." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
                         </StackPanel>
                         <ComboBox Grid.Column="1" Height="34"
                                   SelectedValue="{Binding SelectedPosition}" SelectedValuePath="Tag">
@@ -188,8 +188,8 @@
                             <ColumnDefinition Width="220"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Display Duration" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="How long the HUD banner stays on screen before auto-dismissing." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                            <TextBlock Text="Banner Duration" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="How long floating banners stay visible before auto-dismissing." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Slider Minimum="2" Maximum="20" Value="{Binding DisplayDurationSeconds}" Width="160" TickFrequency="1" IsSnapToTickEnabled="True"/>
@@ -198,7 +198,7 @@
                     </Grid>
 
                     <!-- Countdown Bar Toggle -->
-                    <CheckBox Content="Show visual countdown progress bar on HUD notifications"
+                    <CheckBox Content="Show countdown progress bar on floating banners"
                               IsChecked="{Binding ShowCountdownBar}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
 
                     <!-- Sound Toggle -->
@@ -206,7 +206,7 @@
                               IsChecked="{Binding PlaySound}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
 
                     <!-- Smart Fullscreen Gaming & Presentation Suppression -->
-                    <CheckBox Content="Smart Fullscreen Mode: Automatically suppress alert popups while gaming, presenting, or playing fullscreen videos"
+                    <CheckBox Content="Mute alert popups while gaming, watching fullscreen video, or presenting"
                               IsChecked="{Binding SuppressOnFullscreen}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
                 </StackPanel>
             </Border>
@@ -340,6 +340,29 @@
 
                     <CheckBox Content="Start Gotify Client automatically with Windows" IsChecked="{Binding StartWithWindows}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,8"/>
                     <CheckBox Content="Minimize to System Tray when closing the window" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 6. Backup & Migration -->
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Backup &amp; Restore" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="Export full settings (including app priority filters, quiet hours, and display preferences) or restore from a backup file."
+                                       FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="📤 Export Settings" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding ExportSettingsCommand}"/>
+                            <Button Content="📥 Import Settings" Style="{StaticResource SecondaryButton}" Command="{Binding ImportSettingsCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{Binding BackupStatusText}" FontSize="11" Foreground="{DynamicResource ThemeBrandAccent}"
+                               Visibility="{Binding HasBackupStatus, Converter={StaticResource BoolToVis}}" Margin="0,4,0,0"/>
                 </StackPanel>
             </Border>
         </StackPanel>

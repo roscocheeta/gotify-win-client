@@ -1,7 +1,11 @@
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows.Input;
 using GotifyWin.Models;
 using GotifyWin.Models.Config;
 using GotifyWin.Services;
+using Microsoft.Win32;
 
 namespace GotifyWin.ViewModels;
 
@@ -106,12 +110,14 @@ public class SettingsViewModel : ViewModelBase
                 _configService.Config.Presentation.DisplayDurationSeconds = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(DurationText));
+                OnPropertyChanged(nameof(DisplayDurationText));
                 _configService.Save();
             }
         }
     }
 
     public string DurationText => $"{DisplayDurationSeconds:0} seconds";
+    public string DisplayDurationText => DurationText;
 
     public bool ShowCountdownBar
     {
@@ -335,11 +341,27 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    private string _backupStatusText = string.Empty;
+    public string BackupStatusText
+    {
+        get => _backupStatusText;
+        set
+        {
+            if (SetProperty(ref _backupStatusText, value))
+            {
+                OnPropertyChanged(nameof(HasBackupStatus));
+            }
+        }
+    }
+    public bool HasBackupStatus => !string.IsNullOrEmpty(BackupStatusText);
+
     public ICommand TestConnectionCommand { get; }
     public ICommand SaveConnectionCommand { get; }
     public ICommand SendTestNotificationCommand { get; }
     public ICommand ToggleTokenVisibilityCommand { get; }
     public ICommand CopyTokenCommand { get; }
+    public ICommand ExportSettingsCommand { get; }
+    public ICommand ImportSettingsCommand { get; }
 
     public event EventHandler? ConnectionConfigSaved;
 
@@ -370,6 +392,8 @@ public class SettingsViewModel : ViewModelBase
                 try { System.Windows.Clipboard.SetText(ClientToken); } catch { }
             }
         });
+        ExportSettingsCommand = new RelayCommand(ExportSettings);
+        ImportSettingsCommand = new RelayCommand(ImportSettings);
     }
 
     private async Task TestConnectionAsync()
@@ -432,5 +456,146 @@ public class SettingsViewModel : ViewModelBase
         };
 
         _presenter.Present(testMsg, _configService.Config);
+    }
+
+    public void ExportSettings()
+    {
+        try
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "Export Settings Backup",
+                Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+                FileName = $"gotify-settings-{DateTime.Now:yyyyMMdd-HHmm}.json"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                _configService.Config.ServerUrl = ServerUrl.Trim().TrimEnd('/');
+                _configService.Config.ClientToken = ClientToken.Trim();
+
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Converters = { new JsonStringEnumConverter() }
+                };
+
+                var json = JsonSerializer.Serialize(_configService.Config, options);
+                File.WriteAllText(dlg.FileName, json);
+                BackupStatusText = $"✓ Settings successfully exported to {Path.GetFileName(dlg.FileName)}";
+            }
+        }
+        catch (Exception ex)
+        {
+            BackupStatusText = $"Export error: {ex.Message}";
+        }
+    }
+
+    public void ImportSettings()
+    {
+        try
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Import Settings Backup",
+                Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                var json = File.ReadAllText(dlg.FileName);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new JsonStringEnumConverter() }
+                };
+
+                var loaded = JsonSerializer.Deserialize<GotifyClientConfig>(json, options);
+                if (loaded == null)
+                {
+                    BackupStatusText = "⚠️ Invalid settings file.";
+                    return;
+                }
+
+                _configService.Config.ServerUrl = loaded.ServerUrl ?? string.Empty;
+                _configService.Config.ClientToken = loaded.ClientToken ?? string.Empty;
+                _configService.Config.Theme = loaded.Theme;
+                _configService.Config.GlobalMinPriority = loaded.GlobalMinPriority;
+                _configService.Config.StartWithWindows = loaded.StartWithWindows;
+                _configService.Config.MinimizeToTrayOnClose = loaded.MinimizeToTrayOnClose;
+                _configService.Config.StartMinimized = loaded.StartMinimized;
+                _configService.Config.MaxHistoryCount = loaded.MaxHistoryCount;
+
+                if (loaded.Presentation != null)
+                {
+                    _configService.Config.Presentation.Mode = loaded.Presentation.Mode;
+                    _configService.Config.Presentation.Position = loaded.Presentation.Position;
+                    _configService.Config.Presentation.DisplayDurationSeconds = loaded.Presentation.DisplayDurationSeconds;
+                    _configService.Config.Presentation.ShowCountdownBar = loaded.Presentation.ShowCountdownBar;
+                    _configService.Config.Presentation.PlaySound = loaded.Presentation.PlaySound;
+                    _configService.Config.Presentation.EnableDebounce = loaded.Presentation.EnableDebounce;
+                    _configService.Config.Presentation.DebounceWindowSeconds = loaded.Presentation.DebounceWindowSeconds;
+                    _configService.Config.Presentation.PauseOnHover = loaded.Presentation.PauseOnHover;
+                    _configService.Config.Presentation.Width = loaded.Presentation.Width;
+                    _configService.Config.Presentation.MaxBodyLines = loaded.Presentation.MaxBodyLines;
+                }
+
+                if (loaded.Dnd != null)
+                {
+                    _configService.Config.Dnd.EmergencyBypassPriority = loaded.Dnd.EmergencyBypassPriority;
+                    _configService.Config.Dnd.EnableEmergencyBypass = loaded.Dnd.EnableEmergencyBypass;
+                    _configService.Config.Dnd.QuietHoursEnabled = loaded.Dnd.QuietHoursEnabled;
+                    _configService.Config.Dnd.QuietHoursStart = loaded.Dnd.QuietHoursStart;
+                    _configService.Config.Dnd.QuietHoursEnd = loaded.Dnd.QuietHoursEnd;
+                    _configService.Config.Dnd.SuppressOnFullscreenApps = loaded.Dnd.SuppressOnFullscreenApps;
+                }
+
+                if (loaded.AppFilters != null)
+                {
+                    _configService.Config.AppFilters = loaded.AppFilters;
+                }
+
+                if (loaded.Rules != null && loaded.Rules.Count > 0)
+                {
+                    _configService.Config.Rules = loaded.Rules;
+                }
+
+                _configService.Save();
+
+                ServerUrl = _configService.Config.ServerUrl;
+                ClientToken = _configService.Config.ClientToken;
+                OnPropertyChanged(nameof(SelectedMode));
+                OnPropertyChanged(nameof(SelectedPosition));
+                OnPropertyChanged(nameof(DisplayDurationSeconds));
+                OnPropertyChanged(nameof(DisplayDurationText));
+                OnPropertyChanged(nameof(ShowCountdownBar));
+                OnPropertyChanged(nameof(PlaySound));
+                OnPropertyChanged(nameof(SuppressOnFullscreen));
+                OnPropertyChanged(nameof(GlobalMinPriority));
+                OnPropertyChanged(nameof(GlobalMinPriorityText));
+                OnPropertyChanged(nameof(EnableDebounce));
+                OnPropertyChanged(nameof(DebounceWindowSeconds));
+                OnPropertyChanged(nameof(DebounceText));
+                OnPropertyChanged(nameof(EnableEmergencyBypass));
+                OnPropertyChanged(nameof(EmergencyBypassPriority));
+                OnPropertyChanged(nameof(BypassText));
+                OnPropertyChanged(nameof(QuietHoursEnabled));
+                OnPropertyChanged(nameof(QuietHoursStart));
+                OnPropertyChanged(nameof(QuietHoursEnd));
+                OnPropertyChanged(nameof(SelectedTheme));
+                OnPropertyChanged(nameof(StartWithWindows));
+                OnPropertyChanged(nameof(MinimizeToTrayOnClose));
+
+                _themeManager?.ApplyTheme(_configService.Config.Theme);
+                _startupManager.SetAutoStart(_configService.Config.StartWithWindows);
+
+                BackupStatusText = $"✓ Settings successfully imported from {Path.GetFileName(dlg.FileName)}";
+                ConnectionConfigSaved?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        catch (Exception ex)
+        {
+            BackupStatusText = $"Import error: {ex.Message}";
+        }
     }
 }

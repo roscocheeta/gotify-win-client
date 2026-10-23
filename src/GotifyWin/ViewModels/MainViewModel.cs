@@ -171,7 +171,7 @@ public class MainViewModel : ViewModelBase
 
                 Feed.SetInitialMessages(allowed);
 
-                var recs = _patternAnalyzer.Analyze(recent, _configService.Config, threshold: 5);
+                var recs = _patternAnalyzer.Analyze(recent, _configService.Config, threshold: 3);
                 Application.Current?.Dispatcher?.Invoke(() =>
                 {
                     Rules.SetRecommendations(recs);

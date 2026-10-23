@@ -6,7 +6,7 @@ namespace GotifyWin.Services;
 
 public interface INotificationPatternAnalyzer
 {
-    List<RuleRecommendation> Analyze(IEnumerable<GotifyMessage> messages, GotifyClientConfig config, int threshold = 5);
+    List<RuleRecommendation> Analyze(IEnumerable<GotifyMessage> messages, GotifyClientConfig config, int threshold = 3);
 }
 
 public class NotificationPatternAnalyzer : INotificationPatternAnalyzer
@@ -28,7 +28,7 @@ public class NotificationPatternAnalyzer : INotificationPatternAnalyzer
         "panic", "alert", "corrupt", "emergency", "breach", "unhealthy", "warning", "degraded"
     };
 
-    public List<RuleRecommendation> Analyze(IEnumerable<GotifyMessage> messages, GotifyClientConfig config, int threshold = 5)
+    public List<RuleRecommendation> Analyze(IEnumerable<GotifyMessage> messages, GotifyClientConfig config, int threshold = 3)
     {
         var recommendations = new List<RuleRecommendation>();
         var messageList = messages.Where(m => m.Id > 0).ToList();

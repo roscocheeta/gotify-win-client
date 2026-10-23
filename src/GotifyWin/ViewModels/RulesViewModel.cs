@@ -1,10 +1,47 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows.Input;
 using GotifyWin.Models;
 using GotifyWin.Models.Config;
 using GotifyWin.Services;
+using Microsoft.Win32;
 
 namespace GotifyWin.ViewModels;
+
+public class RulesExportWrapper
+{
+    public int Version { get; set; } = 1;
+    public DateTime ExportDateUtc { get; set; } = DateTime.UtcNow;
+    public List<NotificationRule> Rules { get; set; } = new();
+}
+
+public class RuleImportCandidate : ViewModelBase
+{
+    private bool _isSelected = true;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set => SetProperty(ref _isSelected, value);
+    }
+
+    public NotificationRule Rule { get; }
+    public bool IsDuplicate { get; }
+
+    public string Name => Rule.Name;
+    public string ScopeDescription => Rule.ScopeDescription;
+    public string TargetField => Rule.TargetField.ToString();
+    public string Operator => Rule.Operator.ToString();
+    public string Pattern => Rule.Pattern;
+    public RuleAction Action => Rule.Action;
+
+    public RuleImportCandidate(NotificationRule rule, bool isDuplicate)
+    {
+        Rule = rule;
+        IsDuplicate = isDuplicate;
+    }
+}
 
 public class AppFilterOption
 {
@@ -183,6 +220,34 @@ public class RulesViewModel : ViewModelBase
     public ObservableCollection<RecommendationItemViewModel> Recommendations => _recommendations;
     public bool HasRecommendations => _recommendations.Count > 0;
 
+    public ObservableCollection<RuleImportCandidate> ImportCandidates { get; } = new();
+
+    private bool _isImportModalOpen;
+    public bool IsImportModalOpen
+    {
+        get => _isImportModalOpen;
+        set => SetProperty(ref _isImportModalOpen, value);
+    }
+
+    public int SelectedImportCount => ImportCandidates.Count(c => c.IsSelected);
+    public int TotalImportCount => ImportCandidates.Count;
+    public string ImportSummaryText => $"{SelectedImportCount} of {TotalImportCount} selected";
+    public string ImportButtonText => SelectedImportCount > 0 ? $"Import Selected ({SelectedImportCount})" : "Import Selected (0)";
+
+    private string _ruleStatusFeedback = string.Empty;
+    public string RuleStatusFeedback
+    {
+        get => _ruleStatusFeedback;
+        set
+        {
+            if (SetProperty(ref _ruleStatusFeedback, value))
+            {
+                OnPropertyChanged(nameof(HasRuleStatusFeedback));
+            }
+        }
+    }
+    public bool HasRuleStatusFeedback => !string.IsNullOrEmpty(RuleStatusFeedback);
+
     public int RecommendationsCount => _recommendations.Count;
     public string RecommendationsSummaryText => $"{RecommendationsCount} suggestion{(RecommendationsCount == 1 ? "" : "s")} ready";
 
@@ -199,6 +264,11 @@ public class RulesViewModel : ViewModelBase
     public ICommand ToggleRecommendationsCommand { get; }
     public ICommand ToggleConfiguredRulesCommand { get; }
     public ICommand ReanalyzeCommand { get; }
+    public ICommand ExportRulesCommand { get; }
+    public ICommand ImportRulesCommand { get; }
+    public ICommand ConfirmImportCommand { get; }
+    public ICommand CancelImportCommand { get; }
+    public ICommand SelectAllImportCommand { get; }
 
     public RulesViewModel(
         IConfigService configService,
@@ -218,6 +288,11 @@ public class RulesViewModel : ViewModelBase
         ToggleRecommendationsCommand = new RelayCommand(() => IsRecommendationsExpanded = !IsRecommendationsExpanded);
         ToggleConfiguredRulesCommand = new RelayCommand(() => IsConfiguredRulesExpanded = !IsConfiguredRulesExpanded);
         ReanalyzeCommand = new RelayCommand(async () => await ReanalyzeHistoryAsync());
+        ExportRulesCommand = new RelayCommand(ExportRules);
+        ImportRulesCommand = new RelayCommand(ImportRules);
+        ConfirmImportCommand = new RelayCommand(ConfirmImport);
+        CancelImportCommand = new RelayCommand(CancelImport);
+        SelectAllImportCommand = new RelayCommand<object>(p => SelectAllImport(p?.ToString() == "True"));
 
         RefreshAvailableApps();
         LoadRules();
@@ -339,8 +414,8 @@ public class RulesViewModel : ViewModelBase
 
             IEnumerable<GotifyMessage> messages = _messageSource != null ? _messageSource().ToList() : Enumerable.Empty<GotifyMessage>();
 
-            // If local feed has fewer than 5 messages (e.g. cleared by user), try to fetch from server if available
-            if (messages.Count() < 5 && _historyFetcher != null)
+            // If local feed has fewer than 3 messages (e.g. cleared by user), try to fetch from server if available
+            if (messages.Count() < 3 && _historyFetcher != null)
             {
                 try
                 {
@@ -353,16 +428,16 @@ public class RulesViewModel : ViewModelBase
                 catch { }
             }
 
-            // If still fewer than 5 messages, RETAIN current recommendations so they are not wiped out
-            if (messages.Count() < 5)
+            // If still fewer than 3 messages, RETAIN current recommendations so they are not wiped out
+            if (messages.Count() < 3)
             {
                 ReanalyzeButtonText = "✓ Up to date";
                 await Task.Delay(1400);
                 return;
             }
 
-            var recs = _patternAnalyzer.Analyze(messages, _configService.Config, threshold: 5);
-            if (recs.Count > 0 || messages.Count() >= 5)
+            var recs = _patternAnalyzer.Analyze(messages, _configService.Config, threshold: 3);
+            if (recs.Count > 0 || messages.Count() >= 3)
             {
                 SetRecommendations(recs);
                 ReanalyzeButtonText = recs.Count > 0 ? $"✓ Found {recs.Count}" : "✓ Up to date";
@@ -521,5 +596,178 @@ public class RulesViewModel : ViewModelBase
         OnPropertyChanged(nameof(RecommendationsCount));
         OnPropertyChanged(nameof(RecommendationsSummaryText));
         OnPropertyChanged(nameof(HasRecommendations));
+    }
+
+    public void ExportRules()
+    {
+        if (_rules.Count == 0)
+        {
+            RuleStatusFeedback = "⚠️ No configured rules to export.";
+            return;
+        }
+
+        try
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "Export Filter Rules",
+                Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+                FileName = $"gotify-rules-{DateTime.Now:yyyyMMdd-HHmm}.json"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                var export = new RulesExportWrapper
+                {
+                    Version = 1,
+                    ExportDateUtc = DateTime.UtcNow,
+                    Rules = _rules.ToList()
+                };
+
+                var json = JsonSerializer.Serialize(export, new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Converters = { new JsonStringEnumConverter() }
+                });
+
+                File.WriteAllText(dlg.FileName, json);
+                RuleStatusFeedback = $"✓ Exported {_rules.Count} rules to {Path.GetFileName(dlg.FileName)}";
+            }
+        }
+        catch (Exception ex)
+        {
+            RuleStatusFeedback = $"Export error: {ex.Message}";
+        }
+    }
+
+    public void ImportRules()
+    {
+        try
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Import Filter Rules",
+                Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                var json = File.ReadAllText(dlg.FileName);
+                List<NotificationRule>? incomingRules = null;
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new JsonStringEnumConverter() }
+                };
+
+                // Try wrapped format first
+                try
+                {
+                    var wrapped = JsonSerializer.Deserialize<RulesExportWrapper>(json, options);
+                    if (wrapped?.Rules != null && wrapped.Rules.Count > 0)
+                    {
+                        incomingRules = wrapped.Rules;
+                    }
+                }
+                catch { }
+
+                // Fallback to direct array
+                if (incomingRules == null)
+                {
+                    try
+                    {
+                        incomingRules = JsonSerializer.Deserialize<List<NotificationRule>>(json, options);
+                    }
+                    catch { }
+                }
+
+                if (incomingRules == null || incomingRules.Count == 0)
+                {
+                    RuleStatusFeedback = "⚠️ No valid filter rules found in selected file.";
+                    return;
+                }
+
+                ImportCandidates.Clear();
+                foreach (var rule in incomingRules)
+                {
+                    var isDup = _rules.Any(r =>
+                        r.TargetField == rule.TargetField &&
+                        r.Operator == rule.Operator &&
+                        string.Equals(r.Pattern, rule.Pattern, StringComparison.OrdinalIgnoreCase) &&
+                        r.AppFilterId == rule.AppFilterId);
+
+                    var candidate = new RuleImportCandidate(rule, isDup);
+                    candidate.PropertyChanged += (s, e) =>
+                    {
+                        if (e?.PropertyName == nameof(RuleImportCandidate.IsSelected))
+                        {
+                            NotifyImportSelectionChanged();
+                        }
+                    };
+                    ImportCandidates.Add(candidate);
+                }
+
+                NotifyImportSelectionChanged();
+                IsImportModalOpen = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            RuleStatusFeedback = $"Import error: {ex.Message}";
+        }
+    }
+
+    public void NotifyImportSelectionChanged()
+    {
+        OnPropertyChanged(nameof(SelectedImportCount));
+        OnPropertyChanged(nameof(TotalImportCount));
+        OnPropertyChanged(nameof(ImportSummaryText));
+        OnPropertyChanged(nameof(ImportButtonText));
+    }
+
+    public void ConfirmImport()
+    {
+        var selected = ImportCandidates.Where(c => c.IsSelected).Select(c => c.Rule).ToList();
+        if (selected.Count == 0)
+        {
+            IsImportModalOpen = false;
+            return;
+        }
+
+        int addedCount = 0;
+        foreach (var rule in selected)
+        {
+            if (string.IsNullOrWhiteSpace(rule.Id) || _rules.Any(r => r.Id == rule.Id))
+            {
+                rule.Id = Guid.NewGuid().ToString("N");
+            }
+
+            AttachRuleListener(rule);
+            _rules.Add(rule);
+            _configService.Config.Rules.Add(rule);
+            addedCount++;
+        }
+
+        _configService.Save();
+        NotifyRulesCountChanged();
+        IsImportModalOpen = false;
+        ImportCandidates.Clear();
+        RuleStatusFeedback = $"✓ Successfully imported {addedCount} rule{(addedCount == 1 ? "" : "s")}.";
+    }
+
+    public void CancelImport()
+    {
+        IsImportModalOpen = false;
+        ImportCandidates.Clear();
+    }
+
+    public void SelectAllImport(bool select)
+    {
+        foreach (var c in ImportCandidates)
+        {
+            c.IsSelected = select;
+        }
+        NotifyImportSelectionChanged();
     }
 }

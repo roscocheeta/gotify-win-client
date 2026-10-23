@@ -486,4 +486,97 @@ public class RuleWorkflowTests
         Assert.Equal("Plex", rule.AppFilterName);
         Assert.Equal("Plex", rule.ScopeDescription);
     }
+
+    [Fact]
+    public void RulesViewModel_ConfirmImport_OnlyImportsSelectedCandidates()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var rule1 = new NotificationRule { Name = "Rule 1", Pattern = "P1", TargetField = RuleField.Title };
+        var rule2 = new NotificationRule { Name = "Rule 2", Pattern = "P2", TargetField = RuleField.Title };
+
+        rulesVm.ImportCandidates.Add(new RuleImportCandidate(rule1, isDuplicate: false) { IsSelected = true });
+        rulesVm.ImportCandidates.Add(new RuleImportCandidate(rule2, isDuplicate: false) { IsSelected = false });
+        rulesVm.IsImportModalOpen = true;
+
+        Assert.Equal(1, rulesVm.SelectedImportCount);
+        Assert.Equal(2, rulesVm.TotalImportCount);
+        Assert.Equal("1 of 2 selected", rulesVm.ImportSummaryText);
+
+        rulesVm.ConfirmImport();
+
+        Assert.False(rulesVm.IsImportModalOpen);
+        Assert.Single(rulesVm.Rules);
+        Assert.Equal("Rule 1", rulesVm.Rules[0].Name);
+        Assert.Single(configService.Config.Rules);
+        Assert.Contains("Successfully imported 1 rule", rulesVm.RuleStatusFeedback);
+    }
+
+    [Fact]
+    public void RulesViewModel_SelectAllImport_TogglesAllCandidates()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var rule1 = new NotificationRule { Name = "Rule 1", Pattern = "P1" };
+        var rule2 = new NotificationRule { Name = "Rule 2", Pattern = "P2" };
+
+        rulesVm.ImportCandidates.Add(new RuleImportCandidate(rule1, false) { IsSelected = true });
+        rulesVm.ImportCandidates.Add(new RuleImportCandidate(rule2, false) { IsSelected = true });
+
+        // Deselect all
+        rulesVm.SelectAllImport(false);
+        Assert.Equal(0, rulesVm.SelectedImportCount);
+        Assert.False(rulesVm.ImportCandidates[0].IsSelected);
+        Assert.False(rulesVm.ImportCandidates[1].IsSelected);
+
+        // Select all
+        rulesVm.SelectAllImport(true);
+        Assert.Equal(2, rulesVm.SelectedImportCount);
+        Assert.True(rulesVm.ImportCandidates[0].IsSelected);
+        Assert.True(rulesVm.ImportCandidates[1].IsSelected);
+    }
+
+    [Fact]
+    public void SettingsViewModel_FullSettingsSerialization_PreservesAppFiltersAndMinPriority()
+    {
+        var configService = new DummyConfigService();
+        configService.Config.ServerUrl = "https://gotify.test.lan";
+        configService.Config.ClientToken = "token_abc123";
+        configService.Config.GlobalMinPriority = 4;
+        configService.Config.AppFilters[5] = new AppFilterSetting
+        {
+            AppId = 5,
+            AppName = "Sonarr",
+            Enabled = true,
+            MinPriority = 6
+        };
+        configService.Config.AppFilters[9] = new AppFilterSetting
+        {
+            AppId = 9,
+            AppName = "Profilarr",
+            Enabled = false,
+            MinPriority = 8
+        };
+
+        var options = new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
+
+        var json = System.Text.Json.JsonSerializer.Serialize(configService.Config, options);
+        var deserialized = System.Text.Json.JsonSerializer.Deserialize<GotifyClientConfig>(json, options);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal("https://gotify.test.lan", deserialized.ServerUrl);
+        Assert.Equal("token_abc123", deserialized.ClientToken);
+        Assert.Equal(4, deserialized.GlobalMinPriority);
+        Assert.Equal(2, deserialized.AppFilters.Count);
+        Assert.Equal(6, deserialized.AppFilters[5].MinPriority);
+        Assert.True(deserialized.AppFilters[5].Enabled);
+        Assert.Equal(8, deserialized.AppFilters[9].MinPriority);
+        Assert.False(deserialized.AppFilters[9].Enabled);
+    }
 }

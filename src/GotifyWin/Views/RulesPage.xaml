@@ -143,7 +143,7 @@
 
             <Button Grid.Column="1" Content="{Binding ReanalyzeButtonText}" Style="{StaticResource SecondaryButton}"
                     Width="145" HorizontalContentAlignment="Center"
-                    Command="{Binding ReanalyzeCommand}" ToolTip="Scan message history for repetitive patterns (minimum 5 occurrences)"/>
+                    Command="{Binding ReanalyzeCommand}" ToolTip="Scan message history for repetitive patterns (minimum 3 occurrences)"/>
         </Grid>
 
         <!-- Main Scrollable Content -->
@@ -194,7 +194,7 @@
                                 Visibility="{Binding HasRecommendations, Converter={StaticResource InverseBoolToVis}}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="✨" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="All clean! No repetitive noise patterns detected yet (minimum 5 occurrences required)."
+                                <TextBlock Text="All clean! No repetitive noise patterns detected yet (minimum 3 occurrences required)."
                                            FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
@@ -293,34 +293,44 @@
                 <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                     <StackPanel>
                         <!-- Section Header -->
-                        <Grid Cursor="Hand">
-                            <Grid.InputBindings>
-                                <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleConfiguredRulesCommand}"/>
-                            </Grid.InputBindings>
+                        <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Cursor="Hand">
+                                <StackPanel.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleConfiguredRulesCommand}"/>
+                                </StackPanel.InputBindings>
                                 <TextBlock Text="🛡️ Configured Rules" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                 <Border CornerRadius="10" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="7,2" Margin="10,0,0,0">
                                     <TextBlock Text="{Binding RulesSummaryText}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                 </Border>
                             </StackPanel>
 
-                            <Button Grid.Column="1" Padding="10,5" Command="{Binding ToggleConfiguredRulesCommand}">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-                                        <Setter Property="Content" Value="Expand ▼"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsConfiguredRulesExpanded}" Value="True">
-                                                <Setter Property="Content" Value="Collapse ▲"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="📤 Export" Style="{StaticResource SecondaryButton}" Padding="8,4" FontSize="11" Margin="0,0,6,0"
+                                        Command="{Binding ExportRulesCommand}" ToolTip="Export configured rules to a JSON file"/>
+                                <Button Content="📥 Import" Style="{StaticResource SecondaryButton}" Padding="8,4" FontSize="11" Margin="0,0,10,0"
+                                        Command="{Binding ImportRulesCommand}" ToolTip="Import rules from a JSON file with preview &amp; selection"/>
+                                <Button Padding="10,5" Command="{Binding ToggleConfiguredRulesCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                            <Setter Property="Content" Value="Expand ▼"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsConfiguredRulesExpanded}" Value="True">
+                                                    <Setter Property="Content" Value="Collapse ▲"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
                         </Grid>
+
+                        <!-- Rule Status Feedback -->
+                        <TextBlock Text="{Binding RuleStatusFeedback}" FontSize="11" Foreground="{DynamicResource ThemeBrandAccent}"
+                                   Visibility="{Binding HasRuleStatusFeedback, Converter={StaticResource BoolToVis}}" Margin="0,6,0,0"/>
 
                         <!-- Collapsible Content -->
                         <StackPanel Visibility="{Binding IsConfiguredRulesExpanded, Converter={StaticResource BoolToVis}}" Margin="0,12,0,0">
@@ -582,5 +592,138 @@
 
             </StackPanel>
         </ScrollViewer>
+
+        <!-- ========================================== -->
+        <!-- IMPORT RULES PREVIEW & SELECTION MODAL     -->
+        <!-- ========================================== -->
+        <Grid Grid.Row="0" Grid.RowSpan="2" Background="#90000000"
+              Visibility="{Binding IsImportModalOpen, Converter={StaticResource BoolToVis}}">
+            <!-- Modal Dialog Card -->
+            <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                    BorderThickness="1" CornerRadius="10" Width="600" MaxHeight="520" Margin="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="24" ShadowDepth="4" Opacity="0.4" Color="Black"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Modal Header -->
+                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="📥 Import Rules" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="Select the filter rules you want to import into your configuration:"
+                                       FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="✕" Width="28" Height="28" Background="Transparent" BorderThickness="0"
+                                Foreground="{DynamicResource ThemeTextMuted}" FontSize="13" Cursor="Hand" Command="{Binding CancelImportCommand}"/>
+                    </Grid>
+
+                    <!-- Selection Summary & Actions -->
+                    <Border Grid.Row="1" Background="{DynamicResource ThemeCardInnerBackground}" CornerRadius="6" Padding="10,6" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding ImportSummaryText}" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource ThemeTextPrimary}" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button Content="Select All" Style="{StaticResource SecondaryButton}" Padding="8,3" FontSize="11" Margin="0,0,6,0" Command="{Binding SelectAllImportCommand}" CommandParameter="True"/>
+                                <Button Content="Deselect All" Style="{StaticResource SecondaryButton}" Padding="8,3" FontSize="11" Command="{Binding SelectAllImportCommand}" CommandParameter="False"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Scrollable Candidates List -->
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" MaxHeight="300" Margin="0,0,0,14">
+                        <ItemsControl ItemsSource="{Binding ImportCandidates}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                            BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                    <!-- Scope badge -->
+                                                    <Border CornerRadius="4" Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="5,1" Margin="6,0,0,0">
+                                                        <TextBlock Text="{Binding ScopeDescription}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                                                    </Border>
+                                                    <!-- Duplicate warning badge -->
+                                                    <Border CornerRadius="4" Background="#78350F" Padding="5,1" Margin="6,0,0,0"
+                                                            Visibility="{Binding IsDuplicate, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="Matches existing" FontSize="9" FontWeight="Bold" Foreground="#FDE68A"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock FontSize="10" Foreground="{DynamicResource ThemeTextSecondary}">
+                                                    <Run Text="{Binding TargetField}"/>
+                                                    <Run Text=" "/>
+                                                    <Run Text="{Binding Operator}"/>
+                                                    <Run Text=": '"/>
+                                                    <Run Text="{Binding Pattern}" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                    <Run Text="'"/>
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <!-- Action badge -->
+                                            <Border Grid.Column="2" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#475569"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.Drop}">
+                                                                <Setter Property="Background" Value="#7F1D1D"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.SilentLog}">
+                                                                <Setter Property="Background" Value="#1E3A8A"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Action}" Value="{x:Static cfg:RuleAction.UrgentAlert}">
+                                                                <Setter Property="Background" Value="#B45309"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding Action}" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Bottom Actions -->
+                    <Grid Grid.Row="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="1" Content="Cancel" Style="{StaticResource SecondaryButton}" Padding="14,6" Margin="0,0,10,0"
+                                Command="{Binding CancelImportCommand}"/>
+                        <Button Grid.Column="2" Content="{Binding ImportButtonText}" Style="{StaticResource PrimaryButton}" Padding="16,6"
+                                Command="{Binding ConfirmImportCommand}"/>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>
