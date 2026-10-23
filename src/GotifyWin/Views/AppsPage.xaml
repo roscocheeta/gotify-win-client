@@ -71,7 +71,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="230"/>
+                                    <ColumnDefinition Width="260"/>
                                     <ColumnDefinition Width="105"/>
                                 </Grid.ColumnDefinitions>
 
@@ -106,13 +106,17 @@
                                         </Style>
                                     </StackPanel.Style>
                                     <Grid Margin="0,0,0,4">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Notification Threshold" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                                            <TextBlock Text="Min Priority" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                             <TextBlock Text="ℹ️" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center" Cursor="Help"
                                                        ToolTip="Only show desktop notifications for messages with priority at or above this level. Messages below this threshold are logged silently in history."/>
                                         </StackPanel>
-                                        <Border HorizontalAlignment="Right" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
-                                                BorderThickness="1" CornerRadius="4" Padding="6,2">
+                                        <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                                BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding MinPriorityText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeBrandAccent}"/>
                                         </Border>
                                     </Grid>

@@ -17,7 +17,7 @@ public interface IHudManager
 public class HudManager : IHudManager
 {
     public const int MaxConcurrentVisible = 3;
-    private const double HudSpacing = 12.0;
+    private const double HudSpacing = 6.0;
     private const double Margin = 20.0;
     private const double DefaultSlotHeight = 160.0;
 

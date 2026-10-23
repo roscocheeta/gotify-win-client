@@ -184,7 +184,7 @@ public class RulesViewModel : ViewModelBase
     }
 
     public bool IsEditingRule => EditingRule != null;
-    public string RuleFormHeaderTitle => IsEditingRule ? $"✏️ Edit Rule: \"{EditingRule?.Name}\"" : "⚙️ Advanced Rule Builder";
+    public string RuleFormHeaderTitle => IsEditingRule ? $"✏️ Edit Rule: \"{EditingRule?.Name}\"" : "⚙️ Manual Rule Builder";
     public string RuleFormHeaderSubtitle => IsEditingRule
         ? "Modify rule scope, pattern, or action. Click 'Update Rule' to apply your changes or 'Cancel' to keep the original."
         : "Create manual rules using custom regex, substrings, and target fields.";
