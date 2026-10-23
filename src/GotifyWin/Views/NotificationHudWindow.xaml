@@ -81,14 +81,14 @@
 
                     <!-- App Name & Time -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock x:Name="AppNameTextBlock" Text="Gotify" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource MutedText}"/>
+                        <TextBlock x:Name="AppNameTextBlock" Text="Gotify" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryText}"/>
                         <TextBlock Text=" • " FontSize="11" Foreground="{StaticResource MutedText}"/>
-                        <TextBlock x:Name="TimeTextBlock" Text="Just now" FontSize="11" Foreground="{StaticResource MutedText}"/>
+                        <TextBlock x:Name="TimeTextBlock" Text="Just now" FontSize="11" Foreground="{StaticResource SecondaryText}"/>
                     </StackPanel>
 
                     <!-- Priority Badge -->
-                    <Border Grid.Column="2" x:Name="PriorityBadge" CornerRadius="3" Padding="5,1" Margin="6,0,8,0" Background="#3B82F6">
-                        <TextBlock x:Name="PriorityText" Text="Normal" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                    <Border Grid.Column="2" x:Name="PriorityBadge" CornerRadius="4" Padding="7,2" Margin="6,0,8,0" Background="#3B82F6">
+                        <TextBlock x:Name="PriorityText" Text="Normal" FontSize="11" FontWeight="Bold" Foreground="White"/>
                     </Border>
 
                     <!-- Close Button -->
@@ -122,8 +122,8 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0">
-                        <TextBlock x:Name="TitleTextBlock" Text="Notification Title" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryText}" TextWrapping="Wrap" Margin="0,0,0,4"/>
-                        <TextBlock x:Name="MessageTextBlock" Text="Notification message body goes here..." FontSize="12" Foreground="{StaticResource SecondaryText}" TextWrapping="Wrap" MaxHeight="80" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="TitleTextBlock" Text="Notification Title" FontSize="14" FontWeight="Bold" Foreground="{StaticResource PrimaryText}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                        <TextBlock x:Name="MessageTextBlock" Text="Notification message body goes here..." FontSize="13" Foreground="{StaticResource SecondaryText}" TextWrapping="Wrap" MaxHeight="80" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
 
                     <!-- Optional Thumbnail Preview -->

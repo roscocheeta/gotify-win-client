@@ -149,31 +149,31 @@
                                             </Grid.ColumnDefinitions>
 
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding DisplayAppName}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                                                <TextBlock Text="{Binding DisplayAppName}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
                                                 <TextBlock Text=" • " FontSize="12" Foreground="{DynamicResource ThemeTextMuted}"/>
-                                                <TextBlock Text="{Binding RelativeTime}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                                                <TextBlock Text="{Binding FormattedDate, StringFormat=' ({0})'}" FontSize="10" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                                <TextBlock Text="{Binding RelativeTime}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                                <TextBlock Text="{Binding FormattedDate, StringFormat=' ({0})'}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
                                             </StackPanel>
 
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <!-- Filtered by Rule Badge -->
-                                                <Border CornerRadius="3" Background="#1E3A5F" BorderBrush="#3B82F6" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
+                                                <Border CornerRadius="4" Background="#1E3A5F" BorderBrush="#3B82F6" BorderThickness="1" Padding="7,2" Margin="0,0,6,0"
                                                         Visibility="{Binding IsFiltered, Converter={StaticResource BoolToVis}}"
                                                         ToolTip="{Binding FilteredByRuleName, StringFormat='Automatically filtered: {0}'}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🔕 " FontSize="9" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding FilteredByRuleName, StringFormat='Filtered: {0}'}" FontSize="10" FontWeight="SemiBold" Foreground="#93C5FD"/>
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <TextBlock Text="🔕 " FontSize="10" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding FilteredByRuleName, StringFormat='Filtered: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="#93C5FD"/>
                                                     </StackPanel>
                                                 </Border>
 
                                                 <!-- Debounce duplicate badge -->
-                                                <Border CornerRadius="3" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="5,1" Margin="0,0,6,0"
+                                                <Border CornerRadius="4" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="7,2" Margin="0,0,6,0"
                                                         Visibility="{Binding DuplicateCount, Converter={StaticResource BoolToVis}}">
-                                                    <TextBlock Text="{Binding DuplicateCount, StringFormat='x{0}'}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                    <TextBlock Text="{Binding DuplicateCount, StringFormat='x{0}'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                                 </Border>
 
                                                 <!-- Priority Badge -->
-                                                <Border CornerRadius="4" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}" Padding="7,2"
+                                                <Border CornerRadius="4" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}" Padding="8,3"
                                                         ToolTip="{Binding PriorityTooltip}">
                                                     <TextBlock Text="{Binding PriorityDisplay}" FontSize="11" FontWeight="Bold" Foreground="{Binding PriorityTextColor, Converter={StaticResource HexToBrush}}"/>
                                                 </Border>

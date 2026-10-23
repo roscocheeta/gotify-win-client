@@ -38,6 +38,14 @@ public class NotificationRule : INotifyPropertyChanged
     public bool CaseSensitive { get; set; } = false;
     public RuleAction Action { get; set; } = RuleAction.Drop;
 
+    public string ActionDisplayName => Action switch
+    {
+        RuleAction.SilentLog => "Silent Log",
+        RuleAction.Drop => "Drop",
+        RuleAction.UrgentAlert => "Urgent Alert",
+        _ => Action.ToString()
+    };
+
     public void NotifyAllPropertiesChanged()
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));

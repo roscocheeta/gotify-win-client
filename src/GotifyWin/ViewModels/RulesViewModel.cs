@@ -35,6 +35,7 @@ public class RuleImportCandidate : ViewModelBase
     public string Operator => Rule.Operator.ToString();
     public string Pattern => Rule.Pattern;
     public RuleAction Action => Rule.Action;
+    public string ActionDisplayName => Rule.ActionDisplayName;
     public string CriteriaSummary => $"{TargetField} {Operator}: '{Pattern}'";
 
     public RuleImportCandidate(NotificationRule rule, bool isDuplicate)

@@ -168,7 +168,7 @@
                                 <TextBlock Text="💡 Smart Noise Recommendations" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                 <Border CornerRadius="10" Background="{DynamicResource ThemePrimaryButton}" Padding="8,2" Margin="10,0,0,0"
                                         Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="{Binding RecommendationsSummaryText}" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock Text="{Binding RecommendationsSummaryText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
                                 </Border>
                             </StackPanel>
 
@@ -304,7 +304,7 @@
                                 </StackPanel.InputBindings>
                                 <TextBlock Text="🛡️ Configured Rules" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                 <Border CornerRadius="10" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="7,2" Margin="10,0,0,0">
-                                    <TextBlock Text="{Binding RulesSummaryText}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                    <TextBlock Text="{Binding RulesSummaryText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                 </Border>
                             </StackPanel>
 
@@ -361,42 +361,67 @@
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
                                                     <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" VerticalAlignment="Center"/>
                                                     <!-- Active/Paused Status Badge -->
-                                                    <Border CornerRadius="8" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                    <Border CornerRadius="4" Padding="7,2" Margin="8,0,0,0" VerticalAlignment="Center">
                                                         <Border.Style>
                                                             <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="#10B981"/>
+                                                                <Setter Property="Background" Value="#064E3B"/>
+                                                                <Setter Property="BorderBrush" Value="#059669"/>
+                                                                <Setter Property="BorderThickness" Value="1"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding Enabled}" Value="False">
-                                                                        <Setter Property="Background" Value="#64748B"/>
+                                                                        <Setter Property="Background" Value="#1E293B"/>
+                                                                        <Setter Property="BorderBrush" Value="#475569"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Border.Style>
                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                            <TextBlock Text="● " FontSize="8" Foreground="White" VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{Binding StatusLabel}" FontSize="9" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="● " FontSize="9" VerticalAlignment="Center">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="#34D399"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding Enabled}" Value="False">
+                                                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                            <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="#D1FAE5"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding Enabled}" Value="False">
+                                                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
                                                         </StackPanel>
                                                     </Border>
                                                     <!-- Scope Badge -->
-                                                    <Border CornerRadius="6" Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                    <Border CornerRadius="4" Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                            <TextBlock Text="📱 " FontSize="9" VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{Binding ScopeDescription}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="📱 " FontSize="11" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding ScopeDescription}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </Border>
                                                 </StackPanel>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding TargetField}" FontSize="11" Foreground="{DynamicResource ThemeBrandAccent}"/>
-                                                    <TextBlock Text=" " FontSize="11"/>
-                                                    <TextBlock Text="{Binding Operator}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                                                    <TextBlock Text=": '" FontSize="11" Foreground="{DynamicResource ThemeTextMuted}"/>
-                                                    <TextBlock Text="{Binding Pattern}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                                    <TextBlock Text="'" FontSize="11" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                                    <TextBlock Text="{Binding TargetField}" FontSize="12" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                                                    <TextBlock Text=" " FontSize="12"/>
+                                                    <TextBlock Text="{Binding Operator}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                                    <TextBlock Text=": '" FontSize="12" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                                    <TextBlock Text="{Binding Pattern}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                    <TextBlock Text="'" FontSize="12" Foreground="{DynamicResource ThemeTextMuted}"/>
                                                 </StackPanel>
                                             </StackPanel>
 
                                             <!-- Action Badge -->
-                                            <Border Grid.Column="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,14,0">
+                                            <Border Grid.Column="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
                                                         <Setter Property="Background" Value="#475569"/>
@@ -413,7 +438,7 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <TextBlock Text="{Binding Action}" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                                <TextBlock Text="{Binding ActionDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White"/>
                                             </Border>
 
                                             <!-- Enabled Fluent Toggle Switch -->
@@ -476,9 +501,9 @@
                             <StackPanel Grid.Column="0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding RuleFormHeaderTitle}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                    <Border CornerRadius="4" Background="#1E3A8A" BorderBrush="#3B82F6" BorderThickness="1" Padding="6,1" Margin="8,0,0,0"
+                                    <Border CornerRadius="4" Background="#1E3A8A" BorderBrush="#3B82F6" BorderThickness="1" Padding="8,2" Margin="8,0,0,0"
                                             Visibility="{Binding IsEditingRule, Converter={StaticResource BoolToVis}}">
-                                        <TextBlock Text="EDITING" FontSize="9" FontWeight="Bold" Foreground="#93C5FD"/>
+                                        <TextBlock Text="EDITING" FontSize="11" FontWeight="Bold" Foreground="#93C5FD"/>
                                     </Border>
                                 </StackPanel>
                                 <TextBlock Text="{Binding RuleFormHeaderSubtitle}"
@@ -682,20 +707,20 @@
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                                     <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                                                     <!-- Scope badge -->
-                                                    <Border CornerRadius="4" Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="5,1" Margin="6,0,0,0">
-                                                        <TextBlock Text="{Binding ScopeDescription}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                                                    <Border CornerRadius="4" Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="6,2" Margin="6,0,0,0">
+                                                        <TextBlock Text="{Binding ScopeDescription}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
                                                     </Border>
                                                     <!-- Duplicate warning badge -->
-                                                    <Border CornerRadius="4" Background="#78350F" Padding="5,1" Margin="6,0,0,0"
+                                                    <Border CornerRadius="4" Background="#78350F" Padding="6,2" Margin="6,0,0,0"
                                                             Visibility="{Binding IsDuplicate, Converter={StaticResource BoolToVis}}">
-                                                        <TextBlock Text="Matches existing" FontSize="9" FontWeight="Bold" Foreground="#FDE68A"/>
+                                                        <TextBlock Text="Matches existing" FontSize="11" FontWeight="Bold" Foreground="#FDE68A"/>
                                                     </Border>
                                                 </StackPanel>
-                                                <TextBlock Text="{Binding CriteriaSummary}" FontSize="10" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                                <TextBlock Text="{Binding CriteriaSummary}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
                                             </StackPanel>
 
                                             <!-- Action badge -->
-                                            <Border Grid.Column="2" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                            <Border Grid.Column="2" CornerRadius="4" Padding="7,2" VerticalAlignment="Center">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
                                                         <Setter Property="Background" Value="#475569"/>
@@ -712,7 +737,7 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <TextBlock Text="{Binding Action}" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                                <TextBlock Text="{Binding ActionDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White"/>
                                             </Border>
                                         </Grid>
                                     </Border>
