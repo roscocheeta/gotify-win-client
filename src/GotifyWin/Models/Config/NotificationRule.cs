@@ -37,4 +37,9 @@ public class NotificationRule : INotifyPropertyChanged
     public string Pattern { get; set; } = string.Empty;
     public bool CaseSensitive { get; set; } = false;
     public RuleAction Action { get; set; } = RuleAction.Drop;
+
+    public void NotifyAllPropertiesChanged()
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
+    }
 }

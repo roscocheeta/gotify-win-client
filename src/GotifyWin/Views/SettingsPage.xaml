@@ -77,11 +77,11 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled"
-                  Margin="24,16,10,24"
-                  Padding="0,0,16,0"
+                  Margin="24,16,24,24"
+                  Padding="0,0,14,0"
                   SnapsToDevicePixels="True"
                   UseLayoutRounding="True">
-        <StackPanel MaxWidth="820" HorizontalAlignment="Left">
+        <StackPanel>
             <!-- Page Header -->
             <StackPanel Margin="0,0,0,18">
                 <TextBlock Text="Settings" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
@@ -360,10 +360,10 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
+                        <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
                             <TextBlock Text="Backup &amp; Restore" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
                             <TextBlock Text="Export full settings (including app priority filters, quiet hours, and display preferences) or restore from a backup file."
-                                       FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Content="📤 Export Settings" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding ExportSettingsCommand}"/>

@@ -584,4 +584,161 @@ public class RuleWorkflowTests
         Assert.Equal(8, deserialized.AppFilters[9].MinPriority);
         Assert.False(deserialized.AppFilters[9].Enabled);
     }
+
+    [Fact]
+    public void EditRule_PopulatesBuilderAndUpdatesExistingRuleInPlace()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var existingRule = new NotificationRule
+        {
+            Id = "rule_original_1",
+            Name = "Mute Sonarr Backups",
+            Enabled = true,
+            AppFilterId = 2,
+            AppFilterName = "Sonarr",
+            TargetField = RuleField.Title,
+            Operator = RuleOperator.Contains,
+            Pattern = "Backup Finished",
+            Action = RuleAction.SilentLog
+        };
+        configService.Config.Rules.Add(existingRule);
+        rulesVm.Rules.Add(existingRule);
+
+        // 1. Trigger Edit
+        rulesVm.EditRuleCommand.Execute(existingRule);
+
+        Assert.True(rulesVm.IsEditingRule);
+        Assert.Same(existingRule, rulesVm.EditingRule);
+        Assert.Equal("Mute Sonarr Backups", rulesVm.NewRuleName);
+        Assert.Equal("Backup Finished", rulesVm.NewRulePattern);
+        Assert.Equal("✓ Update Rule", rulesVm.RuleFormSubmitButtonText);
+        Assert.Contains("Edit Rule", rulesVm.RuleFormHeaderTitle);
+
+        // 2. Modify properties in builder
+        rulesVm.NewRuleName = "Drop Sonarr Backups & Tests";
+        rulesVm.NewRulePattern = "Backup or Test";
+        rulesVm.NewRuleAction = RuleAction.Drop;
+
+        // 3. Submit Update
+        rulesVm.AddRuleCommand.Execute(null);
+
+        // Form should reset and exit edit mode
+        Assert.False(rulesVm.IsEditingRule);
+        Assert.Null(rulesVm.EditingRule);
+        Assert.Equal("+ Add Custom Rule", rulesVm.RuleFormSubmitButtonText);
+
+        // Original rule should be updated in-place without duplicating
+        Assert.Single(rulesVm.Rules);
+        Assert.Same(existingRule, rulesVm.Rules[0]);
+        Assert.Equal("Drop Sonarr Backups & Tests", existingRule.Name);
+        Assert.Equal("Backup or Test", existingRule.Pattern);
+        Assert.Equal(RuleAction.Drop, existingRule.Action);
+    }
+
+    [Fact]
+    public void CancelEdit_RestoresBuilderWithoutMutatingOriginalRule()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var existingRule = new NotificationRule
+        {
+            Id = "rule_keep_1",
+            Name = "Original Rule",
+            Pattern = "KeepThis",
+            Action = RuleAction.SilentLog
+        };
+        rulesVm.Rules.Add(existingRule);
+
+        // Start editing
+        rulesVm.StartEditingRule(existingRule);
+        Assert.True(rulesVm.IsEditingRule);
+
+        // Change values in form
+        rulesVm.NewRuleName = "Unsaved Changes";
+        rulesVm.NewRulePattern = "DiscardThis";
+
+        // Cancel
+        rulesVm.CancelEditCommand.Execute(null);
+
+        Assert.False(rulesVm.IsEditingRule);
+        Assert.Null(rulesVm.EditingRule);
+        Assert.Empty(rulesVm.NewRuleName);
+        Assert.Empty(rulesVm.NewRulePattern);
+        Assert.Equal("Original Rule", existingRule.Name);
+        Assert.Equal("KeepThis", existingRule.Pattern);
+    }
+
+    [Fact]
+    public void RuleImportCandidate_CriteriaSummary_MatchesFormat()
+    {
+        var rule = new NotificationRule
+        {
+            Name = "Import Test",
+            TargetField = RuleField.Title,
+            Operator = RuleOperator.Contains,
+            Pattern = "Download Finished"
+        };
+        var candidate = new RuleImportCandidate(rule, isDuplicate: false);
+
+        Assert.Equal("Title Contains: 'Download Finished'", candidate.CriteriaSummary);
+        Assert.True(candidate.IsSelected);
+    }
+
+    [Fact]
+    public void ExportAndImport_Roundtrip_WorksWithoutCrashing()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var rule = new NotificationRule
+        {
+            Id = "roundtrip_1",
+            Name = "Roundtrip Rule",
+            AppFilterId = 5,
+            AppFilterName = "Prowlarr",
+            TargetField = RuleField.Message,
+            Operator = RuleOperator.Contains,
+            Pattern = "Indexer Unhealthy",
+            Action = RuleAction.UrgentAlert,
+            CaseSensitive = true,
+            Enabled = true
+        };
+        rulesVm.Rules.Add(rule);
+
+        // Serialize export wrapper
+        var export = new RulesExportWrapper
+        {
+            Version = 1,
+            ExportDateUtc = DateTime.UtcNow,
+            Rules = rulesVm.Rules.ToList()
+        };
+
+        var options = new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
+
+        var json = System.Text.Json.JsonSerializer.Serialize(export, options);
+
+        // Deserialize as wrapped
+        var deserialized = System.Text.Json.JsonSerializer.Deserialize<RulesExportWrapper>(json, options);
+        Assert.NotNull(deserialized);
+        Assert.Single(deserialized.Rules);
+
+        // Populate candidates as done in ImportRules
+        rulesVm.ImportCandidates.Clear();
+        foreach (var r in deserialized.Rules)
+        {
+            var candidate = new RuleImportCandidate(r, isDuplicate: false);
+            rulesVm.ImportCandidates.Add(candidate);
+        }
+
+        Assert.Single(rulesVm.ImportCandidates);
+        Assert.Equal("Message Contains: 'Indexer Unhealthy'", rulesVm.ImportCandidates[0].CriteriaSummary);
+        Assert.Equal("Prowlarr", rulesVm.ImportCandidates[0].ScopeDescription);
+    }
 }

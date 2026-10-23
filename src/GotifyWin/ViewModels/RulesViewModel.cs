@@ -35,6 +35,7 @@ public class RuleImportCandidate : ViewModelBase
     public string Operator => Rule.Operator.ToString();
     public string Pattern => Rule.Pattern;
     public RuleAction Action => Rule.Action;
+    public string CriteriaSummary => $"{TargetField} {Operator}: '{Pattern}'";
 
     public RuleImportCandidate(NotificationRule rule, bool isDuplicate)
     {
@@ -165,6 +166,29 @@ public class RulesViewModel : ViewModelBase
         set => SetProperty(ref _isAdvancedExpanded, value);
     }
 
+    private NotificationRule? _editingRule;
+    public NotificationRule? EditingRule
+    {
+        get => _editingRule;
+        set
+        {
+            if (SetProperty(ref _editingRule, value))
+            {
+                OnPropertyChanged(nameof(IsEditingRule));
+                OnPropertyChanged(nameof(RuleFormHeaderTitle));
+                OnPropertyChanged(nameof(RuleFormHeaderSubtitle));
+                OnPropertyChanged(nameof(RuleFormSubmitButtonText));
+            }
+        }
+    }
+
+    public bool IsEditingRule => EditingRule != null;
+    public string RuleFormHeaderTitle => IsEditingRule ? $"✏️ Edit Rule: \"{EditingRule?.Name}\"" : "⚙️ Advanced Rule Builder";
+    public string RuleFormHeaderSubtitle => IsEditingRule
+        ? "Modify rule scope, pattern, or action. Click 'Update Rule' to apply your changes or 'Cancel' to keep the original."
+        : "Create manual rules using custom regex, substrings, and target fields.";
+    public string RuleFormSubmitButtonText => IsEditingRule ? "✓ Update Rule" : "+ Add Custom Rule";
+
     private string _newRuleName = string.Empty;
     public string NewRuleName
     {
@@ -258,6 +282,8 @@ public class RulesViewModel : ViewModelBase
     public string RulesSummaryText => _rules.Count == 0 ? "0 rules" : PausedRulesCount == 0 ? $"{ActiveRulesCount} active" : $"{ActiveRulesCount} active • {PausedRulesCount} paused";
 
     public ICommand AddRuleCommand { get; }
+    public ICommand EditRuleCommand { get; }
+    public ICommand CancelEditCommand { get; }
     public ICommand DeleteRuleCommand { get; }
     public ICommand ToggleRuleCommand { get; }
     public ICommand ToggleAdvancedCommand { get; }
@@ -282,6 +308,8 @@ public class RulesViewModel : ViewModelBase
         _historyFetcher = historyFetcher;
 
         AddRuleCommand = new RelayCommand(AddRule);
+        EditRuleCommand = new RelayCommand<NotificationRule>(StartEditingRule);
+        CancelEditCommand = new RelayCommand(CancelEditingRule);
         DeleteRuleCommand = new RelayCommand<NotificationRule>(DeleteRule);
         ToggleRuleCommand = new RelayCommand<NotificationRule>(ToggleRule);
         ToggleAdvancedCommand = new RelayCommand(() => IsAdvancedExpanded = !IsAdvancedExpanded);
@@ -523,6 +551,51 @@ public class RulesViewModel : ViewModelBase
         };
     }
 
+    public void StartEditingRule(NotificationRule? rule)
+    {
+        if (rule == null) return;
+        RefreshAvailableApps();
+        EditingRule = rule;
+
+        NewRuleName = rule.Name;
+        NewRuleField = rule.TargetField;
+        NewRuleOperator = rule.Operator;
+        NewRulePattern = rule.Pattern;
+        NewRuleAction = rule.Action;
+        NewRuleCaseSensitive = rule.CaseSensitive;
+
+        if (rule.AppFilterId.HasValue && rule.AppFilterId.Value > 0)
+        {
+            var match = AvailableAppFilterOptions.FirstOrDefault(x => x.Id == rule.AppFilterId.Value);
+            if (match == null)
+            {
+                match = new AppFilterOption { Id = rule.AppFilterId.Value, Name = rule.AppFilterName ?? $"App #{rule.AppFilterId}" };
+                AvailableAppFilterOptions.Add(match);
+            }
+            SelectedAppFilterOption = match;
+        }
+        else
+        {
+            SelectedAppFilterOption = AvailableAppFilterOptions.FirstOrDefault();
+        }
+
+        IsAdvancedExpanded = true;
+        RuleStatusFeedback = $"✏️ Editing rule '{rule.Name}'. Revise criteria below and click 'Update Rule'.";
+    }
+
+    public void CancelEditingRule()
+    {
+        EditingRule = null;
+        NewRuleName = string.Empty;
+        NewRulePattern = string.Empty;
+        NewRuleField = RuleField.Title;
+        NewRuleOperator = RuleOperator.Contains;
+        NewRuleAction = RuleAction.SilentLog;
+        NewRuleCaseSensitive = false;
+        SelectedAppFilterOption = AvailableAppFilterOptions.FirstOrDefault();
+        RuleStatusFeedback = string.Empty;
+    }
+
     private void AddRule()
     {
         if (string.IsNullOrWhiteSpace(NewRulePattern))
@@ -538,6 +611,35 @@ public class RulesViewModel : ViewModelBase
         var appName = (SelectedAppFilterOption != null && SelectedAppFilterOption.Id > 0)
             ? SelectedAppFilterOption.Name
             : null;
+
+        if (IsEditingRule && EditingRule != null)
+        {
+            // In-place update of existing rule
+            EditingRule.Name = name;
+            EditingRule.AppFilterId = appId;
+            EditingRule.AppFilterName = appName;
+            EditingRule.TargetField = NewRuleField;
+            EditingRule.Operator = NewRuleOperator;
+            EditingRule.Pattern = NewRulePattern.Trim();
+            EditingRule.Action = NewRuleAction;
+            EditingRule.CaseSensitive = NewRuleCaseSensitive;
+            EditingRule.NotifyAllPropertiesChanged();
+
+            _configService.Save();
+
+            // Refresh collection for UI
+            var index = _rules.IndexOf(EditingRule);
+            if (index >= 0)
+            {
+                _rules[index] = EditingRule;
+            }
+
+            var updatedName = EditingRule.Name;
+            CancelEditingRule();
+            RuleStatusFeedback = $"✓ Successfully updated rule '{updatedName}'.";
+            NotifyRulesCountChanged();
+            return;
+        }
 
         var rule = new NotificationRule
         {
@@ -562,11 +664,16 @@ public class RulesViewModel : ViewModelBase
         NewRuleName = string.Empty;
         NewRulePattern = string.Empty;
         SelectedAppFilterOption = AvailableAppFilterOptions.FirstOrDefault();
+        RuleStatusFeedback = $"✓ Created rule '{rule.Name}'.";
     }
 
     private void DeleteRule(NotificationRule? rule)
     {
         if (rule == null) return;
+        if (rule == EditingRule)
+        {
+            CancelEditingRule();
+        }
         _rules.Remove(rule);
         _configService.Config.Rules.Remove(rule);
         _configService.Save();
