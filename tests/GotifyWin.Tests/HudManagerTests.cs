@@ -45,4 +45,52 @@ public class HudManagerTests
         thread.Start();
         thread.Join();
     }
+
+    [Fact]
+    public void HudManager_TopLeft_And_BottomLeft_Positions()
+    {
+        var thread = new Thread(() =>
+        {
+            var manager = new HudManager();
+            var settingsTL = new PresentationSettings
+            {
+                Mode = NotificationMode.CustomHud,
+                Position = HudPosition.TopLeft,
+                DisplayDurationSeconds = 5
+            };
+
+            var msg = new GotifyMessage
+            {
+                Id = 1,
+                Title = "TopLeft Alert",
+                Message = "Testing TopLeft positioning",
+                Priority = 6
+            };
+
+            manager.ShowNotification(msg, settingsTL, null);
+            Assert.Equal(1, manager.ActiveCount);
+
+            var settingsBL = new PresentationSettings
+            {
+                Mode = NotificationMode.CustomHud,
+                Position = HudPosition.BottomLeft,
+                DisplayDurationSeconds = 5
+            };
+
+            var msg2 = new GotifyMessage
+            {
+                Id = 2,
+                Title = "BottomLeft Alert",
+                Message = "Testing BottomLeft positioning",
+                Priority = 7
+            };
+
+            manager.ShowNotification(msg2, settingsBL, null);
+            Assert.Equal(2, manager.ActiveCount);
+        });
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
 }

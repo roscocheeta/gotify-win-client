@@ -5,7 +5,7 @@
              xmlns:conv="clr-namespace:GotifyWin.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignHeight="950" d:DesignWidth="800"
+             mc:Ignorable="d" d:DesignHeight="800" d:DesignWidth="800"
              Background="{DynamicResource ThemeBackground}">
     <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -16,13 +16,13 @@
             <Setter Property="BorderBrush" Value="{DynamicResource ThemeCardBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Padding" Value="16"/>
             <Setter Property="Margin" Value="0,0,0,16"/>
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ThemePrimaryButton}"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemePrimaryButtonText}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="16,8"/>
             <Setter Property="FontSize" Value="12"/>
@@ -77,6 +77,9 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled"
+                  PanningMode="VerticalOnly"
+                  CanContentScroll="False"
+                  VirtualizingPanel.ScrollUnit="Pixel"
                   Margin="24,16,24,24"
                   Padding="0,0,14,0"
                   SnapsToDevicePixels="True"
@@ -89,297 +92,513 @@
                            FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,3,0,0"/>
             </StackPanel>
 
-            <!-- 1. Server Connection -->
+            <!-- 1. Server Connection (Collapsible) -->
             <Border Style="{StaticResource SectionBorder}">
                 <StackPanel>
-                    <TextBlock Text="Gotify Server Connection" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" Margin="0,0,0,12"/>
-
-                    <TextBlock Text="Server URL (e.g. https://gotify.homelab.lan:8080)" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,0,0,4"/>
-                    <TextBox Style="{StaticResource SettingsTextBox}" Text="{Binding ServerUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
-
-                    <TextBlock Text="Client Token" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,0,0,4"/>
-                    
-                    <!-- Masked Token Input Grid with Eye Reveal & Copy Buttons -->
-                    <Grid Margin="0,0,0,12">
+                    <Grid Cursor="Hand">
+                        <Grid.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleConnectionCommand}"/>
+                        </Grid.InputBindings>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Unmasked editable text box -->
-                        <TextBox Grid.Column="0" Style="{StaticResource SettingsTextBox}"
-                                 Text="{Binding ClientToken, UpdateSourceTrigger=PropertyChanged}"
-                                 Visibility="{Binding IsTokenRevealed, Converter={StaticResource BoolToVis}}"
-                                 Margin="0,0,8,0"/>
-
-                        <!-- Masked bullet text box -->
-                        <TextBox Grid.Column="0" Style="{StaticResource SettingsTextBox}"
-                                 Text="{Binding MaskedDisplayToken, Mode=OneWay}"
-                                 IsReadOnly="True"
-                                 Visibility="{Binding IsTokenRevealed, Converter={StaticResource InverseBoolToVis}}"
-                                 Margin="0,0,8,0"/>
-
-                        <!-- Eye Reveal Button -->
-                        <Button Grid.Column="1" Content="{Binding TokenEyeIcon}" Style="{StaticResource SecondaryButton}"
-                                ToolTip="{Binding TokenEyeTooltip}" Width="38" Padding="0" Margin="0,0,6,0"
-                                Command="{Binding ToggleTokenVisibilityCommand}"/>
-
-                        <!-- Copy Button -->
-                        <Button Grid.Column="2" Content="📋" Style="{StaticResource SecondaryButton}"
-                                ToolTip="Copy token to clipboard" Width="38" Padding="0"
-                                Command="{Binding CopyTokenCommand}"/>
-                    </Grid>
-
-                    <Grid Margin="0,4,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Button Grid.Column="0" Content="Test Connection" Style="{StaticResource SecondaryButton}" Command="{Binding TestConnectionCommand}" Margin="0,0,8,0"/>
-                        <Button Grid.Column="1" Content="Save Connection" Style="{StaticResource PrimaryButton}" Command="{Binding SaveConnectionCommand}"/>
-                        <TextBlock Grid.Column="2" Text="{Binding TestStatus}" FontSize="12" Foreground="{DynamicResource ThemeBrandAccent}" VerticalAlignment="Center" Margin="14,0,0,0"/>
-                    </Grid>
-                </StackPanel>
-            </Border>
-
-            <!-- 2. Windows 11 Notification Presentation -->
-            <Border Style="{StaticResource SectionBorder}">
-                <StackPanel>
-                    <Grid Margin="0,0,0,12">
-                        <TextBlock Text="Alerts &amp; Popups" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                        <Button Content="🔔 Preview Alert" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Right" Command="{Binding SendTestNotificationCommand}"/>
-                    </Grid>
-
-                    <!-- Presentation Mode -->
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="270"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Popup Style" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="Choose how incoming alerts appear on your desktop." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="📡 Gotify Server Connection" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="Connect to your private Gotify server instance." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
                         </StackPanel>
-                        <ComboBox Grid.Column="1" Height="34"
-                                  SelectedValue="{Binding SelectedMode}" SelectedValuePath="Tag">
-                            <ComboBoxItem Content="Minimal Floating Banner (Recommended)" Tag="{x:Static cfg:NotificationMode.CustomHud}"/>
-                            <ComboBoxItem Content="Windows Notification Center (Standard)" Tag="{x:Static cfg:NotificationMode.NativeToast}"/>
-                            <ComboBoxItem Content="Both (Floating Banner + Windows)" Tag="{x:Static cfg:NotificationMode.Both}"/>
-                        </ComboBox>
+
+                        <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                BorderThickness="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{Binding ConnectionSummaryText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                        </Border>
+
+                        <Button Grid.Column="2" Command="{Binding ToggleConnectionCommand}" Padding="10,4" FontSize="11">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                    <Setter Property="Content" Value="Expand ▼"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnectionExpanded}" Value="True">
+                                            <Setter Property="Content" Value="Collapse ▲"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </Grid>
 
-                    <!-- HUD Screen Position -->
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="270"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Banner Position" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="Screen location where floating banners appear." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                        </StackPanel>
-                        <ComboBox Grid.Column="1" Height="34"
-                                  SelectedValue="{Binding SelectedPosition}" SelectedValuePath="Tag">
-                            <ComboBoxItem Content="Bottom-Right (Standard)" Tag="{x:Static cfg:HudPosition.BottomRight}"/>
-                            <ComboBoxItem Content="Top-Right" Tag="{x:Static cfg:HudPosition.TopRight}"/>
-                            <ComboBoxItem Content="Top-Center" Tag="{x:Static cfg:HudPosition.TopCenter}"/>
-                            <ComboBoxItem Content="Bottom-Center" Tag="{x:Static cfg:HudPosition.BottomCenter}"/>
-                        </ComboBox>
-                    </Grid>
+                    <!-- Collapsible Content -->
+                    <StackPanel Visibility="{Binding IsConnectionExpanded, Converter={StaticResource BoolToVis}}" Margin="0,14,0,0">
+                        <TextBlock Text="Server URL (e.g. https://gotify.homelab.lan:8080)" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource SettingsTextBox}" Text="{Binding ServerUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
 
-                    <!-- Display Duration -->
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="270"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Banner Duration" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="How long floating banners stay visible before auto-dismissing." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                        </StackPanel>
-                        <Grid Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Client Token" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,0,0,4"/>
+                        
+                        <!-- Masked Token Input Grid with Eye Reveal & Copy Buttons -->
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Slider Grid.Column="0" Minimum="2" Maximum="20" Value="{Binding DisplayDurationSeconds}"
-                                    TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
-                                    CornerRadius="4" Padding="8,3" VerticalAlignment="Center" MinWidth="82">
-                                <TextBlock Text="{Binding DisplayDurationText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" HorizontalAlignment="Center"/>
-                            </Border>
+
+                            <!-- Unmasked editable text box -->
+                            <TextBox Grid.Column="0" Style="{StaticResource SettingsTextBox}"
+                                     Text="{Binding ClientToken, UpdateSourceTrigger=PropertyChanged}"
+                                     Visibility="{Binding IsTokenRevealed, Converter={StaticResource BoolToVis}}"
+                                     Margin="0,0,8,0"/>
+
+                            <!-- Masked bullet text box -->
+                            <TextBox Grid.Column="0" Style="{StaticResource SettingsTextBox}"
+                                     Text="{Binding MaskedDisplayToken, Mode=OneWay}"
+                                     IsReadOnly="True"
+                                     Visibility="{Binding IsTokenRevealed, Converter={StaticResource InverseBoolToVis}}"
+                                     Margin="0,0,8,0"/>
+
+                            <!-- Eye Reveal Button -->
+                            <Button Grid.Column="1" Content="{Binding TokenEyeIcon}" Style="{StaticResource SecondaryButton}"
+                                    ToolTip="{Binding TokenEyeTooltip}" Width="38" Padding="0" Margin="0,0,6,0"
+                                    Command="{Binding ToggleTokenVisibilityCommand}"/>
+
+                            <!-- Copy Button -->
+                            <Button Grid.Column="2" Content="📋" Style="{StaticResource SecondaryButton}"
+                                    ToolTip="Copy token to clipboard" Width="38" Padding="0"
+                                    Command="{Binding CopyTokenCommand}"/>
                         </Grid>
-                    </Grid>
 
-                    <!-- Countdown Bar Toggle -->
-                    <CheckBox Content="Show countdown progress bar on floating banners"
-                              IsChecked="{Binding ShowCountdownBar}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                    <!-- Sound Toggle -->
-                    <CheckBox Content="Play notification chime"
-                              IsChecked="{Binding PlaySound}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
-
-                    <!-- Smart Fullscreen Gaming & Presentation Suppression -->
-                    <CheckBox Content="Mute alert popups while gaming, watching fullscreen video, or presenting"
-                              IsChecked="{Binding SuppressOnFullscreen}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                            <Button Grid.Column="0" Content="Test Connection" Style="{StaticResource SecondaryButton}" Command="{Binding TestConnectionCommand}" Margin="0,0,8,0"/>
+                            <Button Grid.Column="1" Content="Save Connection" Style="{StaticResource PrimaryButton}" Command="{Binding SaveConnectionCommand}"/>
+                            <TextBlock Grid.Column="2" Text="{Binding TestStatus}" FontSize="12" Foreground="{DynamicResource ThemeBrandAccent}" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- 3. Global Priority & Debounce Anti-Spam -->
+            <!-- 2. Windows 11 Notification Presentation (Collapsible) -->
             <Border Style="{StaticResource SectionBorder}">
                 <StackPanel>
-                    <TextBlock Text="Filtering &amp; Anti-Spam Debounce" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" Margin="0,0,0,12"/>
+                    <Grid Cursor="Hand">
+                        <Grid.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleNotificationsCommand}"/>
+                        </Grid.InputBindings>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Card A: Global Minimum Priority -->
-                    <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
-                            CornerRadius="8" Padding="14,12" Margin="0,0,0,12">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,8">
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="🔔 Notification Delivery &amp; Popups" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="Customize banner position, popup style, duration, and mute settings." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                BorderThickness="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{Binding NotificationsSummaryText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                        </Border>
+
+                        <Button Grid.Column="2" Command="{Binding ToggleNotificationsCommand}" Padding="10,4" FontSize="11">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                    <Setter Property="Content" Value="Expand ▼"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsNotificationsExpanded}" Value="True">
+                                            <Setter Property="Content" Value="Collapse ▲"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+
+                    <!-- Collapsible Content -->
+                    <StackPanel Visibility="{Binding IsNotificationsExpanded, Converter={StaticResource BoolToVis}}" Margin="0,14,0,0">
+                        <Grid Margin="0,0,0,14">
+                            <TextBlock Text="Presentation Options" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <Button Content="🔔 Preview Alert" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Right" Command="{Binding SendTestNotificationCommand}"/>
+                        </Grid>
+
+                        <!-- Presentation Mode -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="270"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Popup Style" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                <TextBlock Text="Choose how incoming alerts appear on your desktop." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" Height="34"
+                                      SelectedValue="{Binding SelectedMode}" SelectedValuePath="Tag">
+                                <ComboBoxItem Content="Minimal Floating Banner (Recommended)" Tag="{x:Static cfg:NotificationMode.CustomHud}"/>
+                                <ComboBoxItem Content="Windows Notification Center (Standard)" Tag="{x:Static cfg:NotificationMode.NativeToast}"/>
+                                <ComboBoxItem Content="Both (Floating Banner + Windows)" Tag="{x:Static cfg:NotificationMode.Both}"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- HUD Screen Position (Includes Top-Left and Bottom-Left) -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="270"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Banner Position" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                <TextBlock Text="Screen location where floating banners appear (stacks down from top, up from bottom)." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" Height="34"
+                                      SelectedValue="{Binding SelectedPosition}" SelectedValuePath="Tag">
+                                <ComboBoxItem Content="Bottom-Right (Standard)" Tag="{x:Static cfg:HudPosition.BottomRight}"/>
+                                <ComboBoxItem Content="Top-Right" Tag="{x:Static cfg:HudPosition.TopRight}"/>
+                                <ComboBoxItem Content="Top-Left" Tag="{x:Static cfg:HudPosition.TopLeft}"/>
+                                <ComboBoxItem Content="Bottom-Left" Tag="{x:Static cfg:HudPosition.BottomLeft}"/>
+                                <ComboBoxItem Content="Top-Center" Tag="{x:Static cfg:HudPosition.TopCenter}"/>
+                                <ComboBoxItem Content="Bottom-Center" Tag="{x:Static cfg:HudPosition.BottomCenter}"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Display Duration -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="270"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Banner Duration" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                <TextBlock Text="How long floating banners stay visible before auto-dismissing." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                            </StackPanel>
+                            <Grid Grid.Column="1" VerticalAlignment="Center">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Global Minimum Priority" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                    <TextBlock Text="Silently log messages with a priority lower than this threshold directly into history without triggering a popup or chime."
-                                               FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
-                                </StackPanel>
-                                <Border Grid.Column="1" Background="{DynamicResource ThemePrimaryButton}" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding GlobalMinPriorityText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                                <Slider Grid.Column="0" Minimum="2" Maximum="20" Value="{Binding DisplayDurationSeconds}"
+                                        TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                        CornerRadius="4" Padding="8,3" VerticalAlignment="Center" MinWidth="82">
+                                    <TextBlock Text="{Binding DisplayDurationText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" HorizontalAlignment="Center"/>
                                 </Border>
                             </Grid>
-                            <Slider Minimum="0" Maximum="10" Value="{Binding GlobalMinPriority}" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
+                        </Grid>
+
+                        <!-- Countdown Bar Toggle -->
+                        <CheckBox Content="Show countdown progress bar on floating banners"
+                                  IsChecked="{Binding ShowCountdownBar}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
+
+                        <!-- Sound Toggle -->
+                        <CheckBox Content="Play notification chime"
+                                  IsChecked="{Binding PlaySound}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
+
+                        <!-- Smart Fullscreen Gaming & Presentation Suppression -->
+                        <CheckBox Content="Mute alert popups while gaming, watching fullscreen video, or presenting"
+                                  IsChecked="{Binding SuppressOnFullscreen}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. Global Priority & Debounce Anti-Spam (Collapsible) -->
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <Grid Cursor="Hand">
+                        <Grid.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleFilteringCommand}"/>
+                        </Grid.InputBindings>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="🛡️ Filtering &amp; Anti-Spam Debounce" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="Suppress noise by throttling rapid duplicates and low priority alerts." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
                         </StackPanel>
-                    </Border>
 
-                    <!-- Card B: Anti-Flap Debounce -->
-                    <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
-                            CornerRadius="8" Padding="14,12" Margin="0,0,0,4">
-                        <StackPanel>
-                            <CheckBox Content="Enable anti-flap debounce (combines duplicate rapid alerts into one)"
-                                      IsChecked="{Binding EnableDebounce}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBlock Text="Prevents notification storms by combining identical consecutive alerts from the same app within a short window."
-                                       FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="24,0,0,0"/>
+                        <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                BorderThickness="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{Binding FilteringSummaryText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                        </Border>
 
-                            <!-- Debounce Window Slider -->
-                            <StackPanel Margin="0,12,0,0" Visibility="{Binding EnableDebounce, Converter={StaticResource BoolToVis}}">
-                                <Grid Margin="0,0,0,6">
+                        <Button Grid.Column="2" Command="{Binding ToggleFilteringCommand}" Padding="10,4" FontSize="11">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                    <Setter Property="Content" Value="Expand ▼"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFilteringExpanded}" Value="True">
+                                            <Setter Property="Content" Value="Collapse ▲"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+
+                    <!-- Collapsible Content -->
+                    <StackPanel Visibility="{Binding IsFilteringExpanded, Converter={StaticResource BoolToVis}}" Margin="0,14,0,0">
+                        <!-- Card A: Global Minimum Priority -->
+                        <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                CornerRadius="8" Padding="14,12" Margin="0,0,0,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Debounce Window Duration" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                    <Border Grid.Column="1" Background="#475569" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding DebounceText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Global Minimum Priority" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                        <TextBlock Text="Silently log messages with a priority lower than this threshold directly into history without triggering a popup or chime."
+                                                   FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="{DynamicResource ThemePrimaryButton}" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding GlobalMinPriorityText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
                                     </Border>
                                 </Grid>
-                                <Slider Minimum="3" Maximum="60" Value="{Binding DebounceWindowSeconds}" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
+                                <Slider Minimum="0" Maximum="10" Value="{Binding GlobalMinPriority}" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
                             </StackPanel>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Border>
+                        </Border>
 
-            <!-- 4. Do Not Disturb & Quiet Hours -->
-            <Border Style="{StaticResource SectionBorder}">
-                <StackPanel>
-                    <TextBlock Text="Do Not Disturb &amp; Quiet Hours" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" Margin="0,0,0,12"/>
+                        <!-- Card B: Anti-Flap Debounce -->
+                        <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                CornerRadius="8" Padding="14,12" Margin="0,0,0,4">
+                            <StackPanel>
+                                <CheckBox Content="Enable anti-flap debounce (combines duplicate rapid alerts into one)"
+                                          IsChecked="{Binding EnableDebounce}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                <TextBlock Text="Prevents notification storms by combining identical consecutive alerts from the same app within a short window."
+                                           FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="24,0,0,0"/>
 
-                    <!-- Emergency Breakthrough -->
-                    <CheckBox Content="Allow critical emergencies to break through active DND"
-                              IsChecked="{Binding EnableEmergencyBypass}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,8"/>
-
-                    <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
-                            CornerRadius="8" Padding="14,12" Margin="0,4,0,14"
-                            Visibility="{Binding EnableEmergencyBypass, Converter={StaticResource BoolToVis}}">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Breakthrough Priority Threshold" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                    <TextBlock Text="Alerts with this priority or higher will bypass DND and sound immediately." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                                <!-- Debounce Window Slider -->
+                                <StackPanel Margin="0,12,0,0" Visibility="{Binding EnableDebounce, Converter={StaticResource BoolToVis}}">
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Debounce Window Duration" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                        <Border Grid.Column="1" Background="#475569" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DebounceText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                                        </Border>
+                                    </Grid>
+                                    <Slider Minimum="3" Maximum="60" Value="{Binding DebounceWindowSeconds}" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
                                 </StackPanel>
-                                <Border Grid.Column="1" Background="#DC2626" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding EmergencyBypassPriorityText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
-                                </Border>
-                            </Grid>
-                            <Slider Minimum="5" Maximum="10" Value="{Binding EmergencyBypassPriority}" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Scheduled Quiet Hours -->
-                    <CheckBox Content="Enable scheduled quiet hours (e.g. sleep/work focus)"
-                              IsChecked="{Binding EnableQuietHours}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,10"/>
-
-                    <Grid Margin="0,0,0,4" Visibility="{Binding EnableQuietHours, Converter={StaticResource BoolToVis}}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="100"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="100"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Start:" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBox Grid.Column="1" Style="{StaticResource SettingsTextBox}" Text="{Binding QuietHoursStart}" Margin="0,0,16,0"/>
-                        <TextBlock Grid.Column="2" Text="End:" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBox Grid.Column="3" Style="{StaticResource SettingsTextBox}" Text="{Binding QuietHoursEnd}"/>
-                    </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- 5. Appearance & System Preferences -->
+            <!-- 4. Do Not Disturb & Quiet Hours (Collapsible) -->
             <Border Style="{StaticResource SectionBorder}">
                 <StackPanel>
-                    <TextBlock Text="Appearance &amp; System Integration" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" Margin="0,0,0,12"/>
-
-                    <!-- Theme Mode Selector -->
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="270"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="App Theme Mode" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="Choose Dark, Light, or follow your Windows 11 system mode." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                        </StackPanel>
-                        <ComboBox Grid.Column="1" Height="34"
-                                  SelectedValue="{Binding SelectedTheme}" SelectedValuePath="Tag">
-                            <ComboBoxItem Content="Windows Default (Auto)" Tag="{x:Static cfg:AppThemeMode.System}"/>
-                            <ComboBoxItem Content="Dark Mode" Tag="{x:Static cfg:AppThemeMode.Dark}"/>
-                            <ComboBoxItem Content="Light Mode" Tag="{x:Static cfg:AppThemeMode.Light}"/>
-                        </ComboBox>
-                    </Grid>
-
-                    <CheckBox Content="Start Gotify Client automatically with Windows" IsChecked="{Binding StartWithWindows}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,8"/>
-                    <CheckBox Content="Minimize to System Tray when closing the window" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12"/>
-                </StackPanel>
-            </Border>
-
-            <!-- 6. Backup & Migration -->
-            <Border Style="{StaticResource SectionBorder}">
-                <StackPanel>
-                    <Grid Margin="0,0,0,8">
+                    <Grid Cursor="Hand">
+                        <Grid.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleDndCommand}"/>
+                        </Grid.InputBindings>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                            <TextBlock Text="Backup &amp; Restore" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <TextBlock Text="Export full settings (including app priority filters, quiet hours, and display preferences) or restore from a backup file."
-                                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="🌙 Do Not Disturb &amp; Quiet Hours" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="Automate quiet focus hours and configure emergency breakthrough exceptions." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="📤 Export Settings" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding ExportSettingsCommand}"/>
-                            <Button Content="📥 Import Settings" Style="{StaticResource SecondaryButton}" Command="{Binding ImportSettingsCommand}"/>
-                        </StackPanel>
+
+                        <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                BorderThickness="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{Binding DndSummaryText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                        </Border>
+
+                        <Button Grid.Column="2" Command="{Binding ToggleDndCommand}" Padding="10,4" FontSize="11">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                    <Setter Property="Content" Value="Expand ▼"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDndExpanded}" Value="True">
+                                            <Setter Property="Content" Value="Collapse ▲"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </Grid>
-                    <TextBlock Text="{Binding BackupStatusText}" FontSize="11" Foreground="{DynamicResource ThemeBrandAccent}"
-                               Visibility="{Binding HasBackupStatus, Converter={StaticResource BoolToVis}}" Margin="0,4,0,0"/>
+
+                    <!-- Collapsible Content -->
+                    <StackPanel Visibility="{Binding IsDndExpanded, Converter={StaticResource BoolToVis}}" Margin="0,14,0,0">
+                        <!-- Emergency Breakthrough -->
+                        <CheckBox Content="Allow critical emergencies to break through active DND"
+                                  IsChecked="{Binding EnableEmergencyBypass}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,8"/>
+
+                        <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                CornerRadius="8" Padding="14,12" Margin="0,4,0,14"
+                                Visibility="{Binding EnableEmergencyBypass, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Breakthrough Priority Threshold" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                        <TextBlock Text="Alerts with this priority or higher will bypass DND and sound immediately." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#DC2626" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding EmergencyBypassPriorityText}" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                                    </Border>
+                                </Grid>
+                                <Slider Minimum="5" Maximum="10" Value="{Binding EmergencyBypassPriority}" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Scheduled Quiet Hours -->
+                        <CheckBox Content="Enable scheduled quiet hours (e.g. sleep/work focus)"
+                                  IsChecked="{Binding EnableQuietHours}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,10"/>
+
+                        <Grid Margin="0,0,0,4" Visibility="{Binding EnableQuietHours, Converter={StaticResource BoolToVis}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Start:" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource SettingsTextBox}" Text="{Binding QuietHoursStart}" Margin="0,0,16,0"/>
+                            <TextBlock Grid.Column="2" Text="End:" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox Grid.Column="3" Style="{StaticResource SettingsTextBox}" Text="{Binding QuietHoursEnd}"/>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 5. Appearance & System Preferences (Collapsible) -->
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <Grid Cursor="Hand">
+                        <Grid.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleAppearanceCommand}"/>
+                        </Grid.InputBindings>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="🎨 Appearance &amp; System Integration" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="App color themes, Windows startup, and system tray minimization." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                BorderThickness="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{Binding AppearanceSummaryText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                        </Border>
+
+                        <Button Grid.Column="2" Command="{Binding ToggleAppearanceCommand}" Padding="10,4" FontSize="11">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                    <Setter Property="Content" Value="Expand ▼"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAppearanceExpanded}" Value="True">
+                                            <Setter Property="Content" Value="Collapse ▲"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+
+                    <!-- Collapsible Content -->
+                    <StackPanel Visibility="{Binding IsAppearanceExpanded, Converter={StaticResource BoolToVis}}" Margin="0,14,0,0">
+                        <!-- Theme Mode Selector -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="270"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="App Theme Mode" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                <TextBlock Text="Choose Dark, Light, or follow your Windows 11 system mode." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" Height="34"
+                                      SelectedValue="{Binding SelectedTheme}" SelectedValuePath="Tag">
+                                <ComboBoxItem Content="Windows Default (Auto)" Tag="{x:Static cfg:AppThemeMode.System}"/>
+                                <ComboBoxItem Content="Dark Mode" Tag="{x:Static cfg:AppThemeMode.Dark}"/>
+                                <ComboBoxItem Content="Light Mode" Tag="{x:Static cfg:AppThemeMode.Light}"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <CheckBox Content="Start Gotify Client automatically with Windows" IsChecked="{Binding StartWithWindows}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,8"/>
+                        <CheckBox Content="Minimize to System Tray when closing the window" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 6. Backup & Migration (Collapsible) -->
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <Grid Cursor="Hand">
+                        <Grid.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleBackupCommand}"/>
+                        </Grid.InputBindings>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="💾 Backup &amp; Restore" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="Export or import complete settings profile including app thresholds and quiet hours." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                        </StackPanel>
+
+                        <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                BorderThickness="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{Binding BackupSummaryText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                        </Border>
+
+                        <Button Grid.Column="2" Command="{Binding ToggleBackupCommand}" Padding="10,4" FontSize="11">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                    <Setter Property="Content" Value="Expand ▼"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsBackupExpanded}" Value="True">
+                                            <Setter Property="Content" Value="Collapse ▲"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+
+                    <!-- Collapsible Content -->
+                    <StackPanel Visibility="{Binding IsBackupExpanded, Converter={StaticResource BoolToVis}}" Margin="0,14,0,0">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="Configuration Portability" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                <TextBlock Text="Export full settings (including app priority filters, quiet hours, and display preferences) or restore from a backup file."
+                                           TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="📤 Export Settings" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding ExportSettingsCommand}"/>
+                                <Button Content="📥 Import Settings" Style="{StaticResource SecondaryButton}" Command="{Binding ImportSettingsCommand}"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding BackupStatusText}" FontSize="11" Foreground="{DynamicResource ThemeBrandAccent}"
+                                   Visibility="{Binding HasBackupStatus, Converter={StaticResource BoolToVis}}" Margin="0,4,0,0"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </StackPanel>

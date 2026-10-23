@@ -22,7 +22,13 @@ public class SettingsViewModel : ViewModelBase
     public string ServerUrl
     {
         get => _serverUrl;
-        set => SetProperty(ref _serverUrl, value);
+        set
+        {
+            if (SetProperty(ref _serverUrl, value))
+            {
+                OnPropertyChanged(nameof(ConnectionSummaryText));
+            }
+        }
     }
 
     private string _clientToken = string.Empty;
@@ -61,7 +67,13 @@ public class SettingsViewModel : ViewModelBase
     public string TestStatus
     {
         get => _testStatus;
-        set => SetProperty(ref _testStatus, value);
+        set
+        {
+            if (SetProperty(ref _testStatus, value))
+            {
+                OnPropertyChanged(nameof(ConnectionSummaryText));
+            }
+        }
     }
 
     private bool _isTesting;
@@ -70,6 +82,89 @@ public class SettingsViewModel : ViewModelBase
         get => _isTesting;
         set => SetProperty(ref _isTesting, value);
     }
+
+    // Collapsible Categories
+    private bool _isConnectionExpanded = true;
+    public bool IsConnectionExpanded
+    {
+        get => _isConnectionExpanded;
+        set => SetProperty(ref _isConnectionExpanded, value);
+    }
+
+    private bool _isNotificationsExpanded = true;
+    public bool IsNotificationsExpanded
+    {
+        get => _isNotificationsExpanded;
+        set => SetProperty(ref _isNotificationsExpanded, value);
+    }
+
+    private bool _isFilteringExpanded;
+    public bool IsFilteringExpanded
+    {
+        get => _isFilteringExpanded;
+        set => SetProperty(ref _isFilteringExpanded, value);
+    }
+
+    private bool _isDndExpanded;
+    public bool IsDndExpanded
+    {
+        get => _isDndExpanded;
+        set => SetProperty(ref _isDndExpanded, value);
+    }
+
+    private bool _isAppearanceExpanded;
+    public bool IsAppearanceExpanded
+    {
+        get => _isAppearanceExpanded;
+        set => SetProperty(ref _isAppearanceExpanded, value);
+    }
+
+    private bool _isBackupExpanded;
+    public bool IsBackupExpanded
+    {
+        get => _isBackupExpanded;
+        set => SetProperty(ref _isBackupExpanded, value);
+    }
+
+    public string ConnectionSummaryText => string.IsNullOrWhiteSpace(ServerUrl)
+        ? "Not Configured"
+        : (TestStatus.StartsWith("Connected") ? "● Connected" : ServerUrl);
+
+    public string NotificationsSummaryText => $"{SelectedModeDisplay} • {SelectedPositionDisplay} • {DisplayDurationSeconds:0}s";
+
+    public string SelectedModeDisplay => SelectedMode switch
+    {
+        NotificationMode.CustomHud => "Floating Banner",
+        NotificationMode.NativeToast => "Windows Center",
+        NotificationMode.Both => "Both Modes",
+        _ => SelectedMode.ToString()
+    };
+
+    public string SelectedPositionDisplay => SelectedPosition switch
+    {
+        HudPosition.BottomRight => "Bottom-Right",
+        HudPosition.TopRight => "Top-Right",
+        HudPosition.TopLeft => "Top-Left",
+        HudPosition.BottomLeft => "Bottom-Left",
+        HudPosition.TopCenter => "Top-Center",
+        HudPosition.BottomCenter => "Bottom-Center",
+        _ => SelectedPosition.ToString()
+    };
+
+    public string FilteringSummaryText => $"{(EnableDebounce ? $"Debounce {DebounceWindowSeconds}s" : "Debounce Off")} • {GlobalMinPriorityText}";
+
+    public string DndSummaryText => $"{(QuietHoursEnabled ? $"Quiet Hours ({QuietHoursStart}-{QuietHoursEnd})" : "Quiet Hours Off")}{(EnableEmergencyBypass ? $" • Bypass \u2265 {EmergencyBypassPriority}" : "")}";
+
+    public string AppearanceSummaryText => $"{SelectedTheme} • {(StartWithWindows ? "Auto-start" : "Manual")}";
+
+    public string BackupSummaryText => "Export / Import Configuration";
+
+    public ICommand ToggleConnectionCommand { get; }
+    public ICommand ToggleNotificationsCommand { get; }
+    public ICommand ToggleFilteringCommand { get; }
+    public ICommand ToggleDndCommand { get; }
+    public ICommand ToggleAppearanceCommand { get; }
+    public ICommand ToggleBackupCommand { get; }
 
     // Presentation
     public NotificationMode SelectedMode
@@ -81,6 +176,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _configService.Config.Presentation.Mode = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(NotificationsSummaryText));
                 _configService.Save();
             }
         }
@@ -95,6 +191,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _configService.Config.Presentation.Position = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(NotificationsSummaryText));
                 _configService.Save();
             }
         }
@@ -111,6 +208,7 @@ public class SettingsViewModel : ViewModelBase
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(DurationText));
                 OnPropertyChanged(nameof(DisplayDurationText));
+                OnPropertyChanged(nameof(NotificationsSummaryText));
                 _configService.Save();
             }
         }
@@ -157,6 +255,7 @@ public class SettingsViewModel : ViewModelBase
                 _configService.Config.GlobalMinPriority = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(GlobalMinPriorityText));
+                OnPropertyChanged(nameof(FilteringSummaryText));
                 _configService.Save();
             }
         }
@@ -175,6 +274,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _configService.Config.Presentation.EnableDebounce = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(FilteringSummaryText));
                 _configService.Save();
             }
         }
@@ -190,6 +290,7 @@ public class SettingsViewModel : ViewModelBase
                 _configService.Config.Presentation.DebounceWindowSeconds = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(DebounceText));
+                OnPropertyChanged(nameof(FilteringSummaryText));
                 _configService.Save();
             }
         }
@@ -207,6 +308,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _configService.Config.Dnd.EnableEmergencyBypass = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(DndSummaryText));
                 _configService.Save();
             }
         }
@@ -223,6 +325,7 @@ public class SettingsViewModel : ViewModelBase
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(BypassText));
                 OnPropertyChanged(nameof(EmergencyBypassPriorityText));
+                OnPropertyChanged(nameof(DndSummaryText));
                 _configService.Save();
             }
         }
@@ -249,6 +352,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _configService.Config.Dnd.QuietHoursEnabled = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(DndSummaryText));
                 _configService.Save();
             }
         }
@@ -263,6 +367,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _configService.Config.Dnd.QuietHoursStart = parsed;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(DndSummaryText));
                 _configService.Save();
             }
         }
@@ -277,6 +382,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _configService.Config.Dnd.QuietHoursEnd = parsed;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(DndSummaryText));
                 _configService.Save();
             }
         }
@@ -307,6 +413,7 @@ public class SettingsViewModel : ViewModelBase
                 _configService.Config.StartWithWindows = value;
                 _startupManager.SetAutoStart(value);
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(AppearanceSummaryText));
                 _configService.Save();
             }
         }
@@ -321,6 +428,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _configService.Config.MinimizeToTrayOnClose = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(AppearanceSummaryText));
                 _configService.Save();
             }
         }
@@ -335,6 +443,7 @@ public class SettingsViewModel : ViewModelBase
             {
                 _configService.Config.Theme = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(AppearanceSummaryText));
                 _configService.Save();
                 _themeManager?.ApplyTheme(value);
             }
@@ -394,6 +503,13 @@ public class SettingsViewModel : ViewModelBase
         });
         ExportSettingsCommand = new RelayCommand(ExportSettings);
         ImportSettingsCommand = new RelayCommand(ImportSettings);
+
+        ToggleConnectionCommand = new RelayCommand(() => IsConnectionExpanded = !IsConnectionExpanded);
+        ToggleNotificationsCommand = new RelayCommand(() => IsNotificationsExpanded = !IsNotificationsExpanded);
+        ToggleFilteringCommand = new RelayCommand(() => IsFilteringExpanded = !IsFilteringExpanded);
+        ToggleDndCommand = new RelayCommand(() => IsDndExpanded = !IsDndExpanded);
+        ToggleAppearanceCommand = new RelayCommand(() => IsAppearanceExpanded = !IsAppearanceExpanded);
+        ToggleBackupCommand = new RelayCommand(() => IsBackupExpanded = !IsBackupExpanded);
     }
 
     private async Task TestConnectionAsync()

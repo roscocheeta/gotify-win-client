@@ -101,7 +101,7 @@ public class HudManager : IHudManager
     {
         var workArea = SystemParameters.WorkArea;
 
-        if (position == HudPosition.TopRight || position == HudPosition.TopCenter)
+        if (position == HudPosition.TopRight || position == HudPosition.TopCenter || position == HudPosition.TopLeft)
         {
             double currentTop = workArea.Top + Margin;
             for (int i = 0; i < slotIndex; i++)
@@ -111,7 +111,7 @@ public class HudManager : IHudManager
             }
             return currentTop;
         }
-        else // BottomRight / BottomCenter
+        else // BottomRight, BottomCenter, BottomLeft
         {
             double hCurrent = slotIndex < _activeWindows.Count ? GetWindowHeight(_activeWindows[slotIndex]) : DefaultSlotHeight;
             double currentBottom = workArea.Bottom - Margin;
@@ -134,6 +134,11 @@ public class HudManager : IHudManager
 
         switch (position)
         {
+            case HudPosition.TopLeft:
+            case HudPosition.BottomLeft:
+                left = workArea.Left + Margin;
+                break;
+
             case HudPosition.TopCenter:
             case HudPosition.BottomCenter:
                 left = workArea.Left + (workArea.Width - width) / 2.0;

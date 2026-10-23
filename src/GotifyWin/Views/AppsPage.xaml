@@ -8,6 +8,7 @@
              Background="{DynamicResource ThemeBackground}">
     <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:HexColorToBrushConverter x:Key="HexToBrush"/>
 
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ThemeSecondaryButtonBg}"/>
@@ -70,8 +71,8 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="200"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="230"/>
+                                    <ColumnDefinition Width="105"/>
                                 </Grid.ColumnDefinitions>
 
                                 <!-- App Icon or Placeholder -->
@@ -93,36 +94,61 @@
                                     <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
                                 </StackPanel>
 
-                                <!-- Priority Slider & DND Override -->
-                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
-                                    <Grid Margin="0,0,0,2">
-                                        <TextBlock Text="Min Priority" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                                        <TextBlock Text="{Binding MinPriorityText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}" HorizontalAlignment="Right"/>
+                                <!-- Alert Priority Threshold & DND Override -->
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,20,0" IsEnabled="{Binding IsEnabled}">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.4"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <Grid Margin="0,0,0,4">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Alert Threshold" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                            <TextBlock Text="ℹ️" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center" Cursor="Help"
+                                                       ToolTip="Only deliver notifications with priority at or above this level. Alerts below this threshold are silenced."/>
+                                        </StackPanel>
+                                        <Border HorizontalAlignment="Right" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                                BorderThickness="1" CornerRadius="4" Padding="6,2">
+                                            <TextBlock Text="{Binding MinPriorityText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                                        </Border>
                                     </Grid>
-                                    <Slider Minimum="0" Maximum="10" Value="{Binding MinPriority}" TickFrequency="1" IsSnapToTickEnabled="True"/>
-                                    <CheckBox Content="Bypass DND" IsChecked="{Binding OverrideGlobalDnd}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,4,0,0"/>
+                                    <Slider Minimum="0" Maximum="10" Value="{Binding MinPriority}" TickFrequency="1" IsSnapToTickEnabled="True"
+                                            ToolTip="{Binding MinPriorityDescription}"/>
+                                    <CheckBox Content="Bypass Do Not Disturb" IsChecked="{Binding OverrideGlobalDnd}" FontSize="12"
+                                              Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,5,0,0"
+                                              ToolTip="Deliver notifications from this app even when Do Not Disturb or Quiet Hours are active."/>
                                 </StackPanel>
 
-                                <!-- Enable Toggle Switch -->
-                                <CheckBox Grid.Column="3" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center">
-                                    <CheckBox.Template>
-                                        <ControlTemplate TargetType="CheckBox">
-                                            <Border x:Name="SwitchBorder" Width="44" Height="24" CornerRadius="12" Background="#475569" Cursor="Hand" Padding="2">
-                                                <Ellipse x:Name="SwitchThumb" Width="20" Height="20" Fill="White" HorizontalAlignment="Left">
-                                                    <Ellipse.RenderTransform>
-                                                        <TranslateTransform x:Name="ThumbTransform" X="0"/>
-                                                    </Ellipse.RenderTransform>
-                                                </Ellipse>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsChecked" Value="True">
-                                                    <Setter TargetName="SwitchBorder" Property="Background" Value="#10B981"/>
-                                                    <Setter TargetName="SwitchThumb" Property="HorizontalAlignment" Value="Right"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </CheckBox.Template>
-                                </CheckBox>
+                                <!-- Enable / Mute Toggle Switch with Explicit Label -->
+                                <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <CheckBox IsChecked="{Binding IsEnabled}" HorizontalAlignment="Center" Cursor="Hand"
+                                              ToolTip="Enable or mute all notifications from this application.">
+                                        <CheckBox.Template>
+                                            <ControlTemplate TargetType="CheckBox">
+                                                <Border x:Name="SwitchBorder" Width="44" Height="24" CornerRadius="12" Background="#475569" Cursor="Hand" Padding="2">
+                                                    <Ellipse x:Name="SwitchThumb" Width="20" Height="20" Fill="White" HorizontalAlignment="Left">
+                                                        <Ellipse.RenderTransform>
+                                                            <TranslateTransform x:Name="ThumbTransform" X="0"/>
+                                                        </Ellipse.RenderTransform>
+                                                    </Ellipse>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="SwitchBorder" Property="Background" Value="#10B981"/>
+                                                        <Setter TargetName="SwitchThumb" Property="HorizontalAlignment" Value="Right"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </CheckBox.Template>
+                                    </CheckBox>
+                                    <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{Binding StatusColor, Converter={StaticResource HexToBrush}}"
+                                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </DataTemplate>

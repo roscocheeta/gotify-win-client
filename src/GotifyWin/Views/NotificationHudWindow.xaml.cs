@@ -153,6 +153,14 @@ public partial class NotificationHudWindow : Window
 
         switch (position)
         {
+            case HudPosition.TopLeft:
+                left = workArea.Left + margin;
+                top = workArea.Top + margin;
+                break;
+            case HudPosition.BottomLeft:
+                left = workArea.Left + margin;
+                top = workArea.Bottom - height - margin;
+                break;
             case HudPosition.BottomRight:
                 left = workArea.Right - Width - margin;
                 top = workArea.Bottom - height - margin;

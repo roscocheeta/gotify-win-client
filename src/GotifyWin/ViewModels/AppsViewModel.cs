@@ -37,10 +37,15 @@ public class AppItemViewModel : ViewModelBase
             {
                 _setting.Enabled = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(StatusLabel));
+                OnPropertyChanged(nameof(StatusColor));
                 _onChanged();
             }
         }
     }
+
+    public string StatusLabel => IsEnabled ? "Alerts Active" : "Alerts Muted";
+    public string StatusColor => IsEnabled ? "#10B981" : "#94A3B8";
 
     public int MinPriority
     {
@@ -52,12 +57,24 @@ public class AppItemViewModel : ViewModelBase
                 _setting.MinPriority = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(MinPriorityText));
+                OnPropertyChanged(nameof(MinPriorityDescription));
                 _onChanged();
             }
         }
     }
 
-    public string MinPriorityText => $"Priority \u2265 {MinPriority}";
+    public string MinPriorityText => MinPriority switch
+    {
+        0 => "All (0+)",
+        <= 3 => $"\u2265 {MinPriority} (Low+)",
+        <= 6 => $"\u2265 {MinPriority} (Normal+)",
+        7 => $"\u2265 7 (High+)",
+        _ => $"\u2265 {MinPriority} (Urgent)"
+    };
+
+    public string MinPriorityDescription => MinPriority == 0
+        ? "All notifications from this application will be delivered."
+        : $"Notifications below priority {MinPriority} will be dropped and silenced.";
 
     public bool OverrideGlobalDnd
     {

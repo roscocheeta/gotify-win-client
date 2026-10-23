@@ -328,12 +328,15 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Rule Status Feedback -->
-                        <TextBlock Text="{Binding RuleStatusFeedback}" FontSize="11" Foreground="{DynamicResource ThemeBrandAccent}"
-                                   Visibility="{Binding HasRuleStatusFeedback, Converter={StaticResource BoolToVis}}" Margin="0,6,0,0"/>
-
                         <!-- Collapsible Content -->
                         <StackPanel Visibility="{Binding IsConfiguredRulesExpanded, Converter={StaticResource BoolToVis}}" Margin="0,12,0,0">
+                            <!-- Rule Status Feedback (Transient Banner) -->
+                            <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeBrandAccent}"
+                                    BorderThickness="1" CornerRadius="6" Padding="12,7" Margin="0,0,0,10"
+                                    Visibility="{Binding HasRuleStatusFeedback, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding RuleStatusFeedback}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                            </Border>
+
                             <!-- Empty State: No configured rules -->
                             <Border Background="{DynamicResource ThemeCardInnerBackground}" CornerRadius="6" Padding="14,12" Margin="0,0,0,4"
                                     Visibility="{Binding HasActiveRules, Converter={StaticResource InverseBoolToVis}}">

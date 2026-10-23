@@ -12,7 +12,9 @@ public enum HudPosition
     BottomRight = 0,
     TopRight = 1,
     TopCenter = 2,
-    BottomCenter = 3
+    BottomCenter = 3,
+    TopLeft = 4,
+    BottomLeft = 5
 }
 
 public enum RuleField

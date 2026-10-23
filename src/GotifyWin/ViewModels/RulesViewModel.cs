@@ -259,6 +259,36 @@ public class RulesViewModel : ViewModelBase
     public string ImportSummaryText => $"{SelectedImportCount} of {TotalImportCount} selected";
     public string ImportButtonText => SelectedImportCount > 0 ? $"Import Selected ({SelectedImportCount})" : "Import Selected (0)";
 
+    private CancellationTokenSource? _feedbackCts;
+
+    public void SetTransientFeedback(string message, int durationMs = 4000)
+    {
+        _feedbackCts?.Cancel();
+        _feedbackCts = new CancellationTokenSource();
+        var token = _feedbackCts.Token;
+
+        RuleStatusFeedback = message;
+
+        Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(durationMs, token);
+                if (!token.IsCancellationRequested)
+                {
+                    UiDispatcher.RunOnUI(() =>
+                    {
+                        if (!token.IsCancellationRequested && RuleStatusFeedback == message)
+                        {
+                            RuleStatusFeedback = string.Empty;
+                        }
+                    });
+                }
+            }
+            catch (TaskCanceledException) { }
+        }, token);
+    }
+
     private string _ruleStatusFeedback = string.Empty;
     public string RuleStatusFeedback
     {
@@ -315,7 +345,15 @@ public class RulesViewModel : ViewModelBase
         ToggleRuleCommand = new RelayCommand<NotificationRule>(ToggleRule);
         ToggleAdvancedCommand = new RelayCommand(() => IsAdvancedExpanded = !IsAdvancedExpanded);
         ToggleRecommendationsCommand = new RelayCommand(() => IsRecommendationsExpanded = !IsRecommendationsExpanded);
-        ToggleConfiguredRulesCommand = new RelayCommand(() => IsConfiguredRulesExpanded = !IsConfiguredRulesExpanded);
+        ToggleConfiguredRulesCommand = new RelayCommand(() =>
+        {
+            IsConfiguredRulesExpanded = !IsConfiguredRulesExpanded;
+            if (!IsConfiguredRulesExpanded)
+            {
+                _feedbackCts?.Cancel();
+                RuleStatusFeedback = string.Empty;
+            }
+        });
         ReanalyzeCommand = new RelayCommand(async () => await ReanalyzeHistoryAsync());
         ExportRulesCommand = new RelayCommand(ExportRules);
         ImportRulesCommand = new RelayCommand(ImportRules);
@@ -594,6 +632,7 @@ public class RulesViewModel : ViewModelBase
         NewRuleAction = RuleAction.SilentLog;
         NewRuleCaseSensitive = false;
         SelectedAppFilterOption = AvailableAppFilterOptions.FirstOrDefault();
+        _feedbackCts?.Cancel();
         RuleStatusFeedback = string.Empty;
     }
 
@@ -637,7 +676,7 @@ public class RulesViewModel : ViewModelBase
 
             var updatedName = EditingRule.Name;
             CancelEditingRule();
-            RuleStatusFeedback = $"✓ Successfully updated rule '{updatedName}'.";
+            SetTransientFeedback($"✓ Successfully updated rule '{updatedName}'.");
             NotifyRulesCountChanged();
             return;
         }
@@ -665,7 +704,7 @@ public class RulesViewModel : ViewModelBase
         NewRuleName = string.Empty;
         NewRulePattern = string.Empty;
         SelectedAppFilterOption = AvailableAppFilterOptions.FirstOrDefault();
-        RuleStatusFeedback = $"✓ Created rule '{rule.Name}'.";
+        SetTransientFeedback($"✓ Created rule '{rule.Name}'.");
     }
 
     private void DeleteRule(NotificationRule? rule)
@@ -710,7 +749,7 @@ public class RulesViewModel : ViewModelBase
     {
         if (_rules.Count == 0)
         {
-            RuleStatusFeedback = "⚠️ No configured rules to export.";
+            SetTransientFeedback("⚠️ No configured rules to export.");
             return;
         }
 
@@ -739,12 +778,12 @@ public class RulesViewModel : ViewModelBase
                 });
 
                 File.WriteAllText(dlg.FileName, json);
-                RuleStatusFeedback = $"✓ Exported {_rules.Count} rules to {Path.GetFileName(dlg.FileName)}";
+                SetTransientFeedback($"✓ Exported {_rules.Count} rules to {Path.GetFileName(dlg.FileName)}");
             }
         }
         catch (Exception ex)
         {
-            RuleStatusFeedback = $"Export error: {ex.Message}";
+            SetTransientFeedback($"Export error: {ex.Message}");
         }
     }
 
@@ -792,7 +831,7 @@ public class RulesViewModel : ViewModelBase
 
                 if (incomingRules == null || incomingRules.Count == 0)
                 {
-                    RuleStatusFeedback = "⚠️ No valid filter rules found in selected file.";
+                    SetTransientFeedback("⚠️ No valid filter rules found in selected file.");
                     return;
                 }
 
@@ -822,7 +861,7 @@ public class RulesViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            RuleStatusFeedback = $"Import error: {ex.Message}";
+            SetTransientFeedback($"Import error: {ex.Message}");
         }
     }
 
@@ -861,7 +900,7 @@ public class RulesViewModel : ViewModelBase
         NotifyRulesCountChanged();
         IsImportModalOpen = false;
         ImportCandidates.Clear();
-        RuleStatusFeedback = $"✓ Successfully imported {addedCount} rule{(addedCount == 1 ? "" : "s")}.";
+        SetTransientFeedback($"✓ Successfully imported {addedCount} rule{(addedCount == 1 ? "" : "s")}.");
     }
 
     public void CancelImport()

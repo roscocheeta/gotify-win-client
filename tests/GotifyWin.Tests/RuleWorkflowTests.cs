@@ -741,4 +741,81 @@ public class RuleWorkflowTests
         Assert.Equal("Message Contains: 'Indexer Unhealthy'", rulesVm.ImportCandidates[0].CriteriaSummary);
         Assert.Equal("Prowlarr", rulesVm.ImportCandidates[0].ScopeDescription);
     }
+
+    [Fact]
+    public void AppItemViewModel_StatusAndThresholdFormatting()
+    {
+        var setting = new AppFilterSetting
+        {
+            AppId = 1,
+            AppName = "Prowlarr",
+            Enabled = true,
+            MinPriority = 4
+        };
+
+        var appVm = new AppItemViewModel(setting, () => { });
+
+        Assert.True(appVm.IsEnabled);
+        Assert.Equal("Alerts Active", appVm.StatusLabel);
+        Assert.Equal("#10B981", appVm.StatusColor);
+        Assert.Equal("\u2265 4 (Normal+)", appVm.MinPriorityText);
+        Assert.Contains("below priority 4 will be dropped", appVm.MinPriorityDescription);
+
+        // Toggle disabled
+        appVm.IsEnabled = false;
+        Assert.False(appVm.IsEnabled);
+        Assert.Equal("Alerts Muted", appVm.StatusLabel);
+        Assert.Equal("#94A3B8", appVm.StatusColor);
+
+        // Test threshold scale
+        appVm.MinPriority = 0;
+        Assert.Equal("All (0+)", appVm.MinPriorityText);
+        Assert.Contains("All notifications from this application", appVm.MinPriorityDescription);
+
+        appVm.MinPriority = 8;
+        Assert.Equal("\u2265 8 (Urgent)", appVm.MinPriorityText);
+    }
+
+    [Fact]
+    public void SettingsViewModel_CollapsibleSectionsAndSummaries()
+    {
+        var configService = new DummyConfigService();
+        var vm = new SettingsViewModel(configService, null!, null!, null!);
+
+        // Verify default states
+        Assert.True(vm.IsConnectionExpanded);
+        Assert.True(vm.IsNotificationsExpanded);
+        Assert.False(vm.IsFilteringExpanded);
+        Assert.False(vm.IsDndExpanded);
+
+        // Toggle collapsible sections
+        vm.ToggleConnectionCommand.Execute(null);
+        Assert.False(vm.IsConnectionExpanded);
+
+        vm.ToggleFilteringCommand.Execute(null);
+        Assert.True(vm.IsFilteringExpanded);
+
+        // Verify summary text properties
+        Assert.Contains("Floating Banner", vm.NotificationsSummaryText);
+        Assert.Contains("Debounce", vm.FilteringSummaryText);
+        Assert.Contains("Export / Import", vm.BackupSummaryText);
+    }
+
+    [Fact]
+    public void RulesViewModel_TransientFeedbackAndCollapseClearing()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        rulesVm.SetTransientFeedback("✓ Test feedback message");
+        Assert.True(rulesVm.HasRuleStatusFeedback);
+        Assert.Equal("✓ Test feedback message", rulesVm.RuleStatusFeedback);
+
+        // Collapsing configured rules immediately clears feedback
+        rulesVm.IsConfiguredRulesExpanded = true;
+        rulesVm.ToggleConfiguredRulesCommand.Execute(null);
+        Assert.False(rulesVm.IsConfiguredRulesExpanded);
+        Assert.False(rulesVm.HasRuleStatusFeedback);
+        Assert.Equal(string.Empty, rulesVm.RuleStatusFeedback);
+    }
 }
