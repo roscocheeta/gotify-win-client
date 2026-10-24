@@ -110,7 +110,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 git clone https://github.com/roscocheeta/gotify-win-client.git
 cd gotify-win-client
 
-# Run all 140 automated tests
+# Run all 142 automated tests
 dotnet test
 
 # Launch the app
@@ -139,11 +139,22 @@ dotnet test
 
 ```
 Test run for GotifyWin.Tests.dll (.NETCoreApp,Version=v8.0)
-Total tests: 140
-Passed: 140
+Total tests: 142
+Passed: 142
 Failed: 0
 Skipped: 0
 ```
+
+---
+
+## 🗺️ Roadmap
+
+Planned milestones and upcoming platform enhancements:
+
+- [ ] **.NET 10 Framework Upgrade**: Migrate to .NET 10 LTS upon general availability to take advantage of improved JIT throughput, smaller binary footprint, and NativeAOT compilation enhancements.
+- [ ] **WinGet Distribution**: Publish official Windows Package Manager manifest (`winget install roscocheeta.gotifywin`) for streamlined installation and updates.
+- [ ] **Interactive Toast Actions**: Support Gotify action extras for clickable webhook triggers and URL action buttons directly within Windows notification banners.
+- [ ] **Custom Audio Profiles**: Allow user-defined notification chimes and sound effects based on priority level or sending application.
 
 ---
 
