@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/roscocheeta/gotify-win-client/actions/workflows/ci.yml"><img src="https://github.com/roscocheeta/gotify-win-client/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
+  <a href="https://github.com/roscocheeta/gotify-win-client/actions/workflows/codeql.yml"><img src="https://github.com/roscocheeta/gotify-win-client/actions/workflows/codeql.yml/badge.svg" alt="CodeQL Security" /></a>
   <a href="https://github.com/roscocheeta/gotify-win-client/releases"><img src="https://img.shields.io/github/v/release/roscocheeta/gotify-win-client?include_prereleases&color=blue" alt="Latest Release" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
   <a href="https://microsoft.com/windows"><img src="https://img.shields.io/badge/Platform-Windows%2011%20%7C%20Windows%2010-0078D4?logo=windows" alt="Platform" /></a>
@@ -87,6 +88,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 * **Smart Gaming & Fullscreen Suppression**: Win32 `SHQueryUserNotificationState` detection automatically suppresses popups during fullscreen DirectX games, movies, and presentations.
 
 ### 🔒 Security-Hardened Architecture
+* **Automated Security & Supply Chain Auditing**: Every pull request and release is validated by **GitHub CodeQL** (semantic taint tracking), **SecurityCodeScan** (Roslyn SAST analyzer), **Gitleaks** (secret scanning), and **.NET 8 NuGetAudit** (transitive vulnerability checking).
 * **Windows DPAPI Credential Protection**: Server client tokens are encrypted at rest using Windows Data Protection API (DPAPI) with salted application entropy.
 * **Origin Isolation**: Client tokens are strictly restricted to the configured Gotify origin and never transmitted when fetching external app icons.
 * **Protocol Whitelisting**: Click action links strictly enforce `http://` and `https://` schemes, preventing arbitrary OS protocol execution.
@@ -110,8 +112,8 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 git clone https://github.com/roscocheeta/gotify-win-client.git
 cd gotify-win-client
 
-# Run all 153 automated tests
-dotnet test
+# Run all 165 automated tests
+dotnet test GotifyWin.sln
 
 # Launch the app
 dotnet run --project src/GotifyWin/GotifyWin.csproj
@@ -131,16 +133,16 @@ dotnet publish src/GotifyWin/GotifyWin.csproj -c Release -r win-x64 --self-conta
 
 ## 🧪 Testing & Verification
 
-The project includes an extensive test suite covering filter routing, debounce caches, quiet hour timespans, message parsing, and security validations:
+The project includes an extensive test suite covering filter routing, debounce caches, quiet hour timespans, message parsing, WebSocket resilience, and OS integration contracts:
 
 ```powershell
-dotnet test
+dotnet test GotifyWin.sln
 ```
 
 ```
 Test run for GotifyWin.Tests.dll (.NETCoreApp,Version=v8.0)
-Total tests: 153
-Passed: 153
+Total tests: 165
+Passed: 165
 Failed: 0
 Skipped: 0
 ```

@@ -19,7 +19,7 @@ Thank you for your interest in contributing to GotifyWin! Whether you are fixing
    cd gotify-win-client
    ```
 
-2. Restore and build the solution:
+2. Restore and build the solution (this automatically runs `WpfAnalyzers`, `SecurityCodeScan`, and `.NET 8 NuGetAudit`):
    ```powershell
    dotnet build GotifyWin.sln
    ```
@@ -29,7 +29,12 @@ Thank you for your interest in contributing to GotifyWin! Whether you are fixing
    dotnet test GotifyWin.sln
    ```
 
-4. Launch the application:
+4. Verify dependency security:
+   ```powershell
+   dotnet list package --vulnerable --include-transitive
+   ```
+
+5. Launch the application:
    ```powershell
    dotnet run --project src/GotifyWin/GotifyWin.csproj
    ```
@@ -42,7 +47,7 @@ GotifyWin follows the **Model-View-ViewModel (MVVM)** pattern with dependency in
 
 * **`src/GotifyWin/Models/`**: Data models for Gotify API messages, applications, and settings (`GotifyClientConfig`).
 * **`src/GotifyWin/Services/`**: Core services:
-  * `GotifyWebSocketService`: Resilient WebSocket client with automatic reconnection and heartbeat.
+  * `GotifyWebSocketService`: Resilient WebSocket client with automatic reconnection, power-event resume, and heartbeat.
   * `GotifyApiService`: REST API client for testing connections, fetching apps, and icon caching.
   * `NotificationPresenter`: WinRT Windows 11 Action Center toast integration.
   * `HudNotificationManager`: Floating Acrylic/Mica HUD notification banner overlay with stacking queue.
@@ -52,22 +57,24 @@ GotifyWin follows the **Model-View-ViewModel (MVVM)** pattern with dependency in
   * `ConfigService`: Configuration storage with Windows DPAPI credential protection.
 * **`src/GotifyWin/ViewModels/`**: ViewModels bound to the UI (`MainViewModel`, `FeedViewModel`, `AppsViewModel`, `RulesViewModel`, `SettingsViewModel`).
 * **`src/GotifyWin/Views/`**: WPF XAML views styled with Windows 11 Fluent 2 aesthetics (`WPF-UI`).
-* **`tests/GotifyWin.Tests/`**: Complete xUnit test suite (153 tests) verifying rules, parsing, encryption, and debounce logic.
+* **`tests/GotifyWin.Tests/`**: Complete xUnit test suite (165 tests) verifying rules, parsing, encryption, debounce logic, WebSocket lifecycle, and OS integration contracts.
 
 ---
 
-## 📋 Pull Request Guidelines
+## 🔒 Security & Code Quality Standards
 
 Before submitting a Pull Request, please ensure:
 
-1. **Tests Pass**: Run `dotnet test` locally and verify all automated tests pass.
-2. **Add Tests**: If you are adding a feature or fixing a bug, please include corresponding unit tests in `tests/GotifyWin.Tests/`.
-3. **No Hardcoded Secrets**: Ensure no personal server URLs, API tokens, or test credentials are committed.
-4. **Code Style**:
+1. **Tests Pass**: Run `dotnet test GotifyWin.sln --configuration Release` locally and verify all 165+ automated tests pass with 0 failures.
+2. **Clean Security Scan**: Ensure `dotnet build` reports 0 warnings from `SecurityCodeScan` (`SCSxxxx`) and `WpfAnalyzers` (`WPFxxxx`).
+3. **No Vulnerable Dependencies**: Ensure `dotnet list package --vulnerable --include-transitive` returns 0 vulnerable packages.
+4. **No Hardcoded Secrets**: Ensure no personal server URLs, API tokens, or test credentials are committed. PRs are automatically checked by Gitleaks.
+5. **Code Style & Security**:
    * Follow standard C# coding conventions.
    * Prefer early returns and cancellation token propagation.
+   * Never instantiate `new Random()` for tokens or security calculations; use `RandomNumberGenerator`.
    * In XAML, use explicit `Mode=OneWay` on bindings involving read-only properties or `<Run>` elements.
-5. **Describe Your Changes**: Fill out the Pull Request template detailing what was changed and why.
+6. **Describe Your Changes**: Fill out the Pull Request template detailing what was changed and why.
 
 ---
 

@@ -7,6 +7,20 @@ on:
     branches: [ master, dev ]
 
 jobs:
+  secret-scan:
+    name: Secret & Credential Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-and-test:
     name: Build & Test
     runs-on: windows-latest
@@ -20,10 +34,13 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore Dependencies
+      - name: Restore Dependencies & Audit
         run: dotnet restore GotifyWin.sln
 
-      - name: Build Solution
+      - name: Verify No Vulnerable Packages
+        run: dotnet list package --vulnerable --include-transitive
+
+      - name: Build Solution (with WpfAnalyzers & SecurityCodeScan)
         run: dotnet build GotifyWin.sln --configuration Release --no-restore
 
       - name: Run Automated Tests

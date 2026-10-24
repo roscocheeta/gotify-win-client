@@ -15,13 +15,16 @@ This document defines mandatory development workflows, branching policies, testi
   - `chore/<task>` for build, dependency, or maintenance updates.
 - **Pull Request Protocol**:
   1. Complete code changes on the dedicated branch.
-  2. Run `dotnet test GotifyWin.sln --configuration Release` locally and ensure a 100% pass rate.
+  2. Run `dotnet test GotifyWin.sln --configuration Release` locally and ensure:
+     - 100% test pass rate.
+     - 0 compiler warnings from `WpfAnalyzers` and `SecurityCodeScan`.
+     - 0 dependency vulnerabilities reported by `<NuGetAudit>`.
   3. Push branch to GitHub: `git push -u origin <branch-name>`.
   4. Open a Pull Request targeting `dev` using the GitHub CLI:
      ```powershell
      gh pr create --base dev --title "type: short summary" --body "..."
      ```
-  5. Wait for GitHub Actions (`ci.yml`) to complete and pass all automated tests.
+  5. Wait for GitHub Actions (`ci.yml`, `codeql.yml`) to complete and pass all automated tests and security scans.
   6. Merge PR into `dev` using squash-and-merge (`gh pr merge --squash`).
 - **Release Protocol**:
   1. Open a PR merging `dev` into `master` when preparing a milestone release.
@@ -52,6 +55,11 @@ This document defines mandatory development workflows, branching policies, testi
 ## 🔒 3. Security & Coding Standards
 
 - **Zero Secrets**: Never commit personal Gotify server URLs, API tokens, or homelab credentials.
+- **Automated Secret Scanning**: Gitleaks runs in CI and should be run on staged commits locally (`gitleaks protect --staged`).
+- **Compile-Time SAST**: `SecurityCodeScan.VS2019` is integrated into the build. Code changes must not introduce any security warnings (`SCSxxxx`).
+- **Dependency Auditing**: .NET 8 `<NuGetAudit>` is configured for all direct and transitive dependencies at `moderate` severity. Pulling in vulnerable packages fails the build. Run `dotnet list package --vulnerable --include-transitive` to verify.
+- **Semantic Taint Tracking**: GitHub CodeQL runs continuously in CI, tracing untrusted server payloads to system sinks.
+- **Cryptographic Randomness**: Never instantiate `new Random()` for jitter, tokens, or security calculations. Use `System.Security.Cryptography.RandomNumberGenerator`.
 - **Windows DPAPI**: All credentials stored on disk must use Windows DPAPI (`ProtectedData.Protect`) with salted application entropy.
 - **URL Whitelisting**: Any URL clicked from toasts or UI must be strictly validated for `http` or `https` schemes before invoking `Process.Start`.
 - **XML Sanitization**: Native toast XML payloads must strip invalid XML 1.0 control characters and XML-escape entities.
