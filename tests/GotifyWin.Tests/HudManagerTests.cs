@@ -1,10 +1,13 @@
 using System;
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
 using GotifyWin.Models;
 using GotifyWin.Models.Config;
 using GotifyWin.Services;
 using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace GotifyWin.Tests;
 
@@ -39,6 +42,9 @@ public class HudManagerTests
             // Exactly MaxConcurrentVisible should be active, rest queued
             Assert.Equal(HudManager.MaxConcurrentVisible, manager.ActiveCount);
             Assert.Equal(6 - HudManager.MaxConcurrentVisible, manager.QueuedCount);
+
+            manager.DismissAll();
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
         });
 
         thread.SetApartmentState(ApartmentState.STA);
@@ -87,6 +93,9 @@ public class HudManagerTests
 
             manager.ShowNotification(msg2, settingsBL, null);
             Assert.Equal(2, manager.ActiveCount);
+
+            manager.DismissAll();
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
         });
 
         thread.SetApartmentState(ApartmentState.STA);

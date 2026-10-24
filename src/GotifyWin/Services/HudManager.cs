@@ -12,6 +12,7 @@ namespace GotifyWin.Services;
 public interface IHudManager
 {
     void ShowNotification(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen);
+    void DismissAll();
 }
 
 public class HudManager : IHudManager
@@ -33,6 +34,27 @@ public class HudManager : IHudManager
     public int QueuedCount
     {
         get { lock (_lock) { return _pendingQueue.Count; } }
+    }
+
+    public void DismissAll()
+    {
+        UiDispatcher.RunOnUI(() =>
+        {
+            lock (_lock)
+            {
+                _pendingQueue.Clear();
+                var windows = _activeWindows.ToList();
+                _activeWindows.Clear();
+                foreach (var w in windows)
+                {
+                    try
+                    {
+                        w.Close();
+                    }
+                    catch { }
+                }
+            }
+        });
     }
 
     public void ShowNotification(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
