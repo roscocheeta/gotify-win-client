@@ -12,10 +12,9 @@ namespace GotifyWin.Services;
 
 public class NotificationPresenter : INotificationPresenter
 {
-    private const string AppUserModelId = "GotifyWin.DesktopClient";
+    private const string AppUserModelId = AumidHelper.AppUserModelId;
     private readonly ISoundService _soundService;
     private readonly IHudManager _hudManager;
-    private bool _aumidInitialized;
 
     public event EventHandler<string>? UrlOpenRequested;
 
@@ -23,46 +22,7 @@ public class NotificationPresenter : INotificationPresenter
     {
         _soundService = soundService;
         _hudManager = hudManager ?? new HudManager();
-        InitializeAumidShortcut();
-    }
-
-    private void InitializeAumidShortcut()
-    {
-        if (_aumidInitialized) return;
-        try
-        {
-            var startMenuDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Microsoft", "Windows", "Start Menu", "Programs"
-            );
-            var shortcutPath = Path.Combine(startMenuDir, "Gotify Desktop.lnk");
-
-            if (!File.Exists(shortcutPath))
-            {
-                var exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
-                if (!string.IsNullOrEmpty(exePath))
-                {
-                    var shellType = Type.GetTypeFromProgID("WScript.Shell");
-                    if (shellType != null)
-                    {
-                        dynamic? shell = Activator.CreateInstance(shellType);
-                        if (shell != null)
-                        {
-                            var shortcut = shell.CreateShortcut(shortcutPath);
-                            shortcut.TargetPath = exePath;
-                            shortcut.IconLocation = $"{exePath},0";
-                            shortcut.Description = "Gotify Desktop Client";
-                            shortcut.Save();
-                        }
-                    }
-                }
-            }
-            _aumidInitialized = true;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[NotificationPresenter] AUMID shortcut registration notice: {ex.Message}");
-        }
+        AumidHelper.Initialize();
     }
 
     public void Present(GotifyMessage message, GotifyClientConfig config)
@@ -150,6 +110,7 @@ public class NotificationPresenter : INotificationPresenter
     {
         try
         {
+            AumidHelper.EnsureShortcut();
             var toastXml = new XmlDocument();
             var xmlString = GenerateToastXml(message);
             toastXml.LoadXml(xmlString);
@@ -163,7 +124,8 @@ public class NotificationPresenter : INotificationPresenter
                 }
             };
 
-            ToastNotificationManager.CreateToastNotifier(AppUserModelId).Show(toast);
+            var notifier = ToastNotificationManager.CreateToastNotifier(AppUserModelId);
+            notifier.Show(toast);
         }
         catch (Exception ex)
         {

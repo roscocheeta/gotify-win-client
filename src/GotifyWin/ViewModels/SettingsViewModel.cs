@@ -130,7 +130,10 @@ public class SettingsViewModel : ViewModelBase
         ? "Not Configured"
         : (TestStatus.StartsWith("Connected") ? "● Connected" : ServerUrl);
 
-    public string NotificationsSummaryText => $"{SelectedModeDisplay} • {SelectedPositionDisplay} • {DisplayDurationSeconds:0}s";
+    public string NotificationsSummaryText =>
+        SelectedMode == NotificationMode.NativeToast
+            ? $"{SelectedModeDisplay} • System Managed"
+            : $"{SelectedModeDisplay} • {SelectedPositionDisplay} • {DisplayDurationSeconds:0}s";
 
     public string SelectedModeDisplay => SelectedMode switch
     {
@@ -167,6 +170,8 @@ public class SettingsViewModel : ViewModelBase
     public ICommand ToggleBackupCommand { get; }
 
     // Presentation
+    public bool IsHudCustomizationEnabled => SelectedMode == NotificationMode.CustomHud || SelectedMode == NotificationMode.Both;
+
     public NotificationMode SelectedMode
     {
         get => _configService.Config.Presentation.Mode;
@@ -177,6 +182,7 @@ public class SettingsViewModel : ViewModelBase
                 _configService.Config.Presentation.Mode = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(NotificationsSummaryText));
+                OnPropertyChanged(nameof(IsHudCustomizationEnabled));
                 _configService.Save();
             }
         }
@@ -642,6 +648,13 @@ public class SettingsViewModel : ViewModelBase
         });
     }
 
+    private string _testNotificationStatus = string.Empty;
+    public string TestNotificationStatus
+    {
+        get => _testNotificationStatus;
+        set => SetProperty(ref _testNotificationStatus, value);
+    }
+
     private void SendTestNotification()
     {
         var testMsg = new GotifyMessage
@@ -657,6 +670,15 @@ public class SettingsViewModel : ViewModelBase
         };
 
         _presenter.Present(testMsg, _configService.Config);
+
+        TestNotificationStatus = SelectedMode == NotificationMode.NativeToast
+            ? "✓ Sent to Windows Notification Center"
+            : "✓ Test banner dispatched";
+
+        _ = Task.Delay(3500).ContinueWith(_ =>
+        {
+            UiDispatcher.RunOnUI(() => TestNotificationStatus = string.Empty);
+        });
     }
 
     public static GotifyClientConfig BuildExportConfig(GotifyClientConfig source)

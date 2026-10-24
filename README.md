@@ -110,7 +110,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 git clone https://github.com/roscocheeta/gotify-win-client.git
 cd gotify-win-client
 
-# Run all 142 automated tests
+# Run all 148 automated tests
 dotnet test
 
 # Launch the app
@@ -139,8 +139,8 @@ dotnet test
 
 ```
 Test run for GotifyWin.Tests.dll (.NETCoreApp,Version=v8.0)
-Total tests: 142
-Passed: 142
+Total tests: 148
+Passed: 148
 Failed: 0
 Skipped: 0
 ```

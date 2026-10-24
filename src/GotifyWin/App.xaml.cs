@@ -12,6 +12,8 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        AumidHelper.Initialize();
+
         var configService = new ConfigService();
         configService.Load();
 

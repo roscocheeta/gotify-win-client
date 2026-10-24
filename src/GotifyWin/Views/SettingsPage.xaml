@@ -223,8 +223,11 @@
                     <!-- Collapsible Content -->
                     <StackPanel Visibility="{Binding IsNotificationsExpanded, Converter={StaticResource BoolToVis}}" Margin="0,14,0,0">
                         <Grid Margin="0,0,0,14">
-                            <TextBlock Text="Presentation Options" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                            <Button Content="🔔 Test Notification" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Right" Command="{Binding SendTestNotificationCommand}"/>
+                            <TextBlock Text="Presentation Options" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TestNotificationStatus}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <Button Content="🔔 Test Notification" Style="{StaticResource SecondaryButton}" Command="{Binding SendTestNotificationCommand}"/>
+                            </StackPanel>
                         </Grid>
 
                         <!-- Presentation Mode -->
@@ -245,54 +248,82 @@
                             </ComboBox>
                         </Grid>
 
-                        <!-- HUD Screen Position (Includes Top-Left and Bottom-Left) -->
-                        <Grid Margin="0,0,0,14">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="270"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Banner Position" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                <TextBlock Text="Screen location where floating banners appear (stacks down from top, up from bottom)." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                            </StackPanel>
-                            <ComboBox Grid.Column="1" Height="34"
-                                      SelectedValue="{Binding SelectedPosition}" SelectedValuePath="Tag">
-                                <ComboBoxItem Content="Bottom-Right (Standard)" Tag="{x:Static cfg:HudPosition.BottomRight}"/>
-                                <ComboBoxItem Content="Top-Right" Tag="{x:Static cfg:HudPosition.TopRight}"/>
-                                <ComboBoxItem Content="Top-Left" Tag="{x:Static cfg:HudPosition.TopLeft}"/>
-                                <ComboBoxItem Content="Bottom-Left" Tag="{x:Static cfg:HudPosition.BottomLeft}"/>
-                                <ComboBoxItem Content="Top-Center" Tag="{x:Static cfg:HudPosition.TopCenter}"/>
-                                <ComboBoxItem Content="Bottom-Center" Tag="{x:Static cfg:HudPosition.BottomCenter}"/>
-                            </ComboBox>
-                        </Grid>
+                        <!-- Info notice when Windows Notification Center is exclusively selected -->
+                        <Border Visibility="{Binding IsHudCustomizationEnabled, Converter={StaticResource InverseBoolToVis}}"
+                                Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}"
+                                BorderThickness="1" CornerRadius="6" Padding="12,9" Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="ℹ️" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Grid.Column="1" Text="Banner position and display timeout for Windows Notification Center are managed directly by Windows (Settings &gt; Accessibility &gt; Visual effects)."
+                                           FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
 
-                        <!-- Display Duration -->
-                        <Grid Margin="0,0,0,14">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="270"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Banner Duration" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                <TextBlock Text="How long floating banners stay visible before auto-dismissing." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                            </StackPanel>
-                            <Grid Grid.Column="1" VerticalAlignment="Center">
+                        <!-- Floating Banner Customization Options (Enabled only for CustomHud and Both) -->
+                        <StackPanel IsEnabled="{Binding IsHudCustomizationEnabled}">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Opacity" Value="0.45"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+
+                            <!-- HUD Screen Position (Includes Top-Left and Bottom-Left) -->
+                            <Grid Margin="0,0,0,14">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="270"/>
                                 </Grid.ColumnDefinitions>
-                                <Slider Grid.Column="0" Minimum="2" Maximum="20" Value="{Binding DisplayDurationSeconds}"
-                                        TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
-                                        CornerRadius="4" Padding="8,3" VerticalAlignment="Center" MinWidth="82">
-                                    <TextBlock Text="{Binding DisplayDurationText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" HorizontalAlignment="Center"/>
-                                </Border>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Banner Position (Floating Banner)" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                    <TextBlock Text="Screen location where floating banners appear (stacks down from top, up from bottom)." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                </StackPanel>
+                                <ComboBox Grid.Column="1" Height="34"
+                                          SelectedValue="{Binding SelectedPosition}" SelectedValuePath="Tag">
+                                    <ComboBoxItem Content="Bottom-Right (Standard)" Tag="{x:Static cfg:HudPosition.BottomRight}"/>
+                                    <ComboBoxItem Content="Top-Right" Tag="{x:Static cfg:HudPosition.TopRight}"/>
+                                    <ComboBoxItem Content="Top-Left" Tag="{x:Static cfg:HudPosition.TopLeft}"/>
+                                    <ComboBoxItem Content="Bottom-Left" Tag="{x:Static cfg:HudPosition.BottomLeft}"/>
+                                    <ComboBoxItem Content="Top-Center" Tag="{x:Static cfg:HudPosition.TopCenter}"/>
+                                    <ComboBoxItem Content="Bottom-Center" Tag="{x:Static cfg:HudPosition.BottomCenter}"/>
+                                </ComboBox>
                             </Grid>
-                        </Grid>
 
-                        <!-- Countdown Bar Toggle -->
-                        <CheckBox Content="Show countdown progress bar on floating banners"
-                                  IsChecked="{Binding ShowCountdownBar}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
+                            <!-- Display Duration -->
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="270"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Banner Duration (Floating Banner)" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                    <TextBlock Text="How long floating banners stay visible before auto-dismissing." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                </StackPanel>
+                                <Grid Grid.Column="1" VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Slider Grid.Column="0" Minimum="2" Maximum="20" Value="{Binding DisplayDurationSeconds}"
+                                            TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <Border Grid.Column="1" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                            CornerRadius="4" Padding="8,3" VerticalAlignment="Center" MinWidth="82">
+                                        <TextBlock Text="{Binding DisplayDurationText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" HorizontalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Countdown Bar Toggle -->
+                            <CheckBox Content="Show countdown progress bar on floating banners"
+                                      IsChecked="{Binding ShowCountdownBar}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,14"/>
+                        </StackPanel>
 
                         <!-- Sound Toggle -->
                         <CheckBox Content="Play notification chime"
