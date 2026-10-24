@@ -26,11 +26,11 @@ public class StartupManager : IStartupManager
     {
         try
         {
-            using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
-            if (key == null) return;
-
             if (enable)
             {
+                using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath);
+                if (key == null) return;
+
                 var exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
                 if (!string.IsNullOrEmpty(exePath))
                 {
@@ -48,7 +48,8 @@ public class StartupManager : IStartupManager
             }
             else
             {
-                key.DeleteValue(AppName, false);
+                using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
+                key?.DeleteValue(AppName, false);
             }
         }
         catch (Exception ex)
