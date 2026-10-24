@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-10-25
+
+### Fixed
+- **Windows Notification Center Delivery**: Resolved issue where native toast notifications were silently discarded by Windows 11 due to missing COM `IPropertyStore` registration on unpackaged desktop shortcuts. Added `AumidHelper` with explicit `PKEY_AppUserModel_ID` shell registration and `SetCurrentProcessExplicitAppUserModelID`.
+- **DND State Differentiation**: Correctly differentiated `SHQueryUserNotificationState` results so background/media busy states (`QUNS_BUSY`) are no longer erroneously labeled as "Gaming".
+- **Presentation Options UX**: Automatically disable and dim floating banner settings (position, duration, progress bar) when "Windows Notification Center" is selected, and added an informative note explaining that native toasts are managed by Windows Accessibility settings.
+- **Showcase & Tests**: Re-rendered clean screenshots with connected status and DND off; expanded automated test suite to 148 passing tests.
+
+---
+
 ## [1.0.0] - 2026-10-24
 
 ### Initial Release
