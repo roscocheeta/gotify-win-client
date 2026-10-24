@@ -1,4 +1,5 @@
 using System;
+using GotifyWin.Models;
 using GotifyWin.Models.Config;
 using GotifyWin.Services;
 using GotifyWin.ViewModels;
@@ -8,6 +9,15 @@ namespace GotifyWin.Tests;
 
 public class SettingsAndAumidTests
 {
+    private class DummyPresenter : INotificationPresenter
+    {
+#pragma warning disable CS0067
+        public event EventHandler<string>? UrlOpenRequested;
+#pragma warning restore CS0067
+        public void Present(GotifyMessage message, GotifyClientConfig config) { }
+        public void OpenUrl(string url) { }
+    }
+
     [Fact]
     public void AumidHelper_Constants_AreValid()
     {
@@ -31,12 +41,11 @@ public class SettingsAndAumidTests
         var configService = new ConfigService();
         configService.Config.Presentation.Mode = mode;
 
-        var mockPresenter = new NotificationPresenter(new SoundService());
         var vm = new SettingsViewModel(
             configService,
             new GotifyApiService(),
             new StartupManager(),
-            mockPresenter,
+            new DummyPresenter(),
             new ThemeManager()
         );
 
@@ -49,12 +58,11 @@ public class SettingsAndAumidTests
         var configService = new ConfigService();
         configService.Config.Presentation.Mode = NotificationMode.NativeToast;
 
-        var mockPresenter = new NotificationPresenter(new SoundService());
         var vm = new SettingsViewModel(
             configService,
             new GotifyApiService(),
             new StartupManager(),
-            mockPresenter,
+            new DummyPresenter(),
             new ThemeManager()
         );
 
