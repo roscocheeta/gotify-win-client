@@ -28,6 +28,19 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 
 ---
 
+## 📸 Screenshots & UI Overview
+
+### 🌙 Dark Mode — Message History Feed
+![GotifyWin Dark Mode Message Feed](assets/screenshots/gotifywin-dark-feed.png)
+
+### ☀️ Light Mode — Filter Rules & Smart Noise Recommendations
+![GotifyWin Light Mode Filter Rules](assets/screenshots/gotifywin-light-rules.png)
+
+### ⚡ High-Density Compact Feed
+![GotifyWin Compact Mode Message Feed](assets/screenshots/gotifywin-dark-compact.png)
+
+---
+
 ## Key Features
 
 ### 📱 Selective App Management
@@ -76,6 +89,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 * **ReDoS Protection**: Regex evaluation is constrained by a 50ms timeout and cached via pre-compiled expressions.
 * **Frame Limits**: WebSocket streams enforce a 512 KB payload ceiling to prevent Large Object Heap memory exhaustion.
 * **Atomic File Writes**: Configuration updates use atomic temporary file replacement, preventing config corruption on crashes.
+* *For complete threat modeling and architecture details, see [SECURITY_ARCHITECTURE.md](docs/SECURITY_ARCHITECTURE.md).*
 
 ---
 

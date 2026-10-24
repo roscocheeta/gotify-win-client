@@ -43,6 +43,22 @@ public partial class App : System.Windows.Application
 
         _mainWindow = new MainWindow(mainViewModel, configService);
 
+        var isShowcase = e.Args.Any(a => a.Equals("--generate-showcase", StringComparison.OrdinalIgnoreCase));
+        if (isShowcase)
+        {
+            _mainWindow.Show();
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(600);
+                UiDispatcher.RunOnUI(async () =>
+                {
+                    await ShowcaseGenerator.GenerateAsync(_mainWindow, mainViewModel, themeManager, "assets/screenshots");
+                    Shutdown();
+                });
+            });
+            return;
+        }
+
         var startMinimized = e.Args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase))
                              || configService.Config.StartMinimized;
 
