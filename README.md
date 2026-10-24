@@ -1,12 +1,20 @@
-# GotifyWin
+<p align="center">
+  <img src="logo/image_logo.svg" alt="GotifyWin Logo" width="128" height="128" />
+</p>
 
-[![CI Status](https://github.com/roscocheeta/gotify-win-client/actions/workflows/ci.yml/badge.svg)](https://github.com/roscocheeta/gotify-win-client/actions/workflows/ci.yml)
-[![Latest Release](https://img.shields.io/github/v/release/roscocheeta/gotify-win-client?include_prereleases&color=blue)](https://github.com/roscocheeta/gotify-win-client/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2011%20%7C%20Windows%2010-0078D4?logo=windows)](https://microsoft.com/windows)
-[![.NET 8.0](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+<h1 align="center">GotifyWin</h1>
 
-> A sleek, minimal, and deeply configurable [Gotify](https://gotify.net) push notification client designed for Windows 11.
+<p align="center">
+  <strong>A sleek, minimal, and deeply configurable <a href="https://gotify.net">Gotify</a> push notification client designed for Windows 11.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/roscocheeta/gotify-win-client/actions/workflows/ci.yml"><img src="https://github.com/roscocheeta/gotify-win-client/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
+  <a href="https://github.com/roscocheeta/gotify-win-client/releases"><img src="https://img.shields.io/github/v/release/roscocheeta/gotify-win-client?include_prereleases&color=blue" alt="Latest Release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://microsoft.com/windows"><img src="https://img.shields.io/badge/Platform-Windows%2011%20%7C%20Windows%2010-0078D4?logo=windows" alt="Platform" /></a>
+  <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet" alt=".NET 8.0" /></a>
+</p>
 
 GotifyWin is built specifically for homelab operators, sysadmins, and developers who route notifications from **Home Assistant, Uptime Kuma, Proxmox, TrueNAS, Docker, Sonarr, Plex, and CI/CD pipelines** to their Windows 11 desktop.
 
