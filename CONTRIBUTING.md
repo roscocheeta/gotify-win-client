@@ -52,7 +52,7 @@ GotifyWin follows the **Model-View-ViewModel (MVVM)** pattern with dependency in
   * `ConfigService`: Configuration storage with Windows DPAPI credential protection.
 * **`src/GotifyWin/ViewModels/`**: ViewModels bound to the UI (`MainViewModel`, `FeedViewModel`, `AppsViewModel`, `RulesViewModel`, `SettingsViewModel`).
 * **`src/GotifyWin/Views/`**: WPF XAML views styled with Windows 11 Fluent 2 aesthetics (`WPF-UI`).
-* **`tests/GotifyWin.Tests/`**: Complete xUnit test suite (148 tests) verifying rules, parsing, encryption, and debounce logic.
+* **`tests/GotifyWin.Tests/`**: Complete xUnit test suite (153 tests) verifying rules, parsing, encryption, and debounce logic.
 
 ---
 
