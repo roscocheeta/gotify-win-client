@@ -36,9 +36,6 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 ### ☀️ Light Mode — Filter Rules & Smart Noise Recommendations
 ![GotifyWin Light Mode Filter Rules](assets/screenshots/gotifywin-light-rules.png)
 
-### ⚡ High-Density Compact Feed
-![GotifyWin Compact Mode Message Feed](assets/screenshots/gotifywin-dark-compact.png)
-
 ---
 
 ## Key Features

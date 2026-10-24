@@ -89,12 +89,6 @@ public static class ShowcaseGenerator
         var darkPath = Path.Combine(outputDir, "gotifywin-dark-feed.png");
         CaptureElement((FrameworkElement)mainWindow.Content, 980, 680, darkPath);
 
-        // 1b. Dark Mode Feed Screenshot (Compact High-Density View)
-        vm.Feed.IsCompactView = true;
-        await Task.Delay(200);
-        var compactPath = Path.Combine(outputDir, "gotifywin-dark-compact.png");
-        CaptureElement((FrameworkElement)mainWindow.Content, 980, 680, compactPath);
-
         // 2. Light Mode Rules Page Screenshot
         themeManager.ApplyTheme(AppThemeMode.Light);
         vm.SelectedTabIndex = 2;
