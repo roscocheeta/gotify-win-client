@@ -61,6 +61,38 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Modern Header Toggle Button Style -->
+        <Style x:Key="HeaderToggleButton" TargetType="ToggleButton">
+            <Setter Property="Background" Value="{DynamicResource ThemeSecondaryButtonBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSecondaryButtonText}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeSecondaryButtonBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="TglBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TglBorder" Property="Background" Value="{DynamicResource ThemeItemHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="TglBorder" Property="Background" Value="{DynamicResource ThemeNavChecked}"/>
+                                <Setter TargetName="TglBorder" Property="BorderBrush" Value="{DynamicResource ThemeBrandAccent}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ThemeBrandAccent}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="24,16,24,24">
@@ -94,12 +126,32 @@
 
             <!-- App Filter Dropdown -->
             <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableAppFilters}" SelectedItem="{Binding SelectedAppFilter}"
-                      Width="160" Height="34" Margin="0,0,12,0"/>
+                      Width="140" Height="34" Margin="0,0,10,0"/>
 
-            <!-- Actions -->
+            <!-- Actions & View Toggles -->
             <StackPanel Grid.Column="2" Orientation="Horizontal">
-                <Button Content="🔔 Test Notification" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding TestNotificationCommand}"/>
-                <Button Content="Clear All" Style="{StaticResource SecondaryButton}" Command="{Binding ClearAllCommand}"/>
+                <!-- Hide Filtered Messages Toggle -->
+                <ToggleButton Style="{StaticResource HeaderToggleButton}" Margin="0,0,8,0"
+                              IsChecked="{Binding HideFilteredMessages}"
+                              ToolTip="Hide notifications that were filtered out or silenced by rules">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🔕" FontSize="11" Margin="0,0,5,0"/>
+                        <TextBlock Text="Hide Filtered" FontSize="12"/>
+                    </StackPanel>
+                </ToggleButton>
+
+                <!-- Compact View Mode Toggle -->
+                <ToggleButton Style="{StaticResource HeaderToggleButton}" Margin="0,0,8,0"
+                              IsChecked="{Binding IsCompactView}"
+                              ToolTip="Toggle compact high-density view">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="☵" FontSize="11" Margin="0,0,5,0"/>
+                        <TextBlock Text="Compact" FontSize="12"/>
+                    </StackPanel>
+                </ToggleButton>
+
+                <Button Content="🔔 Test" ToolTip="Send a test notification" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding TestNotificationCommand}"/>
+                <Button Content="Clear All" ToolTip="Clear all messages in history" Style="{StaticResource SecondaryButton}" Command="{Binding ClearAllCommand}"/>
             </StackPanel>
         </Grid>
 
@@ -117,126 +169,227 @@
             <ItemsControl ItemsSource="{Binding FilteredMessages}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" ClipToBounds="True">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="4"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <!-- Left Accent Color Stripe -->
-                                <Border Grid.Column="0" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}"/>
-
-                                <Grid Grid.Column="1" Margin="14,12,14,12">
+                        <Grid>
+                            <!-- Detailed View Card (shown when NOT in compact view) -->
+                            <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" ClipToBounds="True"
+                                    Visibility="{Binding DataContext.IsCompactView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBoolToVis}}">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="4"/>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <!-- Left Column: Message Content -->
-                                    <Grid Grid.Column="0">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
+                                    <!-- Left Accent Color Stripe -->
+                                    <Border Grid.Column="0" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}"/>
 
-                                        <!-- Top Meta Bar: App Name, Time, Priority Badge -->
-                                        <Grid Grid.Row="0" Margin="0,0,0,6">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
+                                    <Grid Grid.Column="1" Margin="14,12,14,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
 
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding DisplayAppName}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
-                                                <TextBlock Text=" • " FontSize="12" Foreground="{DynamicResource ThemeTextMuted}"/>
-                                                <TextBlock Text="{Binding RelativeTime}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                                                <TextBlock Text="{Binding FormattedDate, StringFormat=' ({0})'}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
-                                            </StackPanel>
+                                        <!-- Left Column: Message Content -->
+                                        <Grid Grid.Column="0">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
 
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <!-- Filtered by Rule Badge -->
-                                                <Border CornerRadius="4" Background="#1E3A5F" BorderBrush="#3B82F6" BorderThickness="1" Padding="7,2" Margin="0,0,6,0"
-                                                        Visibility="{Binding IsFiltered, Converter={StaticResource BoolToVis}}"
-                                                        ToolTip="{Binding FilteredByRuleName, StringFormat='Automatically filtered: {0}'}">
-                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                        <TextBlock Text="🔕 " FontSize="10" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding FilteredByRuleName, StringFormat='Filtered: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="#93C5FD"/>
-                                                    </StackPanel>
-                                                </Border>
+                                            <!-- Top Meta Bar: App Name, Time, Priority Badge -->
+                                            <Grid Grid.Row="0" Margin="0,0,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
 
-                                                <!-- Debounce duplicate badge -->
-                                                <Border CornerRadius="4" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="7,2" Margin="0,0,6,0"
-                                                        Visibility="{Binding DuplicateCount, Converter={StaticResource BoolToVis}}">
-                                                    <TextBlock Text="{Binding DuplicateCount, StringFormat='x{0}'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                                </Border>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DisplayAppName}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                                                    <TextBlock Text=" • " FontSize="12" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                                    <TextBlock Text="{Binding RelativeTime}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                                    <TextBlock Text="{Binding FormattedDate, StringFormat=' ({0})'}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                                </StackPanel>
 
-                                                <!-- Priority Badge -->
-                                                <Border CornerRadius="4" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}" Padding="8,3"
-                                                        ToolTip="{Binding PriorityTooltip}">
-                                                    <TextBlock Text="{Binding PriorityDisplay}" FontSize="11" FontWeight="Bold" Foreground="{Binding PriorityTextColor, Converter={StaticResource HexToBrush}}"/>
-                                                </Border>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <!-- Filtered by Rule Badge -->
+                                                    <Border CornerRadius="4" Background="#1E3A5F" BorderBrush="#3B82F6" BorderThickness="1" Padding="7,2" Margin="0,0,6,0"
+                                                            Visibility="{Binding IsFiltered, Converter={StaticResource BoolToVis}}"
+                                                            ToolTip="{Binding FilteredByRuleName, StringFormat='Automatically filtered: {0}'}">
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="🔕 " FontSize="10" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding FilteredByRuleName, StringFormat='Filtered: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="#93C5FD"/>
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <!-- Debounce duplicate badge -->
+                                                    <Border CornerRadius="4" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="7,2" Margin="0,0,6,0"
+                                                            Visibility="{Binding DuplicateCount, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="{Binding DuplicateCount, StringFormat='x{0}'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                    </Border>
+
+                                                    <!-- Priority Badge -->
+                                                    <Border CornerRadius="4" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}" Padding="8,3"
+                                                            ToolTip="{Binding PriorityTooltip}">
+                                                        <TextBlock Text="{Binding PriorityDisplay}" FontSize="11" FontWeight="Bold" Foreground="{Binding PriorityTextColor, Converter={StaticResource HexToBrush}}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Title -->
+                                            <TextBlock Grid.Row="1" Text="{Binding DisplayTitle}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+
+                                            <!-- Body -->
+                                            <TextBlock Grid.Row="2" Text="{Binding Message}" FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,8"/>
+
+                                            <!-- Action Bar -->
+                                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                                                <Button Content="🖼 View Image" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                        Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
+                                                        Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding ImageUrl}"/>
+                                                <Button Content="{Binding ClickUrlButtonText}" ToolTip="{Binding ClickUrl}" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                        Visibility="{Binding HasClickUrl, Converter={StaticResource BoolToVis}}"
+                                                        Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding ClickUrl}"/>
+                                                <Button Content="⚡ Create Rule" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                        ToolTip="Pre-fill a new filter rule using this notification"
+                                                        Command="{Binding DataContext.CreateRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Content="📋 Copy" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                        Command="{Binding DataContext.CopyMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Content="✕ Dismiss" Style="{StaticResource CardActionButton}"
+                                                        Command="{Binding DataContext.DeleteMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"/>
                                             </StackPanel>
                                         </Grid>
 
-                                        <!-- Title -->
-                                        <TextBlock Grid.Row="1" Text="{Binding DisplayTitle}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}" TextWrapping="Wrap" Margin="0,0,0,4"/>
-
-                                        <!-- Body -->
-                                        <TextBlock Grid.Row="2" Text="{Binding Message}" FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,8"/>
-
-                                        <!-- Action Bar -->
-                                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
-                                            <Button Content="🖼 View Image" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
-                                                    Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
-                                                    Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                    CommandParameter="{Binding ImageUrl}"/>
-                                            <Button Content="{Binding ClickUrlButtonText}" ToolTip="{Binding ClickUrl}" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
-                                                    Visibility="{Binding HasClickUrl, Converter={StaticResource BoolToVis}}"
-                                                    Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                    CommandParameter="{Binding ClickUrl}"/>
-                                            <Button Content="⚡ Create Rule" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
-                                                    ToolTip="Pre-fill a new filter rule using this notification"
-                                                    Command="{Binding DataContext.CreateRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                    CommandParameter="{Binding}"/>
-                                            <Button Content="📋 Copy" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
-                                                    Command="{Binding DataContext.CopyMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                    CommandParameter="{Binding}"/>
-                                            <Button Content="✕ Dismiss" Style="{StaticResource CardActionButton}"
-                                                    Command="{Binding DataContext.DeleteMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                    CommandParameter="{Binding}"/>
-                                        </StackPanel>
+                                        <!-- Right Column: Attached Image Thumbnail -->
+                                        <Button Grid.Column="1" VerticalAlignment="Top" Margin="14,0,0,0"
+                                                Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding ImageUrl}"
+                                                ToolTip="Click to open full image"
+                                                Cursor="Hand"
+                                                Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
+                                                Background="Transparent" BorderThickness="0" Padding="0">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Width="110" Height="82" CornerRadius="8"
+                                                            Background="{DynamicResource ThemeCardInnerBackground}"
+                                                            BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                                            ClipToBounds="True">
+                                                        <Grid>
+                                                            <Image Source="{Binding ImageUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                            <Border Background="#55000000" VerticalAlignment="Bottom" Padding="4,2">
+                                                                <TextBlock Text="🔍 View" FontSize="10" Foreground="White" HorizontalAlignment="Center"/>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
                                     </Grid>
-
-                                    <!-- Right Column: Attached Image Thumbnail -->
-                                    <Button Grid.Column="1" VerticalAlignment="Top" Margin="14,0,0,0"
-                                            Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding ImageUrl}"
-                                            ToolTip="Click to open full image"
-                                            Cursor="Hand"
-                                            Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
-                                            Background="Transparent" BorderThickness="0" Padding="0">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Width="110" Height="82" CornerRadius="8"
-                                                        Background="{DynamicResource ThemeCardInnerBackground}"
-                                                        BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
-                                                        ClipToBounds="True">
-                                                    <Grid>
-                                                         <Image Source="{Binding ImageUrl, Converter={StaticResource SecureImage}, IsAsync=True}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                        <Border Background="#55000000" VerticalAlignment="Bottom" Padding="4,2">
-                                                            <TextBlock Text="🔍 View" FontSize="10" Foreground="White" HorizontalAlignment="Center"/>
-                                                        </Border>
-                                                    </Grid>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
                                 </Grid>
-                            </Grid>
-                        </Border>
+                            </Border>
+
+                            <!-- Compact View Card (shown when in compact view) -->
+                            <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,4" ClipToBounds="True"
+                                    Visibility="{Binding DataContext.IsCompactView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                                <Grid MinHeight="36">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="4"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Priority Accent Stripe -->
+                                    <Border Grid.Column="0" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}" ToolTip="{Binding PriorityTooltip}"/>
+
+                                    <!-- App Name -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,6,0">
+                                        <TextBlock Text="{Binding DisplayAppName}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeBrandAccent}"/>
+                                        <TextBlock Text=" • " FontSize="11" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                    </StackPanel>
+
+                                    <!-- Single-Line Truncated Title & Message -->
+                                    <TextBlock Grid.Column="2" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" FontSize="12">
+                                        <Run Text="{Binding DisplayTitle, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                        <Run Text=" — " Foreground="{DynamicResource ThemeTextMuted}"/>
+                                        <Run Text="{Binding Message, Mode=OneWay}" Foreground="{DynamicResource ThemeTextSecondary}"/>
+                                    </TextBlock>
+
+                                    <!-- Badges -->
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                                        <!-- Filtered Badge -->
+                                        <Border CornerRadius="3" Background="#1E3A5F" BorderBrush="#3B82F6" BorderThickness="1" Padding="5,1" Margin="0,0,4,0"
+                                                Visibility="{Binding IsFiltered, Converter={StaticResource BoolToVis}}"
+                                                ToolTip="{Binding FilteredByRuleName, StringFormat='Automatically filtered: {0}'}">
+                                            <TextBlock Text="🔕 Filtered" FontSize="10" FontWeight="SemiBold" Foreground="#93C5FD"/>
+                                        </Border>
+
+                                        <!-- Duplicate Badge -->
+                                        <Border CornerRadius="3" Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" Padding="5,1" Margin="0,0,4,0"
+                                                Visibility="{Binding DuplicateCount, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="{Binding DuplicateCount, StringFormat='x{0}'}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                        </Border>
+
+                                        <!-- Has Image Indicator Button -->
+                                        <Button Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding ImageUrl}"
+                                                ToolTip="View attached image"
+                                                Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
+                                                Style="{StaticResource CardActionButton}" Padding="3,1" Margin="0,0,4,0">
+                                            <TextBlock Text="🖼️" FontSize="11"/>
+                                        </Button>
+
+                                        <!-- Has Click URL Indicator Button -->
+                                        <Button Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding ClickUrl}"
+                                                ToolTip="{Binding ClickUrl, StringFormat='Open link: {0}'}"
+                                                Visibility="{Binding HasClickUrl, Converter={StaticResource BoolToVis}}"
+                                                Style="{StaticResource CardActionButton}" Padding="3,1" Margin="0,0,4,0">
+                                            <TextBlock Text="🔗" FontSize="11"/>
+                                        </Button>
+
+                                        <!-- Priority Badge -->
+                                        <Border CornerRadius="3" Background="{Binding PriorityColor, Converter={StaticResource HexToBrush}}" Padding="6,1"
+                                                ToolTip="{Binding PriorityTooltip}">
+                                            <TextBlock Text="{Binding PriorityDisplay}" FontSize="10" FontWeight="Bold" Foreground="{Binding PriorityTextColor, Converter={StaticResource HexToBrush}}"/>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Timestamp -->
+                                    <TextBlock Grid.Column="4" Text="{Binding RelativeTime}" ToolTip="{Binding FormattedDate}" FontSize="11" Foreground="{DynamicResource ThemeTextMuted}"
+                                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+
+                                    <!-- Compact Actions -->
+                                    <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0">
+                                        <Button Style="{StaticResource CardActionButton}" Padding="4,2" Margin="0,0,2,0"
+                                                ToolTip="Create filter rule from this notification"
+                                                Command="{Binding DataContext.CreateRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="⚡" FontSize="11"/>
+                                        </Button>
+                                        <Button Style="{StaticResource CardActionButton}" Padding="4,2" Margin="0,0,2,0"
+                                                ToolTip="Copy notification text"
+                                                Command="{Binding DataContext.CopyMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="📋" FontSize="11"/>
+                                        </Button>
+                                        <Button Style="{StaticResource CardActionButton}" Padding="4,2"
+                                                ToolTip="Dismiss notification"
+                                                Command="{Binding DataContext.DeleteMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="✕" FontSize="11"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

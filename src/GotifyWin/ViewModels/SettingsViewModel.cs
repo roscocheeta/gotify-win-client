@@ -83,15 +83,15 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _isTesting, value);
     }
 
-    // Collapsible Categories
-    private bool _isConnectionExpanded = true;
+    // Collapsible Categories - start with all categories collapsed
+    private bool _isConnectionExpanded = false;
     public bool IsConnectionExpanded
     {
         get => _isConnectionExpanded;
         set => SetProperty(ref _isConnectionExpanded, value);
     }
 
-    private bool _isNotificationsExpanded = true;
+    private bool _isNotificationsExpanded = false;
     public bool IsNotificationsExpanded
     {
         get => _isNotificationsExpanded;
@@ -155,7 +155,7 @@ public class SettingsViewModel : ViewModelBase
 
     public string DndSummaryText => $"{(QuietHoursEnabled ? $"Quiet Hours ({QuietHoursStart}-{QuietHoursEnd})" : "Quiet Hours Off")}{(EnableEmergencyBypass ? $" • Bypass \u2265 {EmergencyBypassPriority}" : "")}";
 
-    public string AppearanceSummaryText => $"{SelectedTheme} • {(StartWithWindows ? "Auto-start" : "Manual")}";
+    public string AppearanceSummaryText => $"{SelectedTheme} • {(UseCompactFeedView ? "Compact Feed" : "Detailed Feed")} • {(StartWithWindows ? "Auto-start" : "Manual")}";
 
     public string BackupSummaryText => "Export / Import Configuration";
 
@@ -460,6 +460,35 @@ public class SettingsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(AppearanceSummaryText));
                 _configService.Save();
                 _themeManager?.ApplyTheme(value);
+            }
+        }
+    }
+
+    public bool UseCompactFeedView
+    {
+        get => _configService.Config.UseCompactFeedView;
+        set
+        {
+            if (_configService.Config.UseCompactFeedView != value)
+            {
+                _configService.Config.UseCompactFeedView = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AppearanceSummaryText));
+                _configService.Save();
+            }
+        }
+    }
+
+    public bool HideFilteredInFeed
+    {
+        get => _configService.Config.HideFilteredInFeed;
+        set
+        {
+            if (_configService.Config.HideFilteredInFeed != value)
+            {
+                _configService.Config.HideFilteredInFeed = value;
+                OnPropertyChanged();
+                _configService.Save();
             }
         }
     }

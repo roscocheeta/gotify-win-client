@@ -13,6 +13,9 @@ public class GotifyClientConfig
 
     public int GlobalMinPriority { get; set; } = 0;
 
+    public bool UseCompactFeedView { get; set; } = false;
+    public bool HideFilteredInFeed { get; set; } = false;
+
     public PresentationSettings Presentation { get; set; } = new();
     public DndSettings Dnd { get; set; } = new();
 

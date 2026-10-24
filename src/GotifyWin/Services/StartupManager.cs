@@ -37,7 +37,7 @@ public class StartupManager : IStartupManager
                     // SEC-13: Handle framework-dependent dotnet.exe launch vs published standalone executable
                     if (Path.GetFileName(exePath).Equals("dotnet.exe", StringComparison.OrdinalIgnoreCase))
                     {
-                        var dllPath = typeof(StartupManager).Assembly.Location;
+                        var dllPath = Path.Combine(AppContext.BaseDirectory, "GotifyWin.dll");
                         key.SetValue(AppName, $"\"{exePath}\" \"{dllPath}\" --minimized", RegistryValueKind.String);
                     }
                     else

@@ -1,0 +1,63 @@
+name: 🐛 Bug Report
+description: Report a reproducible bug or unexpected behavior in GotifyWin
+labels: [ "bug" ]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for taking the time to report an issue! Please provide as much detail as possible.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: What steps are needed to reproduce the problem?
+      placeholder: |
+        1. Open Settings
+        2. Enter server URL ...
+        3. Click ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os_version
+    attributes:
+      label: Windows OS Version
+      options:
+        - Windows 11 (23H2 or newer)
+        - Windows 11 (22H2)
+        - Windows 10 (22H2 / Build 19045)
+        - Other (specify in comments)
+    validations:
+      required: true
+
+  - type: input
+    id: gotify_version
+    attributes:
+      label: Gotify Server Version
+      placeholder: e.g. v2.5.0
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs or Screenshots
+      description: Drag and drop screenshots or paste error messages if applicable.
+    validations:
+      required: false

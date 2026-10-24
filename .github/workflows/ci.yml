@@ -1,0 +1,30 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore GotifyWin.sln
+
+      - name: Build Solution
+        run: dotnet build GotifyWin.sln --configuration Release --no-restore
+
+      - name: Run Automated Tests
+        run: dotnet test GotifyWin.sln --configuration Release --no-build --verbosity normal

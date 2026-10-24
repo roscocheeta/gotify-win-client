@@ -542,7 +542,8 @@
                         </Grid>
 
                         <CheckBox Content="Start Gotify Client automatically with Windows" IsChecked="{Binding StartWithWindows}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,8"/>
-                        <CheckBox Content="Minimize to System Tray when closing the window" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12"/>
+                        <CheckBox Content="Minimize to System Tray when closing the window" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,8"/>
+                        <CheckBox Content="Use compact message history layout (high-density single-line view)" IsChecked="{Binding UseCompactFeedView}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

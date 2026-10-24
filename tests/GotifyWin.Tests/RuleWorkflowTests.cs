@@ -783,15 +783,15 @@ public class RuleWorkflowTests
         var configService = new DummyConfigService();
         var vm = new SettingsViewModel(configService, null!, null!, null!);
 
-        // Verify default states
-        Assert.True(vm.IsConnectionExpanded);
-        Assert.True(vm.IsNotificationsExpanded);
+        // Verify default states: all categories start collapsed
+        Assert.False(vm.IsConnectionExpanded);
+        Assert.False(vm.IsNotificationsExpanded);
         Assert.False(vm.IsFilteringExpanded);
         Assert.False(vm.IsDndExpanded);
 
         // Toggle collapsible sections
         vm.ToggleConnectionCommand.Execute(null);
-        Assert.False(vm.IsConnectionExpanded);
+        Assert.True(vm.IsConnectionExpanded);
 
         vm.ToggleFilteringCommand.Execute(null);
         Assert.True(vm.IsFilteringExpanded);
@@ -818,5 +818,75 @@ public class RuleWorkflowTests
         Assert.False(rulesVm.IsConfiguredRulesExpanded);
         Assert.False(rulesVm.HasRuleStatusFeedback);
         Assert.Equal(string.Empty, rulesVm.RuleStatusFeedback);
+    }
+
+    [Fact]
+    public void FeedViewModel_CompactViewAndHideFilteredToggle()
+    {
+        var configService = new DummyConfigService();
+        var feedVm = new FeedViewModel(null!, configService);
+
+        // Verify default states match config
+        Assert.False(feedVm.IsCompactView);
+        Assert.False(feedVm.HideFilteredMessages);
+
+        // Toggle compact view and verify config save
+        feedVm.IsCompactView = true;
+        Assert.True(configService.Config.UseCompactFeedView);
+
+        // Add 1 normal message and 1 filtered message
+        var msgNormal = new GotifyMessage
+        {
+            Id = 1,
+            AppId = 1,
+            ApplicationName = "TestApp",
+            Title = "Normal Message",
+            Message = "Everything is normal",
+            Priority = 3
+        };
+        var msgFiltered = new GotifyMessage
+        {
+            Id = 2,
+            AppId = 1,
+            ApplicationName = "TestApp",
+            Title = "Noisy Alert",
+            Message = "Repetitive log notice",
+            Priority = 2,
+            FilteredByRuleName = "Drop Noisy Alerts"
+        };
+
+        feedVm.SetInitialMessages(new[] { msgNormal, msgFiltered });
+        Assert.Equal(1, feedVm.FilteredOutCount);
+
+        // By default (HideFilteredMessages = false), both messages are visible
+        var visibleInitial = feedVm.FilteredMessages.Cast<GotifyMessage>().ToList();
+        Assert.Equal(2, visibleInitial.Count);
+
+        // Turn on HideFilteredMessages
+        feedVm.HideFilteredMessages = true;
+        Assert.True(configService.Config.HideFilteredInFeed);
+
+        var visibleFiltered = feedVm.FilteredMessages.Cast<GotifyMessage>().ToList();
+        Assert.Single(visibleFiltered);
+        Assert.Equal("Normal Message", visibleFiltered[0].Title);
+
+        // Toggle back
+        feedVm.HideFilteredMessages = false;
+        var visibleRestored = feedVm.FilteredMessages.Cast<GotifyMessage>().ToList();
+        Assert.Equal(2, visibleRestored.Count);
+    }
+
+    [Fact]
+    public void SettingsViewModel_CompactFeedViewSync()
+    {
+        var configService = new DummyConfigService();
+        var settingsVm = new SettingsViewModel(configService, null!, null!, null!);
+
+        Assert.False(settingsVm.UseCompactFeedView);
+        Assert.Contains("Detailed Feed", settingsVm.AppearanceSummaryText);
+
+        settingsVm.UseCompactFeedView = true;
+        Assert.True(configService.Config.UseCompactFeedView);
+        Assert.Contains("Compact Feed", settingsVm.AppearanceSummaryText);
     }
 }

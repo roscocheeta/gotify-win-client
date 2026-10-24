@@ -12,6 +12,24 @@
     <RootNamespace>GotifyWin</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+
+    <!-- Versioning & Assembly Metadata -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0</InformationalVersion>
+    <Product>GotifyWin</Product>
+    <Title>GotifyWin</Title>
+    <Description>Modern, lightweight native Windows 11 desktop notification client for Gotify.</Description>
+    <Authors>roscocheeta</Authors>
+    <Company>GotifyWin</Company>
+    <Copyright>Copyright © 2026</Copyright>
+
+    <!-- Repository & Package Metadata -->
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/roscocheeta/gotify-win-client</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/roscocheeta/gotify-win-client</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>

@@ -76,6 +76,7 @@ public partial class MainWindow : Window
 
         var dndMenu = new ToolStripMenuItem("Do Not Disturb");
         dndMenu.DropDownItems.Add("Off (Show Notifications)", null, (s, e) => _viewModel.DisableDnd());
+        dndMenu.DropDownItems.Add("On until I turn it off", null, (s, e) => _viewModel.SetDndIndefinite());
         dndMenu.DropDownItems.Add("Snooze 30 minutes", null, (s, e) => _viewModel.SetDnd(TimeSpan.FromMinutes(30)));
         dndMenu.DropDownItems.Add("Snooze 1 hour", null, (s, e) => _viewModel.SetDnd(TimeSpan.FromHours(1)));
         dndMenu.DropDownItems.Add("Snooze 4 hours", null, (s, e) => _viewModel.SetDnd(TimeSpan.FromHours(4)));
@@ -143,10 +144,18 @@ public partial class MainWindow : Window
             if (NavRulesRadio != null) NavRulesRadio.IsChecked = index == 2;
             if (NavSettingsRadio != null) NavSettingsRadio.IsChecked = index == 3;
 
-            if (FeedPageView != null) FeedPageView.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (FeedPageView != null)
+            {
+                FeedPageView.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
+                if (index == 0) _viewModel.Feed.RefreshFromConfig();
+            }
             if (AppsPageView != null) AppsPageView.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
             if (RulesPageView != null) RulesPageView.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
-            if (SettingsPageView != null) SettingsPageView.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+            if (SettingsPageView != null)
+            {
+                SettingsPageView.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+                if (index == 3) _viewModel.Settings.UseCompactFeedView = _configService.Config.UseCompactFeedView;
+            }
         }
         finally
         {
@@ -167,6 +176,12 @@ public partial class MainWindow : Window
     private void DndDisable_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.DisableDnd();
+        DndFlyout.IsOpen = false;
+    }
+
+    private void DndIndefinite_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SetDndIndefinite();
         DndFlyout.IsOpen = false;
     }
 

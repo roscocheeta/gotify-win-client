@@ -159,6 +159,47 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="ReconnectButtonStyle" TargetType="Button" BasedOn="{StaticResource HeaderIconButton}">
+            <Setter Property="ToolTip" Value="Reconnect to Gotify server"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <TextBlock x:Name="IconText" Text="🔄" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       RenderTransformOrigin="0.5,0.5">
+                                <TextBlock.RenderTransform>
+                                    <RotateTransform x:Name="IconRotate" Angle="0"/>
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="{DynamicResource ThemeItemHover}"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsReconnecting}" Value="True">
+                                <Setter Property="IsEnabled" Value="False"/>
+                                <Setter Property="ToolTip" Value="Reconnecting to Gotify server..."/>
+                                <Setter TargetName="BtnBorder" Property="Opacity" Value="0.7"/>
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard x:Name="SpinAnimation">
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetName="IconRotate"
+                                                             Storyboard.TargetProperty="Angle"
+                                                             From="0" To="360" Duration="0:0:0.8"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <StopStoryboard BeginStoryboardName="SpinAnimation"/>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -259,8 +300,23 @@
                                         </Grid>
                                     </Border>
 
+                                    <!-- Manual DND Indefinite -->
+                                    <Button Style="{StaticResource DndFlyoutOptionButton}" Click="DndIndefinite_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="26"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="🔕" FontSize="13" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="On until I turn it off" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                                                <TextBlock Text="Silence indefinitely until turned back on" FontSize="10" Foreground="{DynamicResource ThemeTextMuted}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+
                                     <!-- Presets Header -->
-                                    <TextBlock Text="QUICK SNOOZE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextMuted}" Margin="4,0,0,6"/>
+                                    <TextBlock Text="TIMED SNOOZE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ThemeTextMuted}" Margin="4,8,0,6"/>
 
                                     <Button Style="{StaticResource DndFlyoutOptionButton}" Click="DndSnooze30m_Click">
                                         <Grid>
@@ -322,8 +378,8 @@
                         </Popup>
                     </Grid>
 
-                    <Button Content="🔄" Style="{StaticResource HeaderIconButton}"
-                            ToolTip="Reconnect WebSocket" Command="{Binding ReconnectCommand}"/>
+                    <Button Style="{StaticResource ReconnectButtonStyle}"
+                            Command="{Binding ReconnectCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>

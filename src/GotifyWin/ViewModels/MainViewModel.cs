@@ -66,12 +66,20 @@ public class MainViewModel : ViewModelBase
     public SettingsViewModel Settings { get; }
 
     public ICommand ToggleDndCommand { get; }
+    public ICommand DndIndefiniteCommand { get; }
     public ICommand Snooze30mCommand { get; }
     public ICommand Snooze1hCommand { get; }
     public ICommand Snooze4hCommand { get; }
     public ICommand SnoozeTomorrowCommand { get; }
     public ICommand DisableDndCommand { get; }
     public ICommand ReconnectCommand { get; }
+
+    private bool _isReconnecting;
+    public bool IsReconnecting
+    {
+        get => _isReconnecting;
+        private set => SetProperty(ref _isReconnecting, value);
+    }
 
     public MainViewModel(
         IConfigService configService,
@@ -103,6 +111,7 @@ public class MainViewModel : ViewModelBase
         Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter, themeManager);
 
         ToggleDndCommand = new RelayCommand(ToggleDnd);
+        DndIndefiniteCommand = new RelayCommand(SetDndIndefinite);
         Snooze30mCommand = new RelayCommand(() => SetDnd(TimeSpan.FromMinutes(30)));
         Snooze1hCommand = new RelayCommand(() => SetDnd(TimeSpan.FromHours(1)));
         Snooze4hCommand = new RelayCommand(() => SetDnd(TimeSpan.FromHours(4)));
@@ -259,18 +268,22 @@ public class MainViewModel : ViewModelBase
                 case ConnectionState.Connected:
                     ConnectionStatusText = "Connected";
                     ConnectionStatusColor = "#10B981"; // Green
+                    IsReconnecting = false;
                     break;
                 case ConnectionState.Connecting:
                     ConnectionStatusText = "Connecting...";
                     ConnectionStatusColor = "#F59E0B"; // Amber
+                    IsReconnecting = true;
                     break;
                 case ConnectionState.Reconnecting:
                     ConnectionStatusText = "Reconnecting...";
                     ConnectionStatusColor = "#F59E0B"; // Amber
+                    IsReconnecting = true;
                     break;
                 case ConnectionState.Disconnected:
                     ConnectionStatusText = "Disconnected";
                     ConnectionStatusColor = "#EF4444"; // Red
+                    IsReconnecting = false;
                     break;
             }
         });
@@ -281,6 +294,8 @@ public class MainViewModel : ViewModelBase
         var cfg = _configService.Config;
         if (!string.IsNullOrEmpty(cfg.ServerUrl) && !string.IsNullOrEmpty(cfg.ClientToken))
         {
+            IsReconnecting = true;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             try
             {
                 await _wsService.ConnectAsync(cfg.ServerUrl, cfg.ClientToken);
@@ -288,6 +303,18 @@ public class MainViewModel : ViewModelBase
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[MainVM] Reconnect failed: {ex.Message}");
+            }
+            finally
+            {
+                // Ensure at least 600ms of visual feedback so user perceives the action
+                if (sw.ElapsedMilliseconds < 600)
+                {
+                    await Task.Delay(600 - (int)sw.ElapsedMilliseconds);
+                }
+                if (_wsService.State != ConnectionState.Connecting && _wsService.State != ConnectionState.Reconnecting)
+                {
+                    IsReconnecting = false;
+                }
             }
         }
     }
@@ -302,6 +329,13 @@ public class MainViewModel : ViewModelBase
         {
             SetDnd(TimeSpan.FromHours(1)); // Default toggle = 1h snooze
         }
+    }
+
+    public void SetDndIndefinite()
+    {
+        _dndManager.SetManualDnd(_configService.Config.Dnd, null);
+        _configService.Save();
+        UpdateDndStatus();
     }
 
     public void SetDnd(TimeSpan duration)

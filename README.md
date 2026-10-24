@@ -1,10 +1,30 @@
 # GotifyWin
 
+[![CI Status](https://github.com/roscocheeta/gotify-win-client/actions/workflows/ci.yml/badge.svg)](https://github.com/roscocheeta/gotify-win-client/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/roscocheeta/gotify-win-client?include_prereleases&color=blue)](https://github.com/roscocheeta/gotify-win-client/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2011%20%7C%20Windows%2010-0078D4?logo=windows)](https://microsoft.com/windows)
+[![.NET 8.0](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+
 > A sleek, minimal, and deeply configurable [Gotify](https://gotify.net) push notification client designed for Windows 11.
 
 GotifyWin is built specifically for homelab operators, sysadmins, and developers who route notifications from **Home Assistant, Uptime Kuma, Proxmox, TrueNAS, Docker, Sonarr, Plex, and CI/CD pipelines** to their Windows 11 desktop.
 
 Unlike legacy tray wrappers, GotifyWin brings **Windows 11 Fluent 2 aesthetics**, a **4-tier granular filtering engine**, an **ultra-sleek floating HUD overlay**, and an intelligent **Do Not Disturb (DND) suite**.
+
+---
+
+## 🚀 Quick Download & Install
+
+You do **not** need to install the .NET SDK or any dependencies to use GotifyWin.
+
+1. Head to the **[Latest Release](https://github.com/roscocheeta/gotify-win-client/releases/latest)** page.
+2. Download **`GotifyWin-v1.0.0-win-x64-standalone.zip`** (self-contained, runs out of the box).
+3. Extract the folder and launch `GotifyWin.exe`.
+4. Enter your Gotify server URL (e.g. `https://gotify.homelab.lan`) and Client Token.
+
+> [!NOTE]
+> **Windows SmartScreen Notice**: Because GotifyWin is a freshly released open-source project without a paid corporate signing certificate, Windows SmartScreen may display an *"Unrecognized app"* warning on first launch. Click **More info** $\rightarrow$ **Run anyway**. You can verify our full test suite and inspect all source code directly here on GitHub.
 
 ---
 
@@ -16,28 +36,34 @@ Unlike legacy tray wrappers, GotifyWin brings **Windows 11 Fluent 2 aesthetics**
 * **Local Icon Caching**: Automatically downloads and caches application icons (`/application/{id}/image`) so notifications display service logos (Home Assistant, Docker, Uptime Kuma, etc.).
 * **Per-App Priority Thresholds**: Configure individual minimum priority filters per application.
 
-### ⚡ Intelligent Noise Reduction & Smart Recommendations
+### ⚡ Intelligent Noise Reduction & Filter Rules
 * **Automated Pattern Detection**: Analyzes local notification history using deterministic variable-masking clustering (normalizes timestamps, durations, numbers, IPs, and hashes) to detect repetitive operational noise (minimum 5 occurrences).
-* **1-Click Muting & Progressive Disclosure**:
-  * **💡 Smart Recommendations**: One-click `[🔕 Silent Log]` (suppresses desktop popups/chimes while keeping the record) or `[🔇 Drop]` directly from automated suggestion cards.
-  * **Interactive Match Preview**: Expandable drawer allows users to review the exact past messages matching any recommendation before applying it.
-  * **🛡️ Active Rules Management**: Clean overview to toggle, monitor, and delete active rules.
-  * **⚙️ Advanced Rule Builder**: Collapsible power-user drawer for custom regex, multi-condition matching, and priority overrides.
-* **Audit Tagging & Log Flagging**: Silently logged messages are visually tagged in the feed with an interactive badge (`🔕 Filtered: <RuleName>`), providing complete transparency.
+* **💡 Smart Noise Recommendations**: 1-click `[🔕 Silent Log]` (suppresses desktop popups/chimes while keeping the record) or `[🔇 Drop]` directly from automated suggestion cards.
+* **⚙️ Manual Rule Builder**: Multi-condition rules targeting Application, Field (Title, Message, Application Name), and Operators (Contains, StartsWith, EndsWith, Exact Match, Regex) with custom actions.
+* **⚡ 1-Click Rule Creation**: Click "Create Rule" on any past notification in history to instantly pre-fill the builder with its application name and patterns.
+* **Audit Tagging & Log Flagging**: Silently logged messages are visibly tagged in the feed with an interactive badge (`🔕 Filtered: <RuleName>`), providing complete transparency.
 * **Safety First**: Intelligent safeguards prevent muting high-priority alerts ($\ge 7$) or notifications containing failure keywords (`error`, `down`, `critical`, `failed`, `corrupt`).
 * **Anti-Spam / Flap Debounce**: Deduplicates flapping monitor alerts within a configurable time window (3s–60s) with duplicate counters (`x5`).
 
+### 🗂️ Message History Feed
+* **Dual Layout Modes**:
+  * **Detailed View**: Rich multi-tier cards with service icons, priority tags, full markdown text, attached image thumbnails, and one-click action buttons.
+  * **Compact View**: High-density 36px single-line layout displaying 4× more notifications on screen with inline action buttons.
+* **Hide Filtered Messages**: One-click header toggle (`🔕 Hide Filtered`) to instantly hide silenced/dropped messages from view.
+* **Full Search & Filter**: Real-time keyword search and per-application filtering.
+
 ### 🔔 Maximum Presentation Customization
 * **Delivery Modes**:
-  * **Custom Fluent HUD Pill (Recommended)**: An ultra-clean, rounded, borderless floating window with Mica/Acrylic material. Features a visual 2px countdown progress bar that pauses on mouse hover, and quick action buttons (*Open Link*, *Dismiss*).
+  * **Custom Fluent HUD Banner (Recommended)**: An ultra-clean, rounded, borderless floating window with Mica/Acrylic material. Features a visual 2px countdown progress bar that pauses on mouse hover, directional screen stacking, and quick action buttons (*Open Link*, *Dismiss*).
   * **Windows 11 Native Action Center Toasts**: Integrates into the Windows 11 notification drawer (`Win + N`) with deep history and protocol activation.
   * **Hybrid Mode**: Instant glanceable floating HUD + Action Center history.
-* **Custom Positioning**: Screen placement in `Bottom-Right`, `Top-Right`, `Top-Center`, or `Bottom-Center`.
+* **Custom Positioning**: Screen placement in `Bottom-Right`, `Top-Right`, `Top-Left`, `Bottom-Left`, `Top-Center`, or `Bottom-Center`.
 * **Adjustable Duration**: Configure auto-dismiss timeout from 2 to 20 seconds.
 * **Audio Alerts**: Standard Windows chimes, custom `.wav` sound files, or completely silent mode.
 
 ### 🌙 Comprehensive Do Not Disturb (DND) Suite
 * **System Tray Quick Snooze**: Toggle DND or select timed snooze presets (*30 minutes*, *1 hour*, *4 hours*, or *Until Tomorrow 8:00 AM*).
+* **Indefinite Silence**: "On until I turn it off" option in both the tray context menu and header flyout.
 * **Scheduled Quiet Hours**: Automatic silent logging during defined sleep/focus periods (e.g., 22:00 to 07:00).
 * **Emergency Breakthrough**: Configurable threshold (e.g., Priority $\ge$ 8) that breaks through DND for critical emergencies (e.g. water leak, disk failure, power outage).
 * **Smart Gaming & Fullscreen Suppression**: Win32 `SHQueryUserNotificationState` detection automatically suppresses popups during fullscreen DirectX games, movies, and presentations.
@@ -53,100 +79,40 @@ Unlike legacy tray wrappers, GotifyWin brings **Windows 11 Fluent 2 aesthetics**
 
 ---
 
-## Screenshots & UI Overview
-
-```
-+-----------------------------------------------------------------------------------+
-|  [Gotify Client]       ● Connected (192.168.1.50)      [🌙 DND: Off]   [⚙ Settings] |
-+-----------------------------------------------------------------------------------+
-|  [ 🔍 Search notifications...                             ] [ Filter: All Apps ▼ ] |
-+-----------------------------------------------------------------------------------+
-|  +-----------------------------------------------------------------------------+  |
-|  | [Icon]  Uptime Kuma  •  2m ago                             [Priority: High] |  |
-|  | AdGuard Home is DOWN                                                        |  |
-|  | Connection timed out after 5000ms.                                          |  |
-|  | [🔗 Open Status Page]  [📋 Copy]  [✕ Dismiss]                               |  |
-|  +-----------------------------------------------------------------------------+  |
-|  +-----------------------------------------------------------------------------+  |
-|  | [Icon]  Home Assistant  •  14m ago                         [Priority: Low]  |  |
-|  | Washing machine cycle completed.                                            |  |
-|  +-----------------------------------------------------------------------------+  |
-+-----------------------------------------------------------------------------------+
-|  Tabs: [Notifications] [Apps] [Filter Rules] [Settings]                            |
-+-----------------------------------------------------------------------------------+
-```
-
----
-
-## Getting Started
+## 🛠️ Building From Source
 
 ### Prerequisites
 * Windows 10 (version 19041+) or **Windows 11** (recommended).
-* [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
+* [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
-### Installation & Running
-
-1. Clone the repository:
-   ```powershell
-   git clone https://github.com/your-username/gotify-win-client.git
-   cd gotify-win-client
-   ```
-2. Build the project:
-   ```powershell
-   dotnet build -c Release
-   ```
-3. Run the client:
-   ```powershell
-   dotnet run --project src/GotifyWin/GotifyWin.csproj
-   ```
-
-### Publishing a Standalone Executable
-To create a single portable `.exe` with zero installation required:
+### Build & Run
 ```powershell
-dotnet publish src/GotifyWin/GotifyWin.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/
+# Clone the repository
+git clone https://github.com/roscocheeta/gotify-win-client.git
+cd gotify-win-client
+
+# Run all 140 automated tests
+dotnet test
+
+# Launch the app
+dotnet run --project src/GotifyWin/GotifyWin.csproj
+```
+
+### Build Portable Executables
+To create standalone executables without an installer:
+```powershell
+# Self-contained (no .NET required on target machine)
+dotnet publish src/GotifyWin/GotifyWin.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/standalone/
+
+# Framework-dependent (~2.5 MB lightweight)
+dotnet publish src/GotifyWin/GotifyWin.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/light/
 ```
 
 ---
 
-## Configuration
+## 🧪 Testing & Verification
 
-Settings are stored securely in `%AppData%\GotifyWin\config.json`:
-
-```json
-{
-  "ServerUrl": "https://gotify.homelab.lan",
-  "ClientToken": "enc:AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA...",
-  "StartWithWindows": false,
-  "MinimizeToTrayOnClose": true,
-  "StartMinimized": false,
-  "MaxHistoryCount": 200,
-  "GlobalMinPriority": 0,
-  "Presentation": {
-    "Mode": 0,
-    "Position": 0,
-    "DisplayDurationSeconds": 5.0,
-    "ShowCountdownBar": true,
-    "PlaySound": true,
-    "EnableDebounce": true,
-    "DebounceWindowSeconds": 10
-  },
-  "Dnd": {
-    "IsManualDndActive": false,
-    "EmergencyBypassPriority": 8,
-    "EnableEmergencyBypass": true,
-    "QuietHoursEnabled": false,
-    "QuietHoursStart": "22:00:00",
-    "QuietHoursEnd": "07:00:00",
-    "SuppressOnFullscreenApps": true
-  }
-}
-```
-
----
-
-## Testing & Verification
-
-The project includes an automated test suite covering filter routing, debounce caches, quiet hour timespans, message parsing, and security validations:
+The project includes an extensive test suite covering filter routing, debounce caches, quiet hour timespans, message parsing, and security validations:
 
 ```powershell
 dotnet test
@@ -154,24 +120,20 @@ dotnet test
 
 ```
 Test run for GotifyWin.Tests.dll (.NETCoreApp,Version=v8.0)
-Total tests: 44
-Passed: 44
+Total tests: 140
+Passed: 140
 Failed: 0
 Skipped: 0
 ```
 
 ---
 
-## Technology Stack
+## 🤝 Contributing
 
-* **UI Framework**: WPF on .NET 8.0 (`net8.0-windows10.0.19041.0`)
-* **Styling**: Modern Fluent 2 Design (`WPF-UI`)
-* **Notifications**: WinRT `Windows.UI.Notifications` + Custom Acrylic/Mica HUD Overlay
-* **System Tray**: Windows Shell Tray with Context Menu & DND Presets
-* **Security**: Windows DPAPI (`System.Security.Cryptography.ProtectedData`)
+Contributions, bug reports, and suggestions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code style, architecture, and pull request process.
 
 ---
 
-## License
+## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).

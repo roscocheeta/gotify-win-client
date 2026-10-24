@@ -146,7 +146,7 @@ public class RulesViewModel : ViewModelBase
         set => SetProperty(ref _reanalyzeButtonText, value);
     }
 
-    private bool _isRecommendationsExpanded = true;
+    private bool _isRecommendationsExpanded; // Default collapsed
     public bool IsRecommendationsExpanded
     {
         get => _isRecommendationsExpanded;

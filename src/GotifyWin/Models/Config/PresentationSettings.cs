@@ -12,8 +12,8 @@ public class PresentationSettings
     public double Width { get; set; } = 360.0;
     public int MaxBodyLines { get; set; } = 4;
 
-    // Privacy: images hosted outside the Gotify server reveal your IP address to that host. Off by default.
-    public bool AllowExternalImages { get; set; } = false;
+    // External image loading: allows images from webhooks/integrations (Home Assistant, Sonarr, Grafana, etc.)
+    public bool AllowExternalImages { get; set; } = true;
 
     // Audio Settings
     public bool PlaySound { get; set; } = true;

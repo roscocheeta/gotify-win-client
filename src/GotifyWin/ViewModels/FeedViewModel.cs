@@ -53,6 +53,39 @@ public class FeedViewModel : ViewModelBase
         set => SetProperty(ref _availableAppFilters, value);
     }
 
+    private bool _isCompactView;
+    public bool IsCompactView
+    {
+        get => _isCompactView;
+        set
+        {
+            if (SetProperty(ref _isCompactView, value))
+            {
+                _configService.Config.UseCompactFeedView = value;
+                _configService.Save();
+            }
+        }
+    }
+
+    private bool _hideFilteredMessages;
+    public bool HideFilteredMessages
+    {
+        get => _hideFilteredMessages;
+        set
+        {
+            if (SetProperty(ref _hideFilteredMessages, value))
+            {
+                _configService.Config.HideFilteredInFeed = value;
+                _configService.Save();
+                _filteredView.Refresh();
+                OnPropertyChanged(nameof(HasMessages));
+                OnPropertyChanged(nameof(FilteredOutCount));
+            }
+        }
+    }
+
+    public int FilteredOutCount => _messages.Count(m => m.IsFiltered);
+
     public ICollectionView FilteredMessages => _filteredView;
 
     public bool HasMessages => !_filteredView.IsEmpty;
@@ -75,6 +108,9 @@ public class FeedViewModel : ViewModelBase
 
         _filteredView = CollectionViewSource.GetDefaultView(_messages);
         _filteredView.Filter = FilterMessagePredicate;
+
+        _isCompactView = _configService.Config.UseCompactFeedView;
+        _hideFilteredMessages = _configService.Config.HideFilteredInFeed;
 
         ClearAllCommand = new RelayCommand(ClearAll);
         DeleteMessageCommand = new RelayCommand<GotifyMessage>(DeleteMessage);
@@ -131,6 +167,7 @@ public class FeedViewModel : ViewModelBase
 
             _filteredView.Refresh();
             OnPropertyChanged(nameof(HasMessages));
+            OnPropertyChanged(nameof(FilteredOutCount));
         });
     }
 
@@ -149,6 +186,7 @@ public class FeedViewModel : ViewModelBase
             }
             _filteredView.Refresh();
             OnPropertyChanged(nameof(HasMessages));
+            OnPropertyChanged(nameof(FilteredOutCount));
         });
     }
 
@@ -158,12 +196,26 @@ public class FeedViewModel : ViewModelBase
         {
             _filteredView.Refresh();
             OnPropertyChanged(nameof(HasMessages));
+            OnPropertyChanged(nameof(FilteredOutCount));
         });
+    }
+
+    public void RefreshFromConfig()
+    {
+        IsCompactView = _configService.Config.UseCompactFeedView;
+        HideFilteredMessages = _configService.Config.HideFilteredInFeed;
+        RefreshFilter();
     }
 
     private bool FilterMessagePredicate(object obj)
     {
         if (obj is not GotifyMessage msg) return false;
+
+        // Hide messages filtered out by rules if user enabled Hide Filtered
+        if (_hideFilteredMessages && msg.IsFiltered)
+        {
+            return false;
+        }
 
         // App-level enablement: Hide notifications from apps that the user has disabled
         if (_configService.Config.AppFilters.TryGetValue(msg.AppId, out var appSetting) && !appSetting.Enabled)
@@ -195,6 +247,7 @@ public class FeedViewModel : ViewModelBase
         _messages.Clear();
         _filteredView.Refresh();
         OnPropertyChanged(nameof(HasMessages));
+        OnPropertyChanged(nameof(FilteredOutCount));
 
         // Optionally clear on server in background
         _ = Task.Run(async () =>
@@ -217,6 +270,7 @@ public class FeedViewModel : ViewModelBase
         _messages.Remove(msg);
         _filteredView.Refresh();
         OnPropertyChanged(nameof(HasMessages));
+        OnPropertyChanged(nameof(FilteredOutCount));
 
         _ = Task.Run(async () =>
         {

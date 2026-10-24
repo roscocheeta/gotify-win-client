@@ -1,0 +1,78 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Build & Package Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run Test Suite
+        run: dotnet test GotifyWin.sln --configuration Release
+
+      # 1. Standalone Single-File Release (Self-Contained - No prerequisites)
+      - name: Publish Standalone Executable (win-x64)
+        run: |
+          dotnet publish src/GotifyWin/GotifyWin.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            --output ./artifacts/standalone
+
+      # 2. Framework-Dependent Release (Lightweight ~2.5MB)
+      - name: Publish Framework-Dependent Executable (win-x64)
+        run: |
+          dotnet publish src/GotifyWin/GotifyWin.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained false `
+            -p:PublishSingleFile=true `
+            --output ./artifacts/light
+
+      # 3. Create Distribution Archives
+      - name: Package Release Archives
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          New-Item -ItemType Directory -Path ./release-dist -Force
+
+          # Standalone zip
+          Compress-Archive -Path ./artifacts/standalone/* -DestinationPath "./release-dist/GotifyWin-$tag-win-x64-standalone.zip" -Force
+
+          # Lightweight zip
+          Compress-Archive -Path ./artifacts/light/* -DestinationPath "./release-dist/GotifyWin-$tag-win-x64-light.zip" -Force
+
+          # Compute SHA-256 Checksums
+          cd ./release-dist
+          Get-FileHash -Algorithm SHA256 *.zip | ForEach-Object { "$($_.Hash)  $($_.Path | Split-Path -Leaf)" } | Out-File -Encoding utf8 SHA256SUMS.txt
+          Get-Content SHA256SUMS.txt
+
+      # 4. Create GitHub Release & Upload Assets
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./release-dist/GotifyWin-*-win-x64-standalone.zip
+            ./release-dist/GotifyWin-*-win-x64-light.zip
+            ./release-dist/SHA256SUMS.txt
+          generate_release_notes: true
+          draft: false
+          prerelease: false

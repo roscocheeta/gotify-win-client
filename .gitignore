@@ -2,6 +2,8 @@
 bin/
 obj/
 publish/
+dist/
+release/
 *.user
 *.suo
 *.userosscache
@@ -16,6 +18,11 @@ TestResults/
 *.trx
 coverage/
 
-## Cache
+## Cache & Temp
 cache/
 icons/
+*.log
+
+## OS Files
+Thumbs.db
+.DS_Store

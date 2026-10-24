@@ -56,7 +56,7 @@ public static class ImageSafety
 public static class SecureImageLoader
 {
     private const int MaxCacheEntries = 64;
-    private static readonly HttpClient Http = new(new HttpClientHandler { AllowAutoRedirect = false })
+    private static readonly HttpClient Http = new(new HttpClientHandler { AllowAutoRedirect = true })
     {
         Timeout = TimeSpan.FromSeconds(8),
         MaxResponseContentBufferSize = ImageSafety.MaxImageBytes
