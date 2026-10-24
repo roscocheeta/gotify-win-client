@@ -81,16 +81,20 @@ public class DndManager : IDndManager
         }
     }
 
-    public bool IsFullscreenAppRunning()
+    public FullscreenState GetFullscreenState()
     {
         try
         {
             var hr = SHQueryUserNotificationState(out var state);
             if (hr == 0) // S_OK
             {
-                return state == USER_NOTIFICATION_STATE.QUNS_RUNNING_D3D_FULL_SCREEN
-                    || state == USER_NOTIFICATION_STATE.QUNS_PRESENTATION_MODE
-                    || state == USER_NOTIFICATION_STATE.QUNS_BUSY;
+                return state switch
+                {
+                    USER_NOTIFICATION_STATE.QUNS_RUNNING_D3D_FULL_SCREEN => FullscreenState.Game,
+                    USER_NOTIFICATION_STATE.QUNS_PRESENTATION_MODE => FullscreenState.Presentation,
+                    USER_NOTIFICATION_STATE.QUNS_BUSY => FullscreenState.Busy,
+                    _ => FullscreenState.None
+                };
             }
         }
         catch
@@ -98,7 +102,12 @@ public class DndManager : IDndManager
             // Ignore on platforms where shell32 is unavailable
         }
 
-        return false;
+        return FullscreenState.None;
+    }
+
+    public bool IsFullscreenAppRunning()
+    {
+        return GetFullscreenState() != FullscreenState.None;
     }
 
     public void SetManualDnd(DndSettings settings, TimeSpan? duration)
@@ -133,9 +142,15 @@ public class DndManager : IDndManager
             return $"Quiet Hours active ({settings.QuietHoursStart:hh\\:mm} - {settings.QuietHoursEnd:hh\\:mm})";
         }
 
-        if (settings.SuppressOnFullscreenApps && IsFullscreenAppRunning())
+        if (settings.SuppressOnFullscreenApps)
         {
-            return "DND on (Fullscreen App / Game detected)";
+            var fs = GetFullscreenState();
+            if (fs == FullscreenState.Game)
+                return "DND on (DirectX Game detected)";
+            if (fs == FullscreenState.Presentation)
+                return "DND on (Presentation mode detected)";
+            if (fs == FullscreenState.Busy)
+                return "DND on (Media / Busy detected)";
         }
 
         return "DND: Off";

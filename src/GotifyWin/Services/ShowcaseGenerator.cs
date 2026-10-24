@@ -22,6 +22,13 @@ public static class ShowcaseGenerator
         vm.Feed.IsCompactView = false;
         vm.SelectedTabIndex = 0;
 
+        // Presentation badges: Clean connected state & DND Off
+        vm.ConnectionStatusText = "Connected";
+        vm.ConnectionStatusColor = "#10B981";
+        vm.IsDndActive = false;
+        vm.DndStatusText = "DND: Off";
+        vm.DndButtonLabel = "DND: Off";
+
         var mockMessages = new List<GotifyMessage>
         {
             new()
@@ -92,6 +99,12 @@ public static class ShowcaseGenerator
         // 2. Light Mode Rules Page Screenshot
         themeManager.ApplyTheme(AppThemeMode.Light);
         vm.SelectedTabIndex = 2;
+
+        vm.ConnectionStatusText = "Connected";
+        vm.ConnectionStatusColor = "#10B981";
+        vm.IsDndActive = false;
+        vm.DndStatusText = "DND: Off";
+        vm.DndButtonLabel = "DND: Off";
 
         vm.Rules.IsConfiguredRulesExpanded = true;
         vm.Rules.IsRecommendationsExpanded = true;

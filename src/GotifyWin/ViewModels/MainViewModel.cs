@@ -401,7 +401,14 @@ public class MainViewModel : ViewModelBase
         }
         else if (dnd.SuppressOnFullscreenApps && _dndManager.IsFullscreenAppRunning())
         {
-            DndButtonLabel = "DND: Gaming";
+            var fs = _dndManager.GetFullscreenState();
+            DndButtonLabel = fs switch
+            {
+                FullscreenState.Game => "DND: Game",
+                FullscreenState.Presentation => "DND: Present",
+                FullscreenState.Busy => "DND: Media",
+                _ => "DND: Active"
+            };
         }
         else
         {

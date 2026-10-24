@@ -106,4 +106,31 @@ public class DndManagerTests
         var testTime = new DateTime(2026, 10, 22, 12, 0, 0);
         Assert.False(_manager.IsQuietHours(settings, testTime));
     }
+
+    [Fact]
+    public void GetStatusDescription_WhenDndOff_ReturnsDndOff()
+    {
+        var settings = new DndSettings
+        {
+            IsManualDndActive = false,
+            QuietHoursEnabled = false,
+            SuppressOnFullscreenApps = false
+        };
+
+        var desc = _manager.GetStatusDescription(settings);
+        Assert.Equal("DND: Off", desc);
+    }
+
+    [Fact]
+    public void GetStatusDescription_WhenManualDndIndefinite_ReturnsIndefinite()
+    {
+        var settings = new DndSettings
+        {
+            IsManualDndActive = true,
+            ManualDndUntilUtc = null
+        };
+
+        var desc = _manager.GetStatusDescription(settings);
+        Assert.Equal("DND on (Indefinite)", desc);
+    }
 }
