@@ -142,7 +142,6 @@ public class GotifyWebSocketService : IGotifyWebSocketService
     {
         var backoffSeconds = 2.0;
         var maxBackoffSeconds = 60.0;
-        var random = new Random();
 
         while (!ct.IsCancellationRequested && !_explicitDisconnect)
         {
@@ -195,7 +194,7 @@ public class GotifyWebSocketService : IGotifyWebSocketService
             State = ConnectionState.Reconnecting;
 
             // Exponential backoff with jitter
-            var jitter = (random.NextDouble() - 0.5) * 1.0;
+            var jitter = System.Security.Cryptography.RandomNumberGenerator.GetInt32(-500, 501) / 1000.0;
             var delay = TimeSpan.FromSeconds(Math.Min(backoffSeconds + jitter, maxBackoffSeconds));
             backoffSeconds = Math.Min(backoffSeconds * 2, maxBackoffSeconds);
 
