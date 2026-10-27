@@ -128,7 +128,11 @@ public class MainViewModel : ViewModelBase
             await LoadRecentHistoryAsync();
             await ReconnectAsync();
         };
-        Apps.AppFilterChanged += () => Feed.RefreshFilter();
+        Apps.AppFilterChanged += () =>
+        {
+            Feed.RefreshFilter();
+            Rules.PruneRecommendationsForDisabledApps();
+        };
         Feed.UrlOpenRequested += (s, url) => _presenter.OpenUrl(url);
         Feed.CreateRuleRequested += (s, msg) =>
         {
