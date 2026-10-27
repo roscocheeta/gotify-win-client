@@ -1,9 +1,9 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 using Brush = System.Windows.Media.Brush;
 using BrushConverter = System.Windows.Media.BrushConverter;
 using GotifyWin.Models;
@@ -13,26 +13,35 @@ namespace GotifyWin.Views;
 
 public partial class NotificationHudWindow : Window
 {
-    private readonly DispatcherTimer _dismissTimer;
+    private Storyboard? _countdownStoryboard;
     private double _durationMs = 5000.0;
-    private double _elapsedMs;
     private bool _isClosing;
     private Action<string>? _onUrlOpen;
     private GotifyMessage? _message;
     private HudPosition _position = HudPosition.BottomRight;
 
+    public Visibility CountdownBarVisibility => CountdownBar.Visibility;
+    public double CountdownScaleX => CountdownScaleTransform.ScaleX;
+
     public NotificationHudWindow()
     {
         InitializeComponent();
 
-        _dismissTimer = new DispatcherTimer(DispatcherPriority.Normal)
+        MouseEnter += (s, e) =>
         {
-            Interval = TimeSpan.FromMilliseconds(50)
+            if (!_isClosing && _countdownStoryboard != null)
+            {
+                try { _countdownStoryboard.Pause(this); } catch { }
+            }
         };
-        _dismissTimer.Tick += DismissTimer_Tick;
 
-        MouseEnter += (s, e) => _dismissTimer.Stop();
-        MouseLeave += (s, e) => { if (!_isClosing) _dismissTimer.Start(); };
+        MouseLeave += (s, e) =>
+        {
+            if (!_isClosing && _countdownStoryboard != null)
+            {
+                try { _countdownStoryboard.Resume(this); } catch { }
+            }
+        };
 
         Loaded += NotificationHudWindow_Loaded;
     }
@@ -50,7 +59,34 @@ public partial class NotificationHudWindow : Window
         };
         RootContainer.BeginAnimation(OpacityProperty, fadeIn);
 
-        _dismissTimer.Start();
+        StartCountdownAnimation();
+    }
+
+    private void StartCountdownAnimation()
+    {
+        _countdownStoryboard = new Storyboard();
+
+        var anim = new DoubleAnimation
+        {
+            From = 1.0,
+            To = 0.0,
+            Duration = new Duration(TimeSpan.FromMilliseconds(_durationMs)),
+            FillBehavior = FillBehavior.HoldEnd
+        };
+
+        Storyboard.SetTarget(anim, CountdownScaleTransform);
+        Storyboard.SetTargetProperty(anim, new PropertyPath(ScaleTransform.ScaleXProperty));
+
+        _countdownStoryboard.Children.Add(anim);
+        _countdownStoryboard.Completed += (s, e) =>
+        {
+            if (!_isClosing)
+            {
+                CloseWithAnimation();
+            }
+        };
+
+        _countdownStoryboard.Begin(this, isControllable: true);
     }
 
     private async Task LoadNotificationImageAsync(string url)
@@ -85,7 +121,7 @@ public partial class NotificationHudWindow : Window
             if (priorityBrush != null)
             {
                 PriorityBadge.Background = priorityBrush;
-                CountdownProgressBar.Foreground = priorityBrush;
+                CountdownBar.Background = priorityBrush;
             }
 
             var textBrush = new BrushConverter().ConvertFromString(message.PriorityTextColor) as Brush;
@@ -138,11 +174,10 @@ public partial class NotificationHudWindow : Window
         }
 
         // Countdown Progress Bar visibility
-        CountdownProgressBar.Visibility = settings.ShowCountdownBar ? Visibility.Visible : Visibility.Collapsed;
+        CountdownBar.Visibility = settings.ShowCountdownBar ? Visibility.Visible : Visibility.Collapsed;
 
         // Display Duration
         _durationMs = Math.Max(2.0, settings.DisplayDurationSeconds) * 1000.0;
-        _elapsedMs = 0;
     }
 
     private void PositionWindow(HudPosition position)
@@ -190,24 +225,16 @@ public partial class NotificationHudWindow : Window
         Top = top;
     }
 
-    private void DismissTimer_Tick(object? sender, EventArgs e)
-    {
-        _elapsedMs += 50.0;
-        var progress = Math.Max(0.0, 100.0 - (_elapsedMs / _durationMs * 100.0));
-        CountdownProgressBar.Value = progress;
-
-        if (_elapsedMs >= _durationMs)
-        {
-            _dismissTimer.Stop();
-            CloseWithAnimation();
-        }
-    }
-
     private void CloseWithAnimation()
     {
         if (_isClosing) return;
         _isClosing = true;
-        _dismissTimer.Stop();
+
+        try
+        {
+            _countdownStoryboard?.Stop(this);
+        }
+        catch { }
 
         var fadeOut = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(200))
         {
@@ -220,6 +247,17 @@ public partial class NotificationHudWindow : Window
         };
 
         RootContainer.BeginAnimation(OpacityProperty, fadeOut);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        try
+        {
+            _countdownStoryboard?.Stop(this);
+            _countdownStoryboard = null;
+        }
+        catch { }
+        base.OnClosed(e);
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
