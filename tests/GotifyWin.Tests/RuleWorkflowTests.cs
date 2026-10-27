@@ -889,4 +889,42 @@ public class RuleWorkflowTests
         Assert.True(configService.Config.UseCompactFeedView);
         Assert.Contains("Compact Feed", settingsVm.AppearanceSummaryText);
     }
+
+    [Fact]
+    public void RulesViewModel_PruneRecommendationsForDisabledApps_RemovesMutedAppRecommendations()
+    {
+        var configService = new DummyConfigService();
+        var rulesVm = new RulesViewModel(configService);
+
+        var rec1 = new RuleRecommendation
+        {
+            Id = "rec-1",
+            AppId = 2,
+            AppName = "Sonarr",
+            Title = "Mute Sonarr downloads"
+        };
+        var rec2 = new RuleRecommendation
+        {
+            Id = "rec-2",
+            AppId = 15,
+            AppName = "Profilarr",
+            Title = "Mute Profilarr sync"
+        };
+
+        rulesVm.SetRecommendations(new[] { rec1, rec2 });
+        Assert.Equal(2, rulesVm.RecommendationsCount);
+
+        // Mute Profilarr in app filters
+        configService.Config.AppFilters[15] = new AppFilterSetting
+        {
+            AppId = 15,
+            AppName = "Profilarr",
+            Enabled = false
+        };
+
+        rulesVm.PruneRecommendationsForDisabledApps();
+
+        Assert.Equal(1, rulesVm.RecommendationsCount);
+        Assert.Equal("Sonarr", rulesVm.Recommendations[0].AppName);
+    }
 }

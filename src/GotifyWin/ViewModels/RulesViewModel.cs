@@ -467,6 +467,29 @@ public class RulesViewModel : ViewModelBase
         NotifyRecommendationsCountChanged();
     }
 
+    public void PruneRecommendationsForDisabledApps()
+    {
+        var appFilters = _configService.Config.AppFilters;
+        if (appFilters.Count == 0 || _recommendations.Count == 0) return;
+
+        var disabledIds = appFilters.Values.Where(a => !a.Enabled).Select(a => a.AppId).ToHashSet();
+        var disabledNames = appFilters.Values.Where(a => !a.Enabled && !string.IsNullOrWhiteSpace(a.AppName)).Select(a => a.AppName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var toRemove = _recommendations.Where(r =>
+            (r.AppId > 0 && disabledIds.Contains(r.AppId)) ||
+            (!string.IsNullOrEmpty(r.AppName) && disabledNames.Contains(r.AppName))
+        ).ToList();
+
+        if (toRemove.Count > 0)
+        {
+            foreach (var item in toRemove)
+            {
+                _recommendations.Remove(item);
+            }
+            NotifyRecommendationsCountChanged();
+        }
+    }
+
     public async Task ReanalyzeHistoryAsync()
     {
         if (_patternAnalyzer == null || IsReanalyzing) return;

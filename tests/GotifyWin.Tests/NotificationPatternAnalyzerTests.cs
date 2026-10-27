@@ -153,4 +153,93 @@ public class NotificationPatternAnalyzerTests
         var results = _analyzer.Analyze(messages, config, threshold: 5);
         Assert.Empty(results);
     }
+
+    [Fact]
+    public void Analyze_WhenAppIsDisabledByIdInAppFilters_SkipsRecommendation()
+    {
+        var config = new GotifyClientConfig();
+        // User muted Profilarr in the Apps tab
+        config.AppFilters[15] = new AppFilterSetting
+        {
+            AppId = 15,
+            AppName = "Profilarr",
+            Enabled = false
+        };
+
+        var messages = new List<GotifyMessage>();
+        for (int i = 1; i <= 6; i++)
+        {
+            messages.Add(new GotifyMessage
+            {
+                Id = i,
+                AppId = 15,
+                ApplicationName = "Profilarr",
+                Title = "Profile Sync Complete",
+                Message = $"Synced media profiles batch #{i}",
+                Priority = 3
+            });
+        }
+
+        var results = _analyzer.Analyze(messages, config, threshold: 5);
+        Assert.Empty(results);
+    }
+
+    [Fact]
+    public void Analyze_WhenAppIsDisabledByNameInAppFilters_SkipsRecommendation()
+    {
+        var config = new GotifyClientConfig();
+        config.AppFilters[99] = new AppFilterSetting
+        {
+            AppId = 99,
+            AppName = "Profilarr",
+            Enabled = false
+        };
+
+        var messages = new List<GotifyMessage>();
+        for (int i = 1; i <= 6; i++)
+        {
+            messages.Add(new GotifyMessage
+            {
+                Id = i,
+                AppId = 0,
+                ApplicationName = "Profilarr",
+                Title = "Profile Sync Complete",
+                Message = $"Synced media profiles batch #{i}",
+                Priority = 3
+            });
+        }
+
+        var results = _analyzer.Analyze(messages, config, threshold: 5);
+        Assert.Empty(results);
+    }
+
+    [Fact]
+    public void Analyze_WhenAppMessagesBelowMinPriorityThreshold_SkipsRecommendation()
+    {
+        var config = new GotifyClientConfig();
+        config.AppFilters[15] = new AppFilterSetting
+        {
+            AppId = 15,
+            AppName = "Profilarr",
+            Enabled = true,
+            MinPriority = 5
+        };
+
+        var messages = new List<GotifyMessage>();
+        for (int i = 1; i <= 6; i++)
+        {
+            messages.Add(new GotifyMessage
+            {
+                Id = i,
+                AppId = 15,
+                ApplicationName = "Profilarr",
+                Title = "Routine Sync Ping",
+                Message = $"Ping #{i}",
+                Priority = 2
+            });
+        }
+
+        var results = _analyzer.Analyze(messages, config, threshold: 5);
+        Assert.Empty(results);
+    }
 }
