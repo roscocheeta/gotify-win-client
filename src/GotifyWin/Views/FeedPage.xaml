@@ -163,11 +163,39 @@
             <TextBlock Text="No messages in your history right now." FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
         </StackPanel>
 
-        <!-- Messages Feed List -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,14,0"
-                      Visibility="{Binding HasMessages, Converter={StaticResource BoolToVis}}">
-            <ItemsControl ItemsSource="{Binding FilteredMessages}">
-                <ItemsControl.ItemTemplate>
+        <!-- Messages Feed List (Virtualized) -->
+        <ListView Grid.Row="1"
+                  ItemsSource="{Binding FilteredMessages}"
+                  Visibility="{Binding HasMessages, Converter={StaticResource BoolToVis}}"
+                  Background="Transparent"
+                  BorderThickness="0"
+                  Padding="0,0,14,0"
+                  HorizontalContentAlignment="Stretch"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  ScrollViewer.CanContentScroll="True"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
+                  VirtualizingPanel.ScrollUnit="Pixel"
+                  Focusable="False">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Focusable" Value="False"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <ContentPresenter HorizontalAlignment="Stretch"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
                     <DataTemplate>
                         <Grid>
                             <!-- Detailed View Card (shown when NOT in compact view) -->
@@ -280,7 +308,7 @@
                                                             BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
                                                             ClipToBounds="True">
                                                         <Grid>
-                                                            <Image Source="{Binding ImageUrl}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                            <Image Source="{Binding ImageUrl, Converter={StaticResource SecureImage}, ConverterParameter=160, IsAsync=True}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="LowQuality"/>
                                                             <Border Background="#55000000" VerticalAlignment="Bottom" Padding="4,2">
                                                                 <TextBlock Text="🔍 View" FontSize="10" Foreground="White" HorizontalAlignment="Center"/>
                                                             </Border>
@@ -391,8 +419,7 @@
                             </Border>
                         </Grid>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+            </ListView.ItemTemplate>
+        </ListView>
     </Grid>
 </UserControl>

@@ -58,39 +58,49 @@ public static class AumidHelper
             }
 
             var shortcutPath = Path.Combine(startMenuDir, ShortcutFileName);
-
-            // Create or update shortcut using COM IShellLink and IPropertyStore
-            var shellLink = (IShellLinkW)new ShellLink();
-            shellLink.SetPath(exePath);
-            shellLink.SetWorkingDirectory(Path.GetDirectoryName(exePath) ?? string.Empty);
-            shellLink.SetDescription("Gotify Desktop Client");
-            shellLink.SetIconLocation(exePath, 0);
-
-            var propertyStore = (IPropertyStore)shellLink;
-            var propKey = new PROPERTYKEY
-            {
-                fmtid = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"),
-                pid = 5
-            };
-
-            var propVar = new PropVariant(AppUserModelId);
-            try
-            {
-                propertyStore.SetValue(ref propKey, ref propVar);
-                propertyStore.Commit();
-            }
-            finally
-            {
-                propVar.Clear();
-            }
-
-            var persistFile = (IPersistFile)shellLink;
-            persistFile.Save(shortcutPath, true);
+            CreateOrUpdateShortcut(shortcutPath, exePath, AppUserModelId);
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[AumidHelper] EnsureShortcut error: {ex.Message}");
         }
+    }
+
+    public static void CreateOrUpdateShortcut(string shortcutPath, string exePath, string aumid)
+    {
+        var dir = Path.GetDirectoryName(shortcutPath);
+        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+
+        // Create or update shortcut using COM IShellLink and IPropertyStore
+        var shellLink = (IShellLinkW)new ShellLink();
+        shellLink.SetPath(exePath);
+        shellLink.SetWorkingDirectory(Path.GetDirectoryName(exePath) ?? string.Empty);
+        shellLink.SetDescription("Gotify Desktop Client");
+        shellLink.SetIconLocation(exePath, 0);
+
+        var propertyStore = (IPropertyStore)shellLink;
+        var propKey = new PROPERTYKEY
+        {
+            fmtid = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"),
+            pid = 5
+        };
+
+        var propVar = new PropVariant(aumid);
+        try
+        {
+            propertyStore.SetValue(ref propKey, ref propVar);
+            propertyStore.Commit();
+        }
+        finally
+        {
+            propVar.Clear();
+        }
+
+        var persistFile = (IPersistFile)shellLink;
+        persistFile.Save(shortcutPath, true);
     }
 
     [ComImport, Guid("00021401-0000-0000-C000-000000000046")]

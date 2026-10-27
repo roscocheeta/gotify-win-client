@@ -165,7 +165,33 @@ public class FeedViewModel : ViewModelBase
                 _availableAppFilters.Add(message.ApplicationName);
             }
 
-            _filteredView.Refresh();
+            OnPropertyChanged(nameof(HasMessages));
+            OnPropertyChanged(nameof(FilteredOutCount));
+        });
+    }
+
+    public void AddMessages(IEnumerable<GotifyMessage> messages)
+    {
+        UiDispatcher.RunOnUI(() =>
+        {
+            var msgList = messages.OrderBy(m => m.Date).ToList();
+            if (msgList.Count == 0) return;
+
+            var max = _configService.Config.MaxHistoryCount;
+            foreach (var m in msgList)
+            {
+                _messages.Insert(0, m);
+                if (!string.IsNullOrEmpty(m.ApplicationName) && !_availableAppFilters.Contains(m.ApplicationName))
+                {
+                    _availableAppFilters.Add(m.ApplicationName);
+                }
+            }
+
+            while (_messages.Count > max && _messages.Count > 0)
+            {
+                _messages.RemoveAt(_messages.Count - 1);
+            }
+
             OnPropertyChanged(nameof(HasMessages));
             OnPropertyChanged(nameof(FilteredOutCount));
         });

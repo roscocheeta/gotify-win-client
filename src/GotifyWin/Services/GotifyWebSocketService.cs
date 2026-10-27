@@ -11,12 +11,42 @@ public class GotifyWebSocketService : IGotifyWebSocketService
 {
     private const int MaxMessageSizeBytes = 512 * 1024; // SEC-04: 512 KB ceiling to prevent LOH exhaustion DoS
     private readonly SemaphoreSlim _connectionLock = new(1, 1); // SEC-12: Thread synchronization
-    private ClientWebSocket? _webSocket;
+    private readonly Func<IWebSocketClient> _webSocketFactory;
+    private IWebSocketClient? _webSocket;
     private CancellationTokenSource? _cts;
     private string? _serverUrl;
     private string? _clientToken;
     private bool _isDisposed;
     private bool _explicitDisconnect;
+
+    public GotifyWebSocketService(Func<IWebSocketClient>? webSocketFactory = null)
+    {
+        _webSocketFactory = webSocketFactory ?? (() => new DefaultWebSocketClient());
+        try
+        {
+            Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
+        }
+        catch
+        {
+            // Session 0 or headless runner might not support SystemEvents
+        }
+    }
+
+    private void OnPowerModeChanged(object sender, Microsoft.Win32.PowerModeChangedEventArgs e)
+    {
+        if (e.Mode == Microsoft.Win32.PowerModes.Resume && !_explicitDisconnect && !string.IsNullOrEmpty(_serverUrl) && !string.IsNullOrEmpty(_clientToken))
+        {
+            System.Diagnostics.Debug.WriteLine("[GotifyWebSocket] System resumed from sleep/standby. Reconnecting...");
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await ConnectAsync(_serverUrl, _clientToken);
+                }
+                catch { }
+            });
+        }
+    }
 
     private ConnectionState _state = ConnectionState.Disconnected;
     public ConnectionState State
@@ -112,7 +142,6 @@ public class GotifyWebSocketService : IGotifyWebSocketService
     {
         var backoffSeconds = 2.0;
         var maxBackoffSeconds = 60.0;
-        var random = new Random();
 
         while (!ct.IsCancellationRequested && !_explicitDisconnect)
         {
@@ -125,15 +154,14 @@ public class GotifyWebSocketService : IGotifyWebSocketService
                     .Replace("https://", "wss://", StringComparison.OrdinalIgnoreCase)
                     .Replace("http://", "ws://", StringComparison.OrdinalIgnoreCase);
 
-                _webSocket = new ClientWebSocket();
-                _webSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+                _webSocket = _webSocketFactory();
 
                 // SEC: Authenticate via header only so the token never appears in URLs (proxy/access logs).
                 // Query-string token is used solely as a fallback if the header cannot be set.
                 var useQueryFallback = false;
                 try
                 {
-                    _webSocket.Options.SetRequestHeader("X-Gotify-Key", _clientToken!);
+                    _webSocket.SetRequestHeader("X-Gotify-Key", _clientToken!);
                 }
                 catch
                 {
@@ -166,7 +194,7 @@ public class GotifyWebSocketService : IGotifyWebSocketService
             State = ConnectionState.Reconnecting;
 
             // Exponential backoff with jitter
-            var jitter = (random.NextDouble() - 0.5) * 1.0;
+            var jitter = System.Security.Cryptography.RandomNumberGenerator.GetInt32(-500, 501) / 1000.0;
             var delay = TimeSpan.FromSeconds(Math.Min(backoffSeconds + jitter, maxBackoffSeconds));
             backoffSeconds = Math.Min(backoffSeconds * 2, maxBackoffSeconds);
 
@@ -183,7 +211,7 @@ public class GotifyWebSocketService : IGotifyWebSocketService
         State = ConnectionState.Disconnected;
     }
 
-    private async Task ReceiveLoopAsync(ClientWebSocket ws, CancellationToken ct)
+    private async Task ReceiveLoopAsync(IWebSocketClient ws, CancellationToken ct)
     {
         var buffer = new byte[1024 * 8];
 
@@ -243,6 +271,12 @@ public class GotifyWebSocketService : IGotifyWebSocketService
         if (_isDisposed) return;
         _isDisposed = true;
         _explicitDisconnect = true;
+
+        try
+        {
+            Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+        }
+        catch { }
 
         if (_cts != null)
         {

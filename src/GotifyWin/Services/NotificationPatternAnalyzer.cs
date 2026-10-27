@@ -44,6 +44,10 @@ public class NotificationPatternAnalyzer : INotificationPatternAnalyzer
             var appId = appGroup.Key;
             var appName = appGroup.First().DisplayAppName;
 
+            // Skip applications that are explicitly muted/disabled by the user in Apps settings
+            if (IsAppDisabled(appId, appName, config))
+                continue;
+
             // 1. Check Title-based clusters
             var titleCandidates = appGroup
                 .Where(m => !string.IsNullOrWhiteSpace(m.Title))
@@ -61,7 +65,7 @@ public class NotificationPatternAnalyzer : INotificationPatternAnalyzer
                     continue;
 
                 // Skip if already covered by an existing enabled rule
-                if (IsAlreadyFiltered(clusterMessages, config))
+                if (IsAlreadyFiltered(clusterMessages, config, appId, appName))
                     continue;
 
                 // Determine pattern: if title is constant, use original title; otherwise extract common prefix
@@ -111,7 +115,7 @@ public class NotificationPatternAnalyzer : INotificationPatternAnalyzer
                 if (IsSafetyViolation(clusterMessages))
                     continue;
 
-                if (IsAlreadyFiltered(clusterMessages, config))
+                if (IsAlreadyFiltered(clusterMessages, config, appId, appName))
                     continue;
 
                 var rawBodies = clusterMessages.Select(m => m.Message.Trim()).Distinct().ToList();
@@ -190,8 +194,43 @@ public class NotificationPatternAnalyzer : INotificationPatternAnalyzer
         return false;
     }
 
-    private static bool IsAlreadyFiltered(List<GotifyMessage> messages, GotifyClientConfig config)
+    public static bool IsAppDisabled(long appId, string? appName, GotifyClientConfig config)
     {
+        if (config.AppFilters.TryGetValue(appId, out var appSetting) && !appSetting.Enabled)
+        {
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(appName))
+        {
+            var match = config.AppFilters.Values.FirstOrDefault(a => string.Equals(a.AppName, appName, StringComparison.OrdinalIgnoreCase));
+            if (match != null && !match.Enabled)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsAlreadyFiltered(List<GotifyMessage> messages, GotifyClientConfig config, long appId, string? appName)
+    {
+        if (IsAppDisabled(appId, appName, config))
+            return true;
+
+        // Check if messages in cluster are already suppressed by app-specific MinPriority threshold
+        var minPriority = config.GlobalMinPriority;
+        if (config.AppFilters.TryGetValue(appId, out var appSetting))
+        {
+            minPriority = appSetting.MinPriority;
+        }
+        else if (!string.IsNullOrWhiteSpace(appName))
+        {
+            var match = config.AppFilters.Values.FirstOrDefault(a => string.Equals(a.AppName, appName, StringComparison.OrdinalIgnoreCase));
+            if (match != null) minPriority = match.MinPriority;
+        }
+
+        if (minPriority > 0 && messages.All(m => m.Priority < minPriority))
+            return true;
+
         if (config.Rules.Count == 0)
             return false;
 

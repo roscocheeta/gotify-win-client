@@ -72,10 +72,38 @@ public static class SecureImageLoader
         return ImageSafety.IsImageUrlAllowed(url, server, allowExternal);
     }
 
-    public static async Task<BitmapImage?> LoadAsync(string? url, CancellationToken ct = default)
+    public static async Task<BitmapImage?> LoadAsync(string? url, int decodeWidth = 160, CancellationToken ct = default)
     {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+
+        var targetWidth = Math.Clamp(decodeWidth, 32, 1024);
+        var cacheKey = $"{url}##{targetWidth}";
+        if (Cache.TryGetValue(cacheKey, out var cached)) return cached;
+
+        // If local file path
+        if (File.Exists(url))
+        {
+            try
+            {
+                var bi = new BitmapImage();
+                bi.BeginInit();
+                bi.CacheOption = BitmapCacheOption.OnLoad;
+                bi.DecodePixelWidth = targetWidth;
+                bi.UriSource = new Uri(url);
+                bi.EndInit();
+                bi.Freeze();
+
+                if (Cache.Count >= MaxCacheEntries) Cache.Clear();
+                Cache[cacheKey] = bi;
+                return bi;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         if (!IsAllowed(url)) return null;
-        if (Cache.TryGetValue(url!, out var cached)) return cached;
 
         try
         {
@@ -105,13 +133,13 @@ public static class SecureImageLoader
             var bitmap = new BitmapImage();
             bitmap.BeginInit();
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.DecodePixelWidth = 512;
+            bitmap.DecodePixelWidth = targetWidth;
             bitmap.StreamSource = new MemoryStream(bytes);
             bitmap.EndInit();
             bitmap.Freeze();
 
             if (Cache.Count >= MaxCacheEntries) Cache.Clear();
-            Cache[url!] = bitmap;
+            Cache[cacheKey] = bitmap;
             return bitmap;
         }
         catch (Exception ex)
