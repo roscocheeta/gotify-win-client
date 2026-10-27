@@ -27,25 +27,25 @@ public class OsIntegrationContractTests
             AumidHelper.CreateOrUpdateShortcut(tempShortcutPath, dummyExePath, AumidHelper.AppUserModelId);
             Assert.True(File.Exists(tempShortcutPath));
 
-            // 2. Read back via Windows Shell Application ExtendedProperty
+            // 2. Read back via Windows Shell Application ExtendedProperty using reflection (avoiding DLR dynamic)
             var shellType = Type.GetTypeFromProgID("Shell.Application");
             Assert.NotNull(shellType);
 
-            dynamic shell = Activator.CreateInstance(shellType)!;
-            Assert.NotNull((object)shell);
+            var shell = Activator.CreateInstance(shellType);
+            Assert.NotNull(shell);
 
             var dir = Path.GetDirectoryName(tempShortcutPath);
             Assert.NotNull(dir);
             var file = Path.GetFileName(tempShortcutPath);
 
-            dynamic folder = shell.Namespace(dir);
-            Assert.NotNull((object)folder);
+            var folder = shellType.InvokeMember("NameSpace", System.Reflection.BindingFlags.InvokeMethod, null, shell, new object[] { dir });
+            Assert.NotNull(folder);
 
-            dynamic item = folder.ParseName(file);
-            Assert.NotNull((object)item);
+            var item = folder.GetType().InvokeMember("ParseName", System.Reflection.BindingFlags.InvokeMethod, null, folder, new object[] { file });
+            Assert.NotNull(item);
 
-            var aumid = item.ExtendedProperty("System.AppUserModel.ID") as string;
-            var targetPath = item.ExtendedProperty("System.Link.TargetParsingPath") as string;
+            var aumid = item.GetType().InvokeMember("ExtendedProperty", System.Reflection.BindingFlags.InvokeMethod, null, item, new object[] { "System.AppUserModel.ID" }) as string;
+            var targetPath = item.GetType().InvokeMember("ExtendedProperty", System.Reflection.BindingFlags.InvokeMethod, null, item, new object[] { "System.Link.TargetParsingPath" }) as string;
 
             Assert.Equal(dummyExePath, targetPath, ignoreCase: true);
             Assert.Equal(AumidHelper.AppUserModelId, aumid);
@@ -97,7 +97,10 @@ public class OsIntegrationContractTests
                 using var cleanupKey = Registry.CurrentUser.OpenSubKey(runKeyPath, true);
                 cleanupKey?.DeleteValue(appName, false);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to clean up test registry key: {ex.Message}");
+            }
         }
     }
 
