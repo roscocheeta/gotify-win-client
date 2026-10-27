@@ -108,12 +108,18 @@ public partial class MainWindow : Window
         System.Windows.Application.Current.Shutdown();
     }
 
+    private void MinimizeToTray()
+    {
+        Hide();
+        MemoryOptimizer.TrimWorkingSet();
+    }
+
     protected override void OnClosing(CancelEventArgs e)
     {
         if (!_isExplicitQuit && _configService.Config.MinimizeToTrayOnClose)
         {
             e.Cancel = true;
-            Hide();
+            MinimizeToTray();
         }
         else
         {
@@ -127,7 +133,7 @@ public partial class MainWindow : Window
         base.OnStateChanged(e);
         if (WindowState == WindowState.Minimized && _configService.Config.MinimizeToTrayOnClose)
         {
-            Hide();
+            MinimizeToTray();
         }
     }
 

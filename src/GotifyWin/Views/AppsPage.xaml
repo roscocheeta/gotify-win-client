@@ -9,6 +9,7 @@
     <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <conv:HexColorToBrushConverter x:Key="HexToBrush"/>
+        <conv:SecureImageConverter x:Key="SecureImage" DecodeWidth="72"/>
 
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ThemeSecondaryButtonBg}"/>
@@ -61,10 +62,38 @@
             </StackPanel>
         </Grid>
 
-        <!-- Apps List -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
-            <ItemsControl ItemsSource="{Binding Apps}">
-                <ItemsControl.ItemTemplate>
+        <!-- Apps List (Virtualized) -->
+        <ListView Grid.Row="1"
+                  ItemsSource="{Binding Apps}"
+                  Background="Transparent"
+                  BorderThickness="0"
+                  Padding="0,0,12,0"
+                  HorizontalContentAlignment="Stretch"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  ScrollViewer.CanContentScroll="True"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
+                  VirtualizingPanel.ScrollUnit="Pixel"
+                  Focusable="False">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Focusable" Value="False"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <ContentPresenter HorizontalAlignment="Stretch"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
                     <DataTemplate>
                         <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" Padding="16">
                             <Grid>
@@ -80,7 +109,7 @@
                                     <Grid>
                                         <TextBlock Text="📱" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                    Visibility="{Binding HasIcon, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}"/>
-                                        <Image Source="{Binding IconPath}" RenderOptions.BitmapScalingMode="HighQuality"
+                                        <Image Source="{Binding IconPath, Converter={StaticResource SecureImage}, ConverterParameter=72, IsAsync=True}" RenderOptions.BitmapScalingMode="LowQuality"
                                                Visibility="{Binding HasIcon, Converter={StaticResource BoolToVis}}"/>
                                     </Grid>
                                 </Border>
@@ -156,8 +185,7 @@
                             </Grid>
                         </Border>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+            </ListView.ItemTemplate>
+        </ListView>
     </Grid>
 </UserControl>
