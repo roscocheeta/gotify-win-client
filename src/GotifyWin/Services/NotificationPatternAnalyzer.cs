@@ -196,9 +196,9 @@ public class NotificationPatternAnalyzer : INotificationPatternAnalyzer
 
     public static bool IsAppDisabled(long appId, string? appName, GotifyClientConfig config)
     {
-        if (config.AppFilters.TryGetValue(appId, out var appSetting))
+        if (config.AppFilters.TryGetValue(appId, out var appSetting) && !appSetting.Enabled)
         {
-            if (!appSetting.Enabled) return true;
+            return true;
         }
 
         if (!string.IsNullOrWhiteSpace(appName))
