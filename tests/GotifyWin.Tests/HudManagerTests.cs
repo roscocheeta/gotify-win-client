@@ -102,4 +102,42 @@ public class HudManagerTests
         thread.Start();
         thread.Join();
     }
+
+    [Fact]
+    public void NotificationHudWindow_CountdownBar_SetupAndVisibility()
+    {
+        var thread = new Thread(() =>
+        {
+            var window = new Views.NotificationHudWindow();
+            var settings = new PresentationSettings
+            {
+                ShowCountdownBar = true,
+                DisplayDurationSeconds = 4
+            };
+            var msg = new GotifyMessage
+            {
+                Id = 1,
+                Title = "Test Alert",
+                Message = "Body text",
+                Priority = 5
+            };
+
+            window.Setup(msg, settings, null);
+
+            Assert.Equal(Visibility.Visible, window.CountdownBarVisibility);
+            Assert.Equal(1.0, window.CountdownScaleX);
+
+            // Test with ShowCountdownBar = false
+            settings.ShowCountdownBar = false;
+            window.Setup(msg, settings, null);
+            Assert.Equal(Visibility.Collapsed, window.CountdownBarVisibility);
+
+            window.Close();
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
+        });
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
 }

@@ -142,9 +142,15 @@
                 </Grid>
 
                 <!-- Countdown Progress Bar -->
-                <ProgressBar Grid.Row="3" x:Name="CountdownProgressBar"
-                             Height="2" Minimum="0" Maximum="100" Value="100"
-                             BorderThickness="0" Background="Transparent" Foreground="{StaticResource AccentColor}"/>
+                <Grid Grid.Row="3" Height="2" Background="Transparent" ClipToBounds="True">
+                    <Border x:Name="CountdownBar"
+                            Background="{StaticResource AccentColor}"
+                            HorizontalAlignment="Stretch">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="CountdownScaleTransform" ScaleX="1.0" ScaleY="1.0" CenterX="0" CenterY="0"/>
+                        </Border.RenderTransform>
+                    </Border>
+                </Grid>
             </Grid>
         </Border>
     </Grid>
