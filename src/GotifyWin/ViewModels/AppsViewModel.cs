@@ -31,14 +31,19 @@ public class AppItemViewModel : ViewModelBase
     public bool IsEnabled
     {
         get => _setting.Enabled;
-        set
+        set => SetEnabled(value, notify: true);
+    }
+
+    public void SetEnabled(bool value, bool notify = true)
+    {
+        if (_setting.Enabled != value)
         {
-            if (_setting.Enabled != value)
+            _setting.Enabled = value;
+            OnPropertyChanged(nameof(IsEnabled));
+            OnPropertyChanged(nameof(StatusLabel));
+            OnPropertyChanged(nameof(StatusColor));
+            if (notify)
             {
-                _setting.Enabled = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(StatusLabel));
-                OnPropertyChanged(nameof(StatusColor));
                 _onChanged();
             }
         }
@@ -257,7 +262,7 @@ public class AppsViewModel : ViewModelBase
     {
         foreach (var app in _apps)
         {
-            app.IsEnabled = enabled;
+            app.SetEnabled(enabled, notify: false);
         }
         _configService.Save();
         AppFilterChanged?.Invoke();

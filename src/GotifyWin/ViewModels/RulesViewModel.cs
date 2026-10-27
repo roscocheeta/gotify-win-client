@@ -641,6 +641,12 @@ public class RulesViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(NewRulePattern))
             return;
 
+        if (!IsEditingRule && _rules.Count >= ImportValidator.MaxRules)
+        {
+            SetTransientFeedback($"Rule limit reached (maximum {ImportValidator.MaxRules} rules).");
+            return;
+        }
+
         var name = string.IsNullOrWhiteSpace(NewRuleName)
             ? $"{NewRuleField} {NewRuleOperator} '{NewRulePattern}'"
             : NewRuleName.Trim();

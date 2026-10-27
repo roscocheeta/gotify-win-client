@@ -13,10 +13,24 @@ namespace GotifyWin.Converters;
 /// </summary>
 public class SecureImageConverter : IValueConverter
 {
+    public int DecodeWidth { get; set; } = 160;
+
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not string url || string.IsNullOrWhiteSpace(url)) return null;
-        return GotifyWin.Services.SecureImageLoader.LoadAsync(url).GetAwaiter().GetResult();
+
+        var width = DecodeWidth;
+        if (parameter is int pInt) width = pInt;
+        else if (parameter is string pStr && int.TryParse(pStr, out var parsed)) width = parsed;
+
+        try
+        {
+            return GotifyWin.Services.SecureImageLoader.LoadAsync(url, width).GetAwaiter().GetResult();
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
