@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-10-27
+
+### Added
+- **Automated Stress & Scalability Test Suite**: 178 passing automated tests (up from 148), including high-load stress testing for 1,000 rapid message burst storms, 200 custom rules evaluation latency (< 18ms), 150 apps lookups, and anti-flap duplicate debounce under heavy ingest.
+- **Working Set Compaction (MemoryOptimizer)**: Added Win32 `SetProcessWorkingSetSize` and forced generational GC heap compaction when minimized or closed to the system tray, keeping idle 24/7 background memory at ~25–35 MB.
+- **Batch Message Ingestion**: Added `AddMessages(IEnumerable<GotifyMessage>)` to `FeedViewModel` for chronological bulk ingestion with single-pass FIFO capping.
+- **Security & CI/CD Pipeline Hardening**: Integrated `SecurityCodeScan.VS2019`, .NET 8 `<NuGetAudit>`, Gitleaks, and continuous GitHub CodeQL SAST taint analysis in CI.
+
+### Changed
+- **Recycling UI Virtualization**: Replaced un-virtualized `ScrollViewer` + `ItemsControl` in `FeedPage` and `AppsPage` with native recycling `ListView` controls (`VirtualizingPanel.ScrollUnit="Pixel"`). Reduces active visual elements from 35,000+ down to ~8–10 viewport cards, eliminating UI thread stutter.
+- **Bulk App Update Efficiency**: Batched `AppsViewModel.SetAllEnabled` so toggling 150+ applications writes to disk once rather than generating repeated synchronous disk writes.
+- **Rule Limits**: Enforced safe ceiling of 500 rules in the Rule Builder with user warning feedback.
+
+### Fixed
+- **High Memory Bloat Exceeding 700MB+ (#6)**: Hardware-clamped image decode widths (`160px` for feed thumbnails, `72px` for app icons) in `SecureImageLoader` and `SecureImageConverter`, reducing per-image memory footprint from 33.1 MB down to ~0.10 MB (99.7% reduction).
+- **Message History Feed Freezes (#4)**: Eliminated O(M × N) collection view refresh storms on incoming messages and resolved visual tree exhaustion via recycling virtualization.
+- **Noise Analyzer False-Positive Suggestions (#5)**: Noise pattern analyzer now strictly ignores disabled applications (by `AppId` and `AppName`) and priority-suppressed clusters. Added dynamic recommendation pruning on app toggle.
+- **HUD Countdown Progress Bar Stutter (#7)**: Replaced stepped `DispatcherTimer` ticks and `ProgressBar.Value` with GPU-accelerated `ScaleTransform.ScaleX` WPF `Storyboard` animation, delivering continuous 60+ FPS motion with interactive hover pause/resume and zero layout re-measures.
+
+---
 ## [1.0.1] - 2026-10-25
 
 ### Fixed
