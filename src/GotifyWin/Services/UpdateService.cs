@@ -464,10 +464,12 @@ public class UpdateService : IUpdateService, IDisposable
         if (string.IsNullOrWhiteSpace(checksumsText)) return dict;
 
         var lines = checksumsText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-        foreach (var trimmed in lines.Select(l => l.Trim()))
-        {
-            if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith('#')) continue;
+        var validLines = lines
+            .Select(l => l.Trim())
+            .Where(trimmed => !string.IsNullOrWhiteSpace(trimmed) && !trimmed.StartsWith('#'));
 
+        foreach (var trimmed in validLines)
+        {
             var parts = trimmed.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length >= 2)
             {
