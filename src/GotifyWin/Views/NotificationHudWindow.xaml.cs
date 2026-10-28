@@ -44,11 +44,25 @@ public partial class NotificationHudWindow : Window
             {
                 _isPaused = true;
                 _remainingDurationMs = Math.Max(0, (_expiresAtUtc - DateTime.UtcNow).TotalMilliseconds);
-                try { _fallbackTimer?.Change(Timeout.Infinite, Timeout.Infinite); } catch { }
+                try
+                {
+                    _fallbackTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Fallback timer pause error: {ex.Message}");
+                }
 
                 if (_countdownStoryboard != null)
                 {
-                    try { _countdownStoryboard.Pause(this); } catch { }
+                    try
+                    {
+                        _countdownStoryboard.Pause(this);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Storyboard pause ignored: {ex.Message}");
+                    }
                 }
             }
         };
@@ -68,7 +82,14 @@ public partial class NotificationHudWindow : Window
 
                 if (_countdownStoryboard != null)
                 {
-                    try { _countdownStoryboard.Resume(this); } catch { }
+                    try
+                    {
+                        _countdownStoryboard.Resume(this);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Storyboard resume ignored: {ex.Message}");
+                    }
                 }
 
                 ArmFallbackTimer(_remainingDurationMs + 200);
@@ -143,7 +164,10 @@ public partial class NotificationHudWindow : Window
                 });
             }, null, safeDelay, Timeout.Infinite);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Fallback timer configuration failed: {ex.Message}");
+        }
     }
 
     public void CheckExpiration()
@@ -168,7 +192,10 @@ public partial class NotificationHudWindow : Window
                 {
                     _countdownStoryboard.Stop(this);
                 }
-                catch { }
+                catch (InvalidOperationException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Storyboard stop ignored: {ex.Message}");
+                }
 
                 _countdownStoryboard = new Storyboard();
                 var anim = new DoubleAnimation
@@ -207,7 +234,10 @@ public partial class NotificationHudWindow : Window
                 NotificationImageBorder.Visibility = Visibility.Visible;
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Image load error: {ex.Message}");
+        }
     }
 
     public void Setup(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
@@ -237,7 +267,10 @@ public partial class NotificationHudWindow : Window
                 PriorityText.Foreground = textBrush;
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Priority brush parse error: {ex.Message}");
+        }
 
         // Load Icon
         if (!string.IsNullOrWhiteSpace(message.ApplicationIconPath) && File.Exists(message.ApplicationIconPath))
@@ -252,7 +285,10 @@ public partial class NotificationHudWindow : Window
                 bitmap.Freeze();
                 AppIconImage.Source = bitmap;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Icon load error: {ex.Message}");
+            }
         }
         else
         {
@@ -262,7 +298,10 @@ public partial class NotificationHudWindow : Window
                 bitmap.Freeze();
                 AppIconImage.Source = bitmap;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Default icon load error: {ex.Message}");
+            }
         }
 
         // Load Notification Image (Thumbnail) - secure, origin-restricted, async (never blocks UI)
@@ -348,14 +387,24 @@ public partial class NotificationHudWindow : Window
             _fallbackTimer = null;
             _countdownStoryboard?.Stop(this);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Close cleanup error: {ex.Message}");
+        }
 
         bool closed = false;
         void SafeClose()
         {
             if (closed) return;
             closed = true;
-            try { Close(); } catch { }
+            try
+            {
+                Close();
+            }
+            catch (InvalidOperationException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] SafeClose error: {ex.Message}");
+            }
         }
 
         var fadeOut = new DoubleAnimation(1.0, 0.0, TimeSpan.FromMilliseconds(200))
@@ -384,7 +433,10 @@ public partial class NotificationHudWindow : Window
             _countdownStoryboard?.Stop(this);
             _countdownStoryboard = null;
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] OnClosed teardown error: {ex.Message}");
+        }
         base.OnClosed(e);
     }
 

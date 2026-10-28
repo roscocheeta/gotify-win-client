@@ -18,7 +18,7 @@ public class HudManagerTests
     {
         var thread = new Thread(() =>
         {
-            var manager = new HudManager();
+            using var manager = new HudManager();
             var settings = new PresentationSettings
             {
                 Mode = NotificationMode.CustomHud,
@@ -57,7 +57,7 @@ public class HudManagerTests
     {
         var thread = new Thread(() =>
         {
-            var manager = new HudManager();
+            using var manager = new HudManager();
             var settingsTL = new PresentationSettings
             {
                 Mode = NotificationMode.CustomHud,
@@ -198,7 +198,7 @@ public class HudManagerTests
     {
         var thread = new Thread(() =>
         {
-            var manager = new HudManager();
+            using var manager = new HudManager();
             var settings = new PresentationSettings
             {
                 Mode = NotificationMode.CustomHud,
@@ -232,8 +232,7 @@ public class HudManagerTests
             manager.HandleSessionUnlock();
 
             manager.DismissAll();
-            manager.Dispose();
-            Dispatcher.CurrentDispatcher.InvokeShutdown();
+                        Dispatcher.CurrentDispatcher.InvokeShutdown();
         });
 
         thread.SetApartmentState(ApartmentState.STA);
@@ -246,7 +245,7 @@ public class HudManagerTests
     {
         var thread = new Thread(() =>
         {
-            var manager = new HudManager();
+            using var manager = new HudManager();
             var settings = new PresentationSettings
             {
                 Mode = NotificationMode.CustomHud,
@@ -278,8 +277,7 @@ public class HudManagerTests
             Assert.Equal(0, manager.QueuedCount);
 
             manager.DismissAll();
-            manager.Dispose();
-            Dispatcher.CurrentDispatcher.InvokeShutdown();
+                        Dispatcher.CurrentDispatcher.InvokeShutdown();
         });
 
         thread.SetApartmentState(ApartmentState.STA);

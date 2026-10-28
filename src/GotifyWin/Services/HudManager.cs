@@ -58,7 +58,10 @@ public class HudManager : IHudManager
         {
             Microsoft.Win32.SystemEvents.SessionSwitch += OnSessionSwitch;
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HudManager] SessionSwitch registration failed: {ex.Message}");
+        }
     }
 
     private void OnSessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs e)
@@ -93,7 +96,10 @@ public class HudManager : IHudManager
             {
                 w.CheckExpiration();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[HudManager] CheckExpiration failed: {ex.Message}");
+            }
         }
 
         // 2. Discard stale/expired items from queue
@@ -155,7 +161,10 @@ public class HudManager : IHudManager
                     {
                         w.Close();
                     }
-                    catch { }
+                    catch (InvalidOperationException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[HudManager] Window close ignored: {ex.Message}");
+                    }
                 }
             }
         });
@@ -339,7 +348,10 @@ public class HudManager : IHudManager
         {
             Microsoft.Win32.SystemEvents.SessionSwitch -= OnSessionSwitch;
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HudManager] SessionSwitch unregistration failed: {ex.Message}");
+        }
         DismissAll();
         GC.SuppressFinalize(this);
     }

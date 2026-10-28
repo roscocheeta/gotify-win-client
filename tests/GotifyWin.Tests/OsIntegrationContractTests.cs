@@ -97,7 +97,7 @@ public class OsIntegrationContractTests
                 using var cleanupKey = Registry.CurrentUser.OpenSubKey(runKeyPath, true);
                 cleanupKey?.DeleteValue(appName, false);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to clean up test registry key: {ex.Message}");
             }
