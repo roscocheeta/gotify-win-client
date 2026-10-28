@@ -1,4 +1,7 @@
+using System.Net.Http;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows.Input;
@@ -16,6 +19,7 @@ public class SettingsViewModel : ViewModelBase
     private readonly IStartupManager _startupManager;
     private readonly INotificationPresenter _presenter;
     private readonly IThemeManager? _themeManager;
+    private readonly IUpdateService _updateService;
 
     // Connection
     private string _serverUrl = string.Empty;
@@ -126,6 +130,13 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _isBackupExpanded, value);
     }
 
+    private bool _isAboutExpanded;
+    public bool IsAboutExpanded
+    {
+        get => _isAboutExpanded;
+        set => SetProperty(ref _isAboutExpanded, value);
+    }
+
     public string ConnectionSummaryText => string.IsNullOrWhiteSpace(ServerUrl)
         ? "Not Configured"
         : (TestStatus.StartsWith("Connected") ? "● Connected" : ServerUrl);
@@ -162,12 +173,15 @@ public class SettingsViewModel : ViewModelBase
 
     public string BackupSummaryText => "Export / Import Configuration";
 
+    public string AboutSummaryText => IsUpdateAvailable ? $"● Update Available ({LatestAppVersion})" : $"{CurrentAppVersion} • Up to date";
+
     public ICommand ToggleConnectionCommand { get; }
     public ICommand ToggleNotificationsCommand { get; }
     public ICommand ToggleFilteringCommand { get; }
     public ICommand ToggleDndCommand { get; }
     public ICommand ToggleAppearanceCommand { get; }
     public ICommand ToggleBackupCommand { get; }
+    public ICommand ToggleAboutCommand { get; }
 
     // Presentation
     public bool IsHudCustomizationEnabled => SelectedMode == NotificationMode.CustomHud || SelectedMode == NotificationMode.Both;
@@ -513,6 +527,111 @@ public class SettingsViewModel : ViewModelBase
     }
     public bool HasBackupStatus => !string.IsNullOrEmpty(BackupStatusText);
 
+    // Updates & Version Info
+    public string CurrentAppVersion => _updateService.CurrentVersionString;
+
+    private string _latestAppVersion = string.Empty;
+    public string LatestAppVersion
+    {
+        get => _latestAppVersion;
+        set
+        {
+            if (SetProperty(ref _latestAppVersion, value))
+            {
+                OnPropertyChanged(nameof(AboutSummaryText));
+            }
+        }
+    }
+
+    private string _latestReleaseName = string.Empty;
+    public string LatestReleaseName
+    {
+        get => _latestReleaseName;
+        set => SetProperty(ref _latestReleaseName, value);
+    }
+
+    private string _releaseNotes = string.Empty;
+    public string ReleaseNotes
+    {
+        get => _releaseNotes;
+        set => SetProperty(ref _releaseNotes, value);
+    }
+
+    private string _releasePageUrl = string.Empty;
+    public string ReleasePageUrl
+    {
+        get => _releasePageUrl;
+        set => SetProperty(ref _releasePageUrl, value);
+    }
+
+    private DateTime? _publishedAt;
+    public string PublishedDateText => _publishedAt.HasValue ? _publishedAt.Value.ToLocalTime().ToString("MMM dd, yyyy") : string.Empty;
+
+    private bool _isUpdateAvailable;
+    public bool IsUpdateAvailable
+    {
+        get => _isUpdateAvailable;
+        set
+        {
+            if (SetProperty(ref _isUpdateAvailable, value))
+            {
+                OnPropertyChanged(nameof(AboutSummaryText));
+            }
+        }
+    }
+
+    private bool _isCheckingForUpdates;
+    public bool IsCheckingForUpdates
+    {
+        get => _isCheckingForUpdates;
+        set => SetProperty(ref _isCheckingForUpdates, value);
+    }
+
+    private bool _isDownloadingUpdate;
+    public bool IsDownloadingUpdate
+    {
+        get => _isDownloadingUpdate;
+        set => SetProperty(ref _isDownloadingUpdate, value);
+    }
+
+    private bool _isUpdateReadyToInstall;
+    public bool IsUpdateReadyToInstall
+    {
+        get => _isUpdateReadyToInstall;
+        set => SetProperty(ref _isUpdateReadyToInstall, value);
+    }
+
+    private double _downloadProgress;
+    public double DownloadProgress
+    {
+        get => _downloadProgress;
+        set => SetProperty(ref _downloadProgress, value);
+    }
+
+    private string _updateStatusMessage = string.Empty;
+    public string UpdateStatusMessage
+    {
+        get => _updateStatusMessage;
+        set => SetProperty(ref _updateStatusMessage, value);
+    }
+
+    public bool AutoCheckForUpdates
+    {
+        get => _configService.Config.AutoCheckForUpdates;
+        set
+        {
+            if (_configService.Config.AutoCheckForUpdates != value)
+            {
+                _configService.Config.AutoCheckForUpdates = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
+
+    private UpdateCheckResult? _lastCheckResult;
+    private string? _downloadedZipPath;
+
     public ICommand TestConnectionCommand { get; }
     public ICommand SaveConnectionCommand { get; }
     public ICommand SendTestNotificationCommand { get; }
@@ -521,6 +640,12 @@ public class SettingsViewModel : ViewModelBase
     public ICommand ExportSettingsCommand { get; }
     public ICommand ImportSettingsCommand { get; }
 
+    public ICommand CheckForUpdatesCommand { get; }
+    public ICommand DownloadAndInstallUpdateCommand { get; }
+    public ICommand ApplyUpdateAndRestartCommand { get; }
+    public ICommand OpenReleaseNotesCommand { get; }
+    public ICommand OpenProjectRepoCommand { get; }
+
     public event EventHandler? ConnectionConfigSaved;
 
     public SettingsViewModel(
@@ -528,13 +653,16 @@ public class SettingsViewModel : ViewModelBase
         IGotifyApiService apiService,
         IStartupManager startupManager,
         INotificationPresenter presenter,
-        IThemeManager? themeManager = null)
+        IThemeManager? themeManager = null,
+        IUpdateService? updateService = null)
     {
         _configService = configService;
         _apiService = apiService;
         _startupManager = startupManager;
         _presenter = presenter;
         _themeManager = themeManager;
+        _updateService = updateService ?? new UpdateService();
+        _updateService.UpdateAvailable += OnUpdateDiscovered;
 
         ServerUrl = _configService.Config.ServerUrl;
         ClientToken = _configService.Config.ClientToken;
@@ -558,7 +686,10 @@ public class SettingsViewModel : ViewModelBase
                     TestStatus = "✓ Token copied to clipboard (will auto-clear in 30s).";
                     ScheduleClipboardClear(ClientToken);
                 }
-                catch { }
+                catch (Exception ex) when (ex is ExternalException or InvalidOperationException)
+                {
+                    Debug.WriteLine($"Failed to set clipboard: {ex.Message}");
+                }
             }
         });
         ExportSettingsCommand = new RelayCommand(ExportSettings);
@@ -570,6 +701,169 @@ public class SettingsViewModel : ViewModelBase
         ToggleDndCommand = new RelayCommand(() => IsDndExpanded = !IsDndExpanded);
         ToggleAppearanceCommand = new RelayCommand(() => IsAppearanceExpanded = !IsAppearanceExpanded);
         ToggleBackupCommand = new RelayCommand(() => IsBackupExpanded = !IsBackupExpanded);
+        ToggleAboutCommand = new RelayCommand(() => IsAboutExpanded = !IsAboutExpanded);
+
+        CheckForUpdatesCommand = new RelayCommand(async () => await CheckForUpdatesAsync(isManual: true));
+        DownloadAndInstallUpdateCommand = new RelayCommand(async () => await DownloadAndInstallUpdateAsync());
+        ApplyUpdateAndRestartCommand = new RelayCommand(async () => await ApplyUpdateAndRestartAsync());
+        OpenReleaseNotesCommand = new RelayCommand(() => OpenUrl(ReleasePageUrl));
+        OpenProjectRepoCommand = new RelayCommand(() => OpenUrl("https://github.com/roscocheeta/gotify-win-client"));
+    }
+
+    private void OnUpdateDiscovered(UpdateCheckResult result)
+    {
+        UiDispatcher.RunOnUI(() =>
+        {
+            _lastCheckResult = result;
+            IsUpdateAvailable = result.IsUpdateAvailable;
+            LatestAppVersion = result.LatestVersionTag;
+            LatestReleaseName = result.ReleaseName;
+            ReleaseNotes = result.ReleaseNotes;
+            ReleasePageUrl = result.ReleasePageUrl;
+            _publishedAt = result.PublishedAt;
+            OnPropertyChanged(nameof(PublishedDateText));
+            UpdateStatusMessage = $"Update {result.LatestVersionTag} is available!";
+        });
+    }
+
+    public async Task CheckForUpdatesAsync(bool isManual = true)
+    {
+        if (IsCheckingForUpdates || IsDownloadingUpdate) return;
+
+        IsCheckingForUpdates = true;
+        UpdateStatusMessage = "Checking GitHub for updates...";
+
+        try
+        {
+            var result = await _updateService.CheckForUpdatesAsync(isManual);
+            _lastCheckResult = result;
+            _configService.Config.LastUpdateCheckUtc = DateTime.UtcNow;
+            _configService.Save();
+
+            if (!string.IsNullOrEmpty(result.ErrorMessage))
+            {
+                UpdateStatusMessage = $"Update check failed: {result.ErrorMessage}";
+                return;
+            }
+
+            if (result.IsUpdateAvailable)
+            {
+                IsUpdateAvailable = true;
+                LatestAppVersion = result.LatestVersionTag;
+                LatestReleaseName = result.ReleaseName;
+                ReleaseNotes = result.ReleaseNotes;
+                ReleasePageUrl = result.ReleasePageUrl;
+                _publishedAt = result.PublishedAt;
+                OnPropertyChanged(nameof(PublishedDateText));
+                UpdateStatusMessage = $"Update {result.LatestVersionTag} is available!";
+            }
+            else
+            {
+                IsUpdateAvailable = false;
+                UpdateStatusMessage = isManual ? $"✓ GotifyWin {CurrentAppVersion} is up to date." : string.Empty;
+            }
+        }
+        finally
+        {
+            IsCheckingForUpdates = false;
+        }
+    }
+
+    public async Task DownloadAndInstallUpdateAsync()
+    {
+        if (_lastCheckResult?.ReleaseInfo == null || IsDownloadingUpdate) return;
+
+        IsDownloadingUpdate = true;
+        IsUpdateReadyToInstall = false;
+        DownloadProgress = 0;
+        UpdateStatusMessage = "Preparing download...";
+
+        try
+        {
+            var release = _lastCheckResult.ReleaseInfo;
+            var chosenAsset = release.Assets.FirstOrDefault(a => a.BrowserDownloadUrl == _lastCheckResult.DownloadUrl)
+                              ?? release.Assets.FirstOrDefault(a => a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+
+            if (chosenAsset == null)
+            {
+                UpdateStatusMessage = "No compatible archive found in the release.";
+                return;
+            }
+
+            UpdateStatusMessage = $"Downloading {chosenAsset.Name}...";
+            var progress = new Progress<double>(p =>
+            {
+                DownloadProgress = p;
+                UpdateStatusMessage = $"Downloading {chosenAsset.Name} ({p:0}%)...";
+            });
+
+            _downloadedZipPath = await _updateService.DownloadUpdateAsync(release, chosenAsset, progress);
+
+            // Fetch SHA-256 Checksum
+            UpdateStatusMessage = "Verifying cryptographic SHA-256 checksum...";
+            var expectedHash = await _updateService.FetchChecksumForAssetAsync(release, chosenAsset.Name);
+
+            if (!string.IsNullOrEmpty(expectedHash))
+            {
+                var isVerified = await _updateService.VerifyChecksumAsync(_downloadedZipPath, expectedHash);
+                if (!isVerified)
+                {
+                    UpdateStatusMessage = "⚠️ Security error: SHA-256 checksum mismatch! Download deleted.";
+                    try { File.Delete(_downloadedZipPath); }
+                    catch (Exception ex) when (ex is IOException) { Debug.WriteLine($"Failed to delete corrupted download: {ex.Message}"); }
+                    _downloadedZipPath = null;
+                    return;
+                }
+            }
+
+            IsUpdateReadyToInstall = true;
+            UpdateStatusMessage = "✓ Update verified and ready to install.";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException or InvalidOperationException)
+        {
+            UpdateStatusMessage = $"Download failed: {ex.Message}";
+            IsUpdateReadyToInstall = false;
+        }
+        finally
+        {
+            IsDownloadingUpdate = false;
+        }
+    }
+
+    public async Task ApplyUpdateAndRestartAsync()
+    {
+        if (string.IsNullOrEmpty(_downloadedZipPath) || !File.Exists(_downloadedZipPath))
+        {
+            UpdateStatusMessage = "Update file not found. Please download again.";
+            return;
+        }
+
+        UpdateStatusMessage = "Applying update and restarting GotifyWin...";
+        try
+        {
+            await _updateService.ApplyUpdateAndRestartAsync(_downloadedZipPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            UpdateStatusMessage = $"Update failed: {ex.Message}. Try running as Administrator.";
+        }
+    }
+
+    private static void OpenUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return;
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+            {
+                Debug.WriteLine($"Failed to open URL {url}: {ex.Message}");
+            }
+        }
     }
 
     private async Task TestConnectionAsync()
@@ -608,7 +902,7 @@ public class SettingsViewModel : ViewModelBase
                 TestStatus = "Authentication failed. Check your token and server URL.";
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException or InvalidOperationException)
         {
             TestStatus = $"Connection error: {ex.Message}";
         }
@@ -644,7 +938,10 @@ public class SettingsViewModel : ViewModelBase
                     }
                 });
             }
-            catch { }
+            catch (Exception ex) when (ex is ExternalException or InvalidOperationException)
+            {
+                Debug.WriteLine($"Failed to clear clipboard: {ex.Message}");
+            }
         });
     }
 
@@ -716,7 +1013,7 @@ public class SettingsViewModel : ViewModelBase
                 BackupStatusText = $"✓ Settings exported to {Path.GetFileName(dlg.FileName)} (client token not included)";
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or NotSupportedException)
         {
             BackupStatusText = $"Export error: {ex.Message}";
         }
@@ -843,7 +1140,7 @@ public class SettingsViewModel : ViewModelBase
                 ConnectionConfigSaved?.Invoke(this, EventArgs.Empty);
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or NotSupportedException or InvalidOperationException)
         {
             BackupStatusText = $"Import error: {ex.Message}";
         }
