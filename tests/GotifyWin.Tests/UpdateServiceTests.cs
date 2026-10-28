@@ -203,7 +203,7 @@ b600654caa813227f154eb9191422c8276f122ce126deef3af235ce8923c00a5 *GotifyWin-v1.1
     [Fact]
     public async Task VerifyChecksumAsync_MatchingHash_ReturnsTrue()
     {
-        var tempFile = Path.Combine(Path.GetTempPath(), $"test_checksum_{Guid.NewGuid():N}.bin");
+        var tempFile = Path.Join(Path.GetTempPath(), $"test_checksum_{Guid.NewGuid():N}.bin");
         try
         {
             var content = "GotifyWin test executable content"u8.ToArray();
@@ -226,7 +226,7 @@ b600654caa813227f154eb9191422c8276f122ce126deef3af235ce8923c00a5 *GotifyWin-v1.1
     [Fact]
     public async Task VerifyChecksumAsync_MismatchedHash_ReturnsFalse()
     {
-        var tempFile = Path.Combine(Path.GetTempPath(), $"test_checksum_mismatch_{Guid.NewGuid():N}.bin");
+        var tempFile = Path.Join(Path.GetTempPath(), $"test_checksum_mismatch_{Guid.NewGuid():N}.bin");
         try
         {
             await File.WriteAllBytesAsync(tempFile, "Different content"u8.ToArray());

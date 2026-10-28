@@ -167,16 +167,16 @@ public class UpdateService : IUpdateService, IDisposable
             throw new ArgumentException("Asset download URL cannot be empty.", nameof(asset));
         }
 
-        var updateDir = Path.Combine(Path.GetTempPath(), "GotifyWin-Update");
+        var updateDir = Path.Join(Path.GetTempPath(), "GotifyWin-Update");
         Directory.CreateDirectory(updateDir);
 
-        var destinationFilePath = Path.Combine(updateDir, asset.Name);
+        var destinationFilePath = Path.Join(updateDir, asset.Name);
         if (File.Exists(destinationFilePath))
         {
             try { File.Delete(destinationFilePath); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                destinationFilePath = Path.Combine(updateDir, $"{Path.GetFileNameWithoutExtension(asset.Name)}_{DateTime.UtcNow.Ticks}.zip");
+                destinationFilePath = Path.Join(updateDir, $"{Path.GetFileNameWithoutExtension(asset.Name)}_{DateTime.UtcNow.Ticks}.zip");
             }
         }
 
@@ -279,7 +279,7 @@ public class UpdateService : IUpdateService, IDisposable
         }
 
         var appDir = Path.GetDirectoryName(currentProcessPath)!;
-        var tempExtractDir = Path.Combine(Path.GetTempPath(), "GotifyWin-Update", Guid.NewGuid().ToString("N"));
+        var tempExtractDir = Path.Join(Path.GetTempPath(), "GotifyWin-Update", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempExtractDir);
 
         string backupPath = currentProcessPath + ".old";
@@ -292,7 +292,7 @@ public class UpdateService : IUpdateService, IDisposable
                 ZipFile.ExtractToDirectory(zipFilePath, tempExtractDir, overwriteFiles: true);
 
                 // 2. Identify new executable in extracted files
-                var newExePath = Path.Combine(tempExtractDir, "GotifyWin.exe");
+                var newExePath = Path.Join(tempExtractDir, "GotifyWin.exe");
                 if (!File.Exists(newExePath))
                 {
                     var found = Directory.GetFiles(tempExtractDir, "GotifyWin.exe", SearchOption.AllDirectories).FirstOrDefault();
@@ -328,7 +328,7 @@ public class UpdateService : IUpdateService, IDisposable
                     var fileName = Path.GetFileName(file);
                     if (fileName.Equals("GotifyWin.exe", StringComparison.OrdinalIgnoreCase)) continue;
 
-                    var dest = Path.Combine(appDir, fileName);
+                    var dest = Path.Join(appDir, fileName);
                     try
                     {
                         File.Copy(file, dest, overwrite: true);
@@ -464,9 +464,8 @@ public class UpdateService : IUpdateService, IDisposable
         if (string.IsNullOrWhiteSpace(checksumsText)) return dict;
 
         var lines = checksumsText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-        foreach (var line in lines)
+        foreach (var trimmed in lines.Select(l => l.Trim()))
         {
-            var trimmed = line.Trim();
             if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith('#')) continue;
 
             var parts = trimmed.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
