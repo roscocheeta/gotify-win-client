@@ -10,7 +10,7 @@ using GotifyWin.Views;
 
 namespace GotifyWin.Services;
 
-public class NotificationPresenter : INotificationPresenter
+public class NotificationPresenter : INotificationPresenter, IDisposable
 {
     private const string AppUserModelId = AumidHelper.AppUserModelId;
     private readonly ISoundService _soundService;
@@ -152,5 +152,11 @@ public class NotificationPresenter : INotificationPresenter
         {
             System.Diagnostics.Debug.WriteLine($"[NotificationPresenter] OpenUrl error: {ex.Message}");
         }
+    }
+
+    public void Dispose()
+    {
+        _hudManager.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
