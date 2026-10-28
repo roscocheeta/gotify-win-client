@@ -164,7 +164,7 @@ public partial class NotificationHudWindow : Window
                 });
             }, null, safeDelay, Timeout.Infinite);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is ObjectDisposedException or ArgumentOutOfRangeException)
         {
             System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Fallback timer configuration failed: {ex.Message}");
         }
@@ -234,7 +234,7 @@ public partial class NotificationHudWindow : Window
                 NotificationImageBorder.Visibility = Visibility.Visible;
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or IOException or NotSupportedException)
         {
             System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Image load error: {ex.Message}");
         }
@@ -267,7 +267,7 @@ public partial class NotificationHudWindow : Window
                 PriorityText.Foreground = textBrush;
             }
         }
-        catch (Exception ex)
+        catch (FormatException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Priority brush parse error: {ex.Message}");
         }
@@ -285,7 +285,7 @@ public partial class NotificationHudWindow : Window
                 bitmap.Freeze();
                 AppIconImage.Source = bitmap;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is UriFormatException or IOException or NotSupportedException)
             {
                 System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Icon load error: {ex.Message}");
             }
@@ -298,7 +298,7 @@ public partial class NotificationHudWindow : Window
                 bitmap.Freeze();
                 AppIconImage.Source = bitmap;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is UriFormatException or IOException or NotSupportedException)
             {
                 System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Default icon load error: {ex.Message}");
             }
@@ -387,7 +387,7 @@ public partial class NotificationHudWindow : Window
             _fallbackTimer = null;
             _countdownStoryboard?.Stop(this);
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] Close cleanup error: {ex.Message}");
         }
@@ -433,7 +433,7 @@ public partial class NotificationHudWindow : Window
             _countdownStoryboard?.Stop(this);
             _countdownStoryboard = null;
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] OnClosed teardown error: {ex.Message}");
         }

@@ -58,7 +58,7 @@ public class HudManager : IHudManager
         {
             Microsoft.Win32.SystemEvents.SessionSwitch += OnSessionSwitch;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             System.Diagnostics.Debug.WriteLine($"[HudManager] SessionSwitch registration failed: {ex.Message}");
         }
@@ -96,7 +96,7 @@ public class HudManager : IHudManager
             {
                 w.CheckExpiration();
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[HudManager] CheckExpiration failed: {ex.Message}");
             }
@@ -348,7 +348,7 @@ public class HudManager : IHudManager
         {
             Microsoft.Win32.SystemEvents.SessionSwitch -= OnSessionSwitch;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             System.Diagnostics.Debug.WriteLine($"[HudManager] SessionSwitch unregistration failed: {ex.Message}");
         }
