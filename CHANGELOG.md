@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2026-10-28
+
+### Added
+- **In-App Version Monitoring & Auto-Update Service (Tier 1 - Feature 1)**:
+  - Automatic background monitoring for new GitHub releases on startup with user-friendly toggle in Settings.
+  - Interactive top header pill notification (🚀 Update vX.Y.Z) routing directly to update details.
+  - Integrated "About & Updates" section in Settings featuring current version display, manual "Check for Updates" trigger, release notes viewer, and real-time download progress.
+  - In-place executable replacement leveraging Windows NTFS executable renaming semantics (GotifyWin.exe -> GotifyWin.exe.old), followed by seamless process relaunch and silent startup cleanup of old executables.
+  - Cryptographic integrity verification streaming SHA-256 validation against SHA256SUMS.txt prior to extraction.
+  - Deployment-aware asset selection automatically picking between self-contained (standalone.zip) and lightweight framework-dependent (light.zip) distributions.
+- **Comprehensive Updater Test Suite**: 21 new tests bringing total suite to **199 sequential passing tests** (100% pass rate) covering SemVer parsing, checksum parsing, SHA-256 digest validation, mock GitHub API handling, and UI state transitions.
+
+### Fixed
+- **Workstation Lock Auto-Dismiss Freeze & Inconsistent Dismiss Button (#14)**:
+  - Standardized NotificationHudWindow layout so every notification presents a reliable, uniform Dismiss button alongside custom action links.
+  - Added thread-pool fallback timer (350ms) to ensure notifications dismiss cleanly even during OS message loop suspension or rapid pointer exit events.
+  - Added SystemEvents.SessionSwitch detection in HudManager with automatic queue purging on workstation lock (SessionSwitchReason.SessionLock).
+- **CodeQL Quality Hardening**:
+  - Replaced Path.Combine with Path.Join to eliminate silent path root argument dropping warnings.
+  - Replaced implicit sequence filtering and mapping loops with LINQ .Where and .Select.
+  - Converted all generic and empty catch blocks to typed exception filters with structured diagnostic logging.
+
+---
 ## [1.1.0] - 2026-10-27
 
 ### Added
