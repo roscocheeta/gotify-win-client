@@ -1,3 +1,5 @@
+using System.IO;
+using System.Net.Http;
 using System.Windows;
 using GotifyWin.Services;
 using GotifyWin.ViewModels;
@@ -28,6 +30,9 @@ public partial class App : System.Windows.Application
         var themeManager = new ThemeManager();
         themeManager.ApplyTheme(configService.Config.Theme);
 
+        var updateService = new UpdateService();
+        updateService.CleanUpOldExecutables();
+
         SecureImageLoader.PolicyProvider = () =>
             (configService.Config.ServerUrl, configService.Config.Presentation.AllowExternalImages);
 
@@ -40,7 +45,8 @@ public partial class App : System.Windows.Application
             presenter,
             startupManager,
             patternAnalyzer,
-            themeManager
+            themeManager,
+            updateService
         );
 
         _mainWindow = new MainWindow(mainViewModel, configService);
@@ -67,6 +73,22 @@ public partial class App : System.Windows.Application
         if (!startMinimized)
         {
             _mainWindow.Show();
+        }
+
+        if (configService.Config.AutoCheckForUpdates)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(4000);
+                    await updateService.CheckForUpdatesAsync(isManual: false);
+                }
+                catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[App] Background update check error: {ex.Message}");
+                }
+            });
         }
     }
 }

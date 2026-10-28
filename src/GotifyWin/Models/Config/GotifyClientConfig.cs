@@ -16,6 +16,9 @@ public class GotifyClientConfig
     public bool UseCompactFeedView { get; set; } = false;
     public bool HideFilteredInFeed { get; set; } = false;
 
+    public bool AutoCheckForUpdates { get; set; } = true;
+    public DateTime? LastUpdateCheckUtc { get; set; }
+
     public PresentationSettings Presentation { get; set; } = new();
     public DndSettings Dnd { get; set; } = new();
 

@@ -73,6 +73,7 @@ public class MainViewModel : ViewModelBase
     public ICommand SnoozeTomorrowCommand { get; }
     public ICommand DisableDndCommand { get; }
     public ICommand ReconnectCommand { get; }
+    public ICommand NavigateToUpdatesCommand { get; }
 
     private bool _isReconnecting;
     public bool IsReconnecting
@@ -90,7 +91,8 @@ public class MainViewModel : ViewModelBase
         INotificationPresenter presenter,
         IStartupManager startupManager,
         INotificationPatternAnalyzer? patternAnalyzer = null,
-        IThemeManager? themeManager = null)
+        IThemeManager? themeManager = null,
+        IUpdateService? updateService = null)
     {
         _configService = configService;
         _apiService = apiService;
@@ -108,7 +110,7 @@ public class MainViewModel : ViewModelBase
             () => Feed.Messages,
             async () => await FetchRecentMessagesAsync()
         );
-        Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter, themeManager);
+        Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter, themeManager, updateService);
 
         ToggleDndCommand = new RelayCommand(ToggleDnd);
         DndIndefiniteCommand = new RelayCommand(SetDndIndefinite);
@@ -118,6 +120,7 @@ public class MainViewModel : ViewModelBase
         SnoozeTomorrowCommand = new RelayCommand(SetDndUntilTomorrow);
         DisableDndCommand = new RelayCommand(DisableDnd);
         ReconnectCommand = new RelayCommand(async () => await ReconnectAsync());
+        NavigateToUpdatesCommand = new RelayCommand(NavigateToUpdates);
 
         // Wire events
         _wsService.MessageReceived += OnWebSocketMessageReceived;
@@ -418,5 +421,11 @@ public class MainViewModel : ViewModelBase
         {
             DndButtonLabel = "DND: Active";
         }
+    }
+
+    private void NavigateToUpdates()
+    {
+        SelectedTabIndex = 3;
+        Settings.IsAboutExpanded = true;
     }
 }
