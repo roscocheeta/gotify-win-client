@@ -1,4 +1,9 @@
-## .NET build artifacts
+## .NET build artifacts & binaries
+*.exe
+*.dll
+*.pdb
+*.zip
+artifacts/
 bin/
 obj/
 publish/
