@@ -24,7 +24,17 @@ This document defines mandatory development workflows, branching policies, testi
      ```powershell
      gh pr create --base dev --title "type: short summary" --body "..."
      ```
-  5. Wait for GitHub Actions (`ci.yml`, `codeql.yml`) to complete and pass all automated tests and security scans.
+  5. Verify PR outcomes, check-run annotations, and bot feedback:
+     - Run `gh pr checks <id>` and ensure 100% check pass rate.
+     - Inspect PR review comments from GitHub Advanced Security and automated bots:
+       ```powershell
+       gh api repos/:owner/:repo/pulls/<id>/comments
+       ```
+     - Check CodeQL check-run annotations for warnings or notices:
+       ```powershell
+       gh api repos/:owner/:repo/check-runs/<run_id>/annotations
+       ```
+     - Ensure zero CodeQL warnings/notes (e.g. unhandled IDisposable disposal, empty catch blocks, or overly broad exception catching).
   6. Merge PR into `dev` using squash-and-merge (`gh pr merge --squash`).
 - **Release Protocol**:
   1. Open a PR merging `dev` into `master` when preparing a milestone release.
