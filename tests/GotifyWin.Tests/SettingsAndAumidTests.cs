@@ -68,4 +68,22 @@ public class SettingsAndAumidTests
 
         Assert.Contains("System Managed", vm.NotificationsSummaryText);
     }
+
+    [Fact]
+    public void MainViewModel_AppVersionDisplay_ReturnsSemanticVersionString()
+    {
+        var configService = new ConfigService();
+        var vm = new MainViewModel(
+            configService,
+            new GotifyApiService(),
+            new GotifyWebSocketService(),
+            new FilterEngine(),
+            new DndManager(),
+            new DummyPresenter(),
+            new StartupManager()
+        );
+
+        Assert.NotNull(vm.AppVersionDisplay);
+        Assert.StartsWith("v", vm.AppVersionDisplay);
+    }
 }

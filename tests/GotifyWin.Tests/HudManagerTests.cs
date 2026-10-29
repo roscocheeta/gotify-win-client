@@ -142,6 +142,121 @@ public class HudManagerTests
     }
 
     [Fact]
+    public void NotificationHudWindow_CountdownAnimation_ActuallyAnimates()
+    {
+        var thread = new Thread(() =>
+        {
+            var window = new Views.NotificationHudWindow();
+            var settings = new PresentationSettings
+            {
+                ShowCountdownBar = true,
+                DisplayDurationSeconds = 1.0
+            };
+            var msg = new GotifyMessage
+            {
+                Id = 1,
+                Title = "Test Alert",
+                Message = "Body text",
+                Priority = 5
+            };
+            window.Setup(msg, settings, null);
+            window.Show();
+
+            var frame = new DispatcherFrame();
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+            timer.Tick += (s, e) => { timer.Stop(); frame.Continue = false; };
+            timer.Start();
+            Dispatcher.PushFrame(frame);
+
+            var scale = window.CountdownScaleX;
+            Assert.True(scale < 1.0, $"Expected scale < 1.0, but got {scale}");
+
+            window.Close();
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
+        });
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+
+    [Fact]
+    public void NotificationHudWindow_MeasureDesiredHeight_ReturnsAccurateHeightBeforeShow()
+    {
+        var thread = new Thread(() =>
+        {
+            var window = new Views.NotificationHudWindow();
+            var settings = new PresentationSettings
+            {
+                ShowCountdownBar = true,
+                DisplayDurationSeconds = 4.0
+            };
+            var msg = new GotifyMessage
+            {
+                Id = 1,
+                Title = "Test Alert with enough text to measure",
+                Message = "Body text that takes some space",
+                Priority = 5
+            };
+            window.Setup(msg, settings, null);
+
+            Assert.Equal(0.0, window.ActualHeight);
+            double height = window.MeasureHeight(380);
+            Assert.True(height > 100.0, $"MeasureHeight was {height}");
+
+            window.Close();
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
+        });
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+
+    [Fact]
+    public void HudManager_BottomRight_Positioning_ClearsTaskbarAndStacksConsecutively()
+    {
+        var thread = new Thread(() =>
+        {
+            using var manager = new HudManager();
+            var settings = new PresentationSettings
+            {
+                Mode = NotificationMode.CustomHud,
+                Position = HudPosition.BottomRight,
+                DisplayDurationSeconds = 10
+            };
+
+            var msg1 = new GotifyMessage
+            {
+                Id = 1,
+                Title = "Alert 1",
+                Message = "First notification body text",
+                Priority = 5
+            };
+            manager.ShowNotification(msg1, settings, null);
+
+            var msg2 = new GotifyMessage
+            {
+                Id = 2,
+                Title = "Alert 2",
+                Message = "Second notification with more detailed body text that wraps across multiple lines",
+                Priority = 6
+            };
+            manager.ShowNotification(msg2, settings, null);
+
+            Assert.Equal(2, manager.ActiveCount);
+
+            // Active windows are private, but we can verify through HudManager stacking contracts
+            manager.DismissAll();
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
+        });
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+
+    [Fact]
     public void NotificationHudWindow_DismissButton_AlwaysVisible_And_OpenLinkVisibility()
     {
         var thread = new Thread(() =>

@@ -34,6 +34,17 @@ public partial class NotificationHudWindow : Window
     public bool IsExpired => DateTime.UtcNow >= _expiresAtUtc;
     public bool IsClosing => _isClosing;
 
+    public double MeasureHeight(double availableWidth = 380.0)
+    {
+        if (ActualHeight > 50.0)
+        {
+            return ActualHeight;
+        }
+
+        RootContainer.Measure(new System.Windows.Size(availableWidth, double.PositiveInfinity));
+        return RootContainer.DesiredSize.Height;
+    }
+
     public NotificationHudWindow()
     {
         InitializeComponent();
@@ -129,8 +140,8 @@ public partial class NotificationHudWindow : Window
             FillBehavior = FillBehavior.HoldEnd
         };
 
-        Storyboard.SetTarget(anim, CountdownScaleTransform);
-        Storyboard.SetTargetProperty(anim, new PropertyPath(ScaleTransform.ScaleXProperty));
+        Storyboard.SetTarget(anim, CountdownBar);
+        Storyboard.SetTargetProperty(anim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
 
         _countdownStoryboard.Children.Add(anim);
         _countdownStoryboard.Completed += (s, e) =>
@@ -206,8 +217,8 @@ public partial class NotificationHudWindow : Window
                     FillBehavior = FillBehavior.HoldEnd
                 };
 
-                Storyboard.SetTarget(anim, CountdownScaleTransform);
-                Storyboard.SetTargetProperty(anim, new PropertyPath(ScaleTransform.ScaleXProperty));
+                Storyboard.SetTarget(anim, CountdownBar);
+                Storyboard.SetTargetProperty(anim, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
 
                 _countdownStoryboard.Children.Add(anim);
                 _countdownStoryboard.Completed += (s, e) =>
@@ -337,9 +348,7 @@ public partial class NotificationHudWindow : Window
         var margin = 20.0;
 
         Width = 380;
-        UpdateLayout();
-
-        var height = ActualHeight > 0 ? ActualHeight : 140.0;
+        var height = MeasureHeight(Width);
 
         double left = workArea.Right - Width - margin;
         double top = workArea.Bottom - height - margin;
