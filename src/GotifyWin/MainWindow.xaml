@@ -223,7 +223,15 @@
                         <Image Source="pack://application:,,,/Assets/app.png" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Gotify" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Gotify" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
+                            <TextBlock Text="{Binding AppVersionDisplay, Mode=OneWay}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource ThemeTextSecondary}"
+                                       Opacity="0.75"
+                                       Margin="6,2,0,0"
+                                       VerticalAlignment="Bottom"/>
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <Ellipse Width="8" Height="8" Fill="{Binding ConnectionStatusColor, Converter={StaticResource HexToBrush}}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding ConnectionStatusText}" FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"/>

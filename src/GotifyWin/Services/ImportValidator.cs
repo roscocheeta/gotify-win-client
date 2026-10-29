@@ -110,6 +110,7 @@ public static class ImportValidator
             d.EmergencyBypassPriority = Math.Clamp(d.EmergencyBypassPriority, 1, 10);
             d.QuietHoursStart = ClampTimeOfDay(d.QuietHoursStart);
             d.QuietHoursEnd = ClampTimeOfDay(d.QuietHoursEnd);
+            d.GameAltTabRetentionSeconds = Math.Clamp(d.GameAltTabRetentionSeconds, 10, 3600);
         }
     }
 

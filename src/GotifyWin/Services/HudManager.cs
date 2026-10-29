@@ -30,6 +30,7 @@ public class HudManager : IHudManager
         DateTime EnqueuedAtUtc,
         double DurationMs);
 
+    private readonly IDndManager _dndManager;
     private readonly List<NotificationHudWindow> _activeWindows = new();
     private readonly Queue<PendingHudItem> _pendingQueue = new();
     private readonly object _lock = new();
@@ -39,6 +40,11 @@ public class HudManager : IHudManager
     public int ActiveCount
     {
         get { lock (_lock) { return _activeWindows.Count; } }
+    }
+
+    internal IReadOnlyList<NotificationHudWindow> ActiveWindows
+    {
+        get { lock (_lock) { return _activeWindows.ToList(); } }
     }
 
     public int QueuedCount
@@ -52,8 +58,9 @@ public class HudManager : IHudManager
         set { lock (_lock) { _isSessionLocked = value; } }
     }
 
-    public HudManager()
+    public HudManager(IDndManager? dndManager = null)
     {
+        _dndManager = dndManager ?? new DndManager();
         try
         {
             Microsoft.Win32.SystemEvents.SessionSwitch += OnSessionSwitch;
@@ -209,11 +216,34 @@ public class HudManager : IHudManager
         var hud = new NotificationHudWindow();
         hud.Setup(message, settings, onUrlOpen);
 
+        // Pre-measure window height so exact size is known before placement
+        double width = hud.Width > 0 ? hud.Width : 380.0;
+        hud.MeasureHeight(width);
+
+        // Issue #23: When game or fullscreen application is active, keep HUD behind it
+        bool isFullscreen = _dndManager.IsFullscreenAppRunning();
+        hud.Topmost = !settings.KeepHudBehindFullscreen || !isFullscreen;
+
         int slotIndex = _activeWindows.Count;
         _activeWindows.Add(hud);
 
         // Position window before showing
         PositionHudWindow(hud, slotIndex, settings.Position);
+
+        // Auto-realign if window size dynamically adjusts (e.g. async image loads)
+        hud.SizeChanged += (s, e) =>
+        {
+            if (e.HeightChanged && !hud.IsClosing)
+            {
+                UiDispatcher.RunOnUI(() =>
+                {
+                    lock (_lock)
+                    {
+                        RestackWindows(settings.Position);
+                    }
+                });
+            }
+        };
 
         hud.Closed += (s, e) =>
         {
@@ -246,7 +276,9 @@ public class HudManager : IHudManager
 
     private double GetWindowHeight(NotificationHudWindow window)
     {
-        return window.ActualHeight > 50.0 ? window.ActualHeight : DefaultSlotHeight;
+        double width = window.Width > 0 ? window.Width : 380.0;
+        double measured = window.MeasureHeight(width);
+        return measured > 50.0 ? measured : DefaultSlotHeight;
     }
 
     private double CalculateSlotTop(int slotIndex, HudPosition position)
@@ -309,9 +341,11 @@ public class HudManager : IHudManager
 
     private void RestackWindows(HudPosition position)
     {
+        bool isFullscreen = _dndManager.IsFullscreenAppRunning();
         for (int i = 0; i < _activeWindows.Count; i++)
         {
             var win = _activeWindows[i];
+            win.Topmost = !isFullscreen;
             double targetTop = CalculateSlotTop(i, position);
 
             // Cancel any prior animation on TopProperty to avoid animation property lock

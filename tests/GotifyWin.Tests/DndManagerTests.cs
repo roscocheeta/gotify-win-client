@@ -133,4 +133,161 @@ public class DndManagerTests
         var desc = _manager.GetStatusDescription(settings);
         Assert.Equal("DND on (Indefinite)", desc);
     }
+
+    [Fact]
+    public void GetFullscreenState_ExclusiveD3D_DetectsGame()
+    {
+        var manager = new DndManager();
+        manager.StateProbe = () => FullscreenState.Game;
+
+        var state = manager.GetFullscreenState();
+        Assert.Equal(FullscreenState.Game, state);
+        Assert.True(manager.IsFullscreenAppRunning());
+    }
+
+    [Fact]
+    public void AltTabRetention_WhileGameProcessRunning_MaintainsDnd()
+    {
+        var manager = new DndManager
+        {
+            WinNotificationStateProbe = () => 5, // QUNS_ACCEPTS_NOTIFICATIONS
+            ForegroundWindowProbe = () => IntPtr.Zero
+        };
+        var settings = new DndSettings
+        {
+            SuppressOnFullscreenApps = true,
+            RetainGameDndOnAltTab = true,
+            GameAltTabRetentionSeconds = 300
+        };
+
+        int currentPid = Environment.ProcessId;
+        manager.ProcessRunningProbe = pid => pid == currentPid;
+        manager.SetActiveGameSessionForTest(currentPid, "TestGame.exe", DateTime.UtcNow.AddSeconds(-30));
+
+        var isDnd = manager.IsDndActive(settings);
+        Assert.True(isDnd);
+
+        var desc = manager.GetStatusDescription(settings);
+        Assert.Contains("TestGame.exe", desc);
+    }
+
+    [Fact]
+    public void AltTabRetention_WhenGracePeriodExpires_DropsDnd()
+    {
+        var manager = new DndManager
+        {
+            WinNotificationStateProbe = () => 5, // QUNS_ACCEPTS_NOTIFICATIONS
+            ForegroundWindowProbe = () => IntPtr.Zero
+        };
+        var settings = new DndSettings
+        {
+            SuppressOnFullscreenApps = true,
+            RetainGameDndOnAltTab = true,
+            GameAltTabRetentionSeconds = 60
+        };
+
+        int currentPid = Environment.ProcessId;
+        manager.ProcessRunningProbe = pid => true;
+        manager.SetActiveGameSessionForTest(currentPid, "OldGame.exe", DateTime.UtcNow.AddSeconds(-120));
+
+        var isDnd = manager.IsDndActive(settings);
+        Assert.False(isDnd);
+        Assert.Equal(0, manager.TrackedGameProcessId);
+    }
+
+    [Fact]
+    public void AltTabRetention_WhenGameProcessExits_DropsDndImmediately()
+    {
+        var manager = new DndManager
+        {
+            WinNotificationStateProbe = () => 5, // QUNS_ACCEPTS_NOTIFICATIONS
+            ForegroundWindowProbe = () => IntPtr.Zero
+        };
+        var settings = new DndSettings
+        {
+            SuppressOnFullscreenApps = true,
+            RetainGameDndOnAltTab = true,
+            GameAltTabRetentionSeconds = 300
+        };
+
+        manager.ProcessRunningProbe = pid => false;
+        manager.SetActiveGameSessionForTest(999999, "ClosedGame.exe", DateTime.UtcNow.AddSeconds(-10));
+
+        var isDnd = manager.IsDndActive(settings);
+        Assert.False(isDnd);
+        Assert.Equal(0, manager.TrackedGameProcessId);
+    }
+
+    [Fact]
+    public void AltTabRetention_WhenDisabledInSettings_DoesNotRetainDnd()
+    {
+        var manager = new DndManager
+        {
+            WinNotificationStateProbe = () => 5, // QUNS_ACCEPTS_NOTIFICATIONS
+            ForegroundWindowProbe = () => IntPtr.Zero
+        };
+        var settings = new DndSettings
+        {
+            SuppressOnFullscreenApps = true,
+            RetainGameDndOnAltTab = false
+        };
+
+        int currentPid = Environment.ProcessId;
+        manager.ProcessRunningProbe = pid => true;
+        manager.SetActiveGameSessionForTest(currentPid, "Game.exe", DateTime.UtcNow.AddSeconds(-10));
+
+        var isDnd = manager.IsDndActive(settings);
+        Assert.False(isDnd);
+    }
+
+    [Fact]
+    public void DndManager_StressTest_RapidIsDndActiveQueries_CompletesQuicklyWithoutMemoryLeak()
+    {
+        var manager = new DndManager
+        {
+            WinNotificationStateProbe = () => 5, // QUNS_ACCEPTS_NOTIFICATIONS
+            ForegroundWindowProbe = () => IntPtr.Zero
+        };
+        var settings = new DndSettings
+        {
+            SuppressOnFullscreenApps = true,
+            RetainGameDndOnAltTab = true,
+            GameAltTabRetentionSeconds = 300
+        };
+
+        int currentPid = Environment.ProcessId;
+        manager.ProcessRunningProbe = pid => pid == currentPid;
+        manager.SetActiveGameSessionForTest(currentPid, "StressGame.exe", DateTime.UtcNow);
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        for (int i = 0; i < 1000; i++)
+        {
+            _ = manager.IsDndActive(settings);
+        }
+        sw.Stop();
+
+        Assert.True(sw.ElapsedMilliseconds < 500, $"1000 queries took {sw.ElapsedMilliseconds}ms");
+    }
+
+    [Fact]
+    public void DndManager_Security_HandlesInvalidOrTerminatedProcessIdsGracefully()
+    {
+        var manager = new DndManager
+        {
+            WinNotificationStateProbe = () => 5, // QUNS_ACCEPTS_NOTIFICATIONS
+            ForegroundWindowProbe = () => IntPtr.Zero
+        };
+        var settings = new DndSettings
+        {
+            SuppressOnFullscreenApps = true,
+            RetainGameDndOnAltTab = true,
+            GameAltTabRetentionSeconds = 300
+        };
+
+        manager.SetActiveGameSessionForTest(int.MaxValue - 1, "NonExistentGame.exe", DateTime.UtcNow.AddSeconds(-5));
+
+        var exception = Record.Exception(() => manager.IsDndActive(settings));
+        Assert.Null(exception);
+        Assert.Equal(0, manager.TrackedGameProcessId);
+    }
 }
