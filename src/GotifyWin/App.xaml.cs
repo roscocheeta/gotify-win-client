@@ -24,7 +24,7 @@ public partial class App : System.Windows.Application
         var filterEngine = new FilterEngine();
         var dndManager = new DndManager();
         var soundService = new SoundService();
-        var presenter = new NotificationPresenter(soundService);
+        var presenter = new NotificationPresenter(soundService, dndManager: dndManager);
         var startupManager = new StartupManager();
         var patternAnalyzer = new NotificationPatternAnalyzer();
         var themeManager = new ThemeManager();

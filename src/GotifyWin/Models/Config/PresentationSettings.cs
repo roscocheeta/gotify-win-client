@@ -12,6 +12,10 @@ public class PresentationSettings
     public double Width { get; set; } = 360.0;
     public int MaxBodyLines { get; set; } = 4;
 
+    // Issue #23: Fullscreen & Gaming overlay behavior
+    // When true, HUD banners stay behind full-screen games and applications (Topmost = false)
+    public bool KeepHudBehindFullscreen { get; set; } = true;
+
     // External image loading: allows images from webhooks/integrations (Home Assistant, Sonarr, Grafana, etc.)
     public bool AllowExternalImages { get; set; } = true;
 
