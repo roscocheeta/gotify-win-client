@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-10-29
+
+### Added
+- **Alt-Tab Gaming DND Session Retention (#24)**:
+  - Preserves Do Not Disturb (DND) gaming suppression during temporary Alt-Tab switches away from active games.
+  - Automatically captures the running game process PID and name upon game detection.
+  - Retains DND suppression for a configurable grace period (`RetainGameDndOnAltTab`, 300 seconds default) while the game process remains active.
+  - Suppresses transient toast and HUD interruptions when multitasking, immediately releasing DND suppression when the game process terminates.
+- **Borderless Fullscreen Game Detection**:
+  - Enhanced gaming detection heuristics in `DndManager` combining `SHQueryUserNotificationState` with Win32 foreground window evaluation (`GetForegroundWindow`, `GetWindowRect`, window style examination via `WS_CAPTION`, and monitor dimension matching).
+  - Accurately detects modern borderless windowed games without relying solely on exclusive DirectX mode.
+- **Gaming HUD Overlay Prevention (#23)**:
+  - Prevents notification popups (HUD) from overlaying full-screen games.
+  - Dynamically lowers HUD window Z-order (`Topmost = false` via `KeepHudBehindFullscreen`) when a full-screen game or application is in focus so game rendering is never obscured.
+- **Subtle In-App Version Indicator (#22)**:
+  - Added subtle, clean version indicator badge in the main window UI header/footer for immediate visual verification of the running application version.
+- **Extended Test Suite**:
+  - Added 13 new unit tests across DND Alt-Tab retention, borderless game detection, HUD topmost layering, and stacking offset calculations, bringing total suite to **212 sequential passing tests** (100% pass rate).
+
+### Fixed
+- **HUD Countdown Progress Bar Animation (#20)**:
+  - Corrected WPF `Storyboard` target resolution for `ScaleTransform.ScaleX` on the `CountdownBar` element namescope.
+  - Progress bar smoothly and continuously animates down from full width to zero across the notification's display lifetime.
+- **Notification Taskbar Overlap & Excessive Stacking Gaps (#21)**:
+  - Pre-measures dynamic notification height (`MeasureHeight()`) prior to anchoring `Window.Top` and `Window.Left`.
+  - Accurately anchors bottom-right notifications against the Windows 11 working area bounds to eliminate taskbar overlap.
+  - Corrects cumulative height calculations to ensure uniform, consistent vertical spacing between stacked notification HUD windows.
+
+---
+
 ## [1.2.0] - 2026-10-28
 
 ### Added
