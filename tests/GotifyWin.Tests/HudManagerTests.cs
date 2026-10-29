@@ -433,4 +433,74 @@ public class HudManagerTests
         thread.Start();
         thread.Join();
     }
+
+    private class MockDndManager : IDndManager
+    {
+        public bool IsFullscreen { get; set; }
+        public bool IsDndActive(DndSettings settings) => false;
+        public bool IsQuietHours(DndSettings settings, DateTime? currentTime = null) => false;
+        public bool IsFullscreenAppRunning() => IsFullscreen;
+        public bool IsFullscreenAppRunning(DndSettings settings) => IsFullscreen;
+        public FullscreenState GetFullscreenState() => IsFullscreen ? FullscreenState.Game : FullscreenState.None;
+        public FullscreenState GetFullscreenState(DndSettings settings) => IsFullscreen ? FullscreenState.Game : FullscreenState.None;
+        public void SetManualDnd(DndSettings settings, TimeSpan? duration) { }
+        public void DisableManualDnd(DndSettings settings) { }
+        public string GetStatusDescription(DndSettings settings) => "Mock";
+    }
+
+    [Fact]
+    public void HudManager_WhenFullscreenActive_SpawnsHudWithTopmostFalse()
+    {
+        var thread = new Thread(() =>
+        {
+            var mockDnd = new MockDndManager { IsFullscreen = true };
+            using var manager = new HudManager(mockDnd);
+            var settings = new PresentationSettings
+            {
+                Mode = NotificationMode.CustomHud,
+                KeepHudBehindFullscreen = true
+            };
+            var msg = new GotifyMessage { Id = 1, Title = "Alert", Message = "Text", Priority = 5 };
+
+            manager.ShowNotification(msg, settings, null);
+            Assert.Equal(1, manager.ActiveCount);
+
+            var activeWin = manager.ActiveWindows[0];
+            Assert.False(activeWin.Topmost);
+
+            manager.DismissAll();
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+
+    [Fact]
+    public void HudManager_WhenNotFullscreen_SpawnsHudWithTopmostTrue()
+    {
+        var thread = new Thread(() =>
+        {
+            var mockDnd = new MockDndManager { IsFullscreen = false };
+            using var manager = new HudManager(mockDnd);
+            var settings = new PresentationSettings
+            {
+                Mode = NotificationMode.CustomHud,
+                KeepHudBehindFullscreen = true
+            };
+            var msg = new GotifyMessage { Id = 1, Title = "Alert", Message = "Text", Priority = 5 };
+
+            manager.ShowNotification(msg, settings, null);
+            Assert.Equal(1, manager.ActiveCount);
+
+            var activeWin = manager.ActiveWindows[0];
+            Assert.True(activeWin.Topmost);
+
+            manager.DismissAll();
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
 }

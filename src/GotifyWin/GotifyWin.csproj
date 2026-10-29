@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\**" />
+    <InternalsVisibleTo Include="GotifyWin.Tests" />
   </ItemGroup>
 
   <ItemGroup>

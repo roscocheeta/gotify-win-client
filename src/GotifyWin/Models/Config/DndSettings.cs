@@ -16,4 +16,9 @@ public class DndSettings
 
     // Win32 Fullscreen & Gaming Suppression
     public bool SuppressOnFullscreenApps { get; set; } = true;
+
+    // Game Session Retention (Alt-Tab Persistence)
+    // Retains DND suppression when alt-tabbing away from a running game as long as the game process is running
+    public bool RetainGameDndOnAltTab { get; set; } = true;
+    public int GameAltTabRetentionSeconds { get; set; } = 300; // 5 minutes retention window
 }

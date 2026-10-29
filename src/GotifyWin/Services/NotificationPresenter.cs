@@ -18,10 +18,10 @@ public class NotificationPresenter : INotificationPresenter, IDisposable
 
     public event EventHandler<string>? UrlOpenRequested;
 
-    public NotificationPresenter(ISoundService soundService, IHudManager? hudManager = null)
+    public NotificationPresenter(ISoundService soundService, IHudManager? hudManager = null, IDndManager? dndManager = null)
     {
         _soundService = soundService;
-        _hudManager = hudManager ?? new HudManager();
+        _hudManager = hudManager ?? new HudManager(dndManager);
         AumidHelper.Initialize();
     }
 

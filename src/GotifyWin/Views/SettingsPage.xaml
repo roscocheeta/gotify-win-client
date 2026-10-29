@@ -337,6 +337,10 @@
                         <!-- Smart Fullscreen Gaming & Presentation Suppression -->
                         <CheckBox Content="Mute notification popups while gaming, watching fullscreen video, or presenting"
                                   IsChecked="{Binding SuppressOnFullscreen}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                        <CheckBox Content="Retain gaming DND when Alt-Tabbing while game process is running"
+                                  IsChecked="{Binding RetainGameDndOnAltTab}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" Margin="24,0,0,8"
+                                  IsEnabled="{Binding SuppressOnFullscreen}"
+                                  ToolTip="Prevents notifications from interrupting or overlaying on your game when you temporarily Alt-Tab."/>
                     </StackPanel>
                 </StackPanel>
             </Border>

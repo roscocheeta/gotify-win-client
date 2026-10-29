@@ -15,7 +15,9 @@ public interface IDndManager
     bool IsDndActive(DndSettings settings);
     bool IsQuietHours(DndSettings settings, DateTime? currentTime = null);
     bool IsFullscreenAppRunning();
+    bool IsFullscreenAppRunning(DndSettings settings);
     FullscreenState GetFullscreenState();
+    FullscreenState GetFullscreenState(DndSettings settings);
     void SetManualDnd(DndSettings settings, TimeSpan? duration);
     void DisableManualDnd(DndSettings settings);
     string GetStatusDescription(DndSettings settings);

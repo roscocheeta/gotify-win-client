@@ -436,6 +436,20 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    public bool RetainGameDndOnAltTab
+    {
+        get => _configService.Config.Dnd.RetainGameDndOnAltTab;
+        set
+        {
+            if (_configService.Config.Dnd.RetainGameDndOnAltTab != value)
+            {
+                _configService.Config.Dnd.RetainGameDndOnAltTab = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
+
     // System
     public bool StartWithWindows
     {
@@ -1091,6 +1105,7 @@ public class SettingsViewModel : ViewModelBase
                     _configService.Config.Dnd.QuietHoursStart = loaded.Dnd.QuietHoursStart;
                     _configService.Config.Dnd.QuietHoursEnd = loaded.Dnd.QuietHoursEnd;
                     _configService.Config.Dnd.SuppressOnFullscreenApps = loaded.Dnd.SuppressOnFullscreenApps;
+                    _configService.Config.Dnd.RetainGameDndOnAltTab = loaded.Dnd.RetainGameDndOnAltTab;
                 }
 
                 if (loaded.AppFilters != null)
@@ -1118,6 +1133,7 @@ public class SettingsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(ShowCountdownBar));
                 OnPropertyChanged(nameof(PlaySound));
                 OnPropertyChanged(nameof(SuppressOnFullscreen));
+                OnPropertyChanged(nameof(RetainGameDndOnAltTab));
                 OnPropertyChanged(nameof(GlobalMinPriority));
                 OnPropertyChanged(nameof(GlobalMinPriorityText));
                 OnPropertyChanged(nameof(EnableDebounce));
