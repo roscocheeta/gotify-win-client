@@ -64,6 +64,7 @@ public class MainViewModel : ViewModelBase
     public AppsViewModel Apps { get; }
     public RulesViewModel Rules { get; }
     public SettingsViewModel Settings { get; }
+    public string AppVersionDisplay => Settings.CurrentAppVersion;
 
     public ICommand ToggleDndCommand { get; }
     public ICommand DndIndefiniteCommand { get; }

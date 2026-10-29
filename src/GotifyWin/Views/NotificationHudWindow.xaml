@@ -62,7 +62,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="2"/>
+                    <RowDefinition Height="3"/>
                 </Grid.RowDefinitions>
 
                 <!-- Header / App bar -->
@@ -142,9 +142,10 @@
                 </Grid>
 
                 <!-- Countdown Progress Bar -->
-                <Grid Grid.Row="3" Height="2" Background="Transparent" ClipToBounds="True">
+                <Grid Grid.Row="3" Height="3" Background="Transparent" ClipToBounds="True">
                     <Border x:Name="CountdownBar"
                             Background="{StaticResource AccentColor}"
+                            CornerRadius="0,0,9,9"
                             HorizontalAlignment="Stretch">
                         <Border.RenderTransform>
                             <ScaleTransform x:Name="CountdownScaleTransform" ScaleX="1.0" ScaleY="1.0" CenterX="0" CenterY="0"/>
