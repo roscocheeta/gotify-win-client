@@ -37,16 +37,31 @@ This document defines mandatory development workflows, branching policies, testi
      - Ensure zero CodeQL warnings/notes (e.g. unhandled IDisposable disposal, empty catch blocks, or overly broad exception catching).
   6. Merge PR into `dev` using squash-and-merge (`gh pr merge --squash`).
 - **Release Protocol**:
-  1. Open a PR merging `dev` into `master` when preparing a milestone release.
-  2. Bump versions in `src/GotifyWin/GotifyWin.csproj` (`<Version>`, `<AssemblyVersion>`, `<FileVersion>`) and `src/GotifyWin/app.manifest`.
-  3. Update `CHANGELOG.md` with release notes adhering to Keep a Changelog.
-  4. Merge into `master`.
+  1. Prepare release metadata on a dedicated branch (`chore/prepare-vX.Y.Z-release`) off `dev`:
+     - Bump versions in `src/GotifyWin/GotifyWin.csproj` (`<Version>`, `<AssemblyVersion>`, `<FileVersion>`, `<InformationalVersion>`) and `src/GotifyWin/app.manifest`.
+     - Update `CHANGELOG.md` with release notes adhering to Keep a Changelog.
+     - Run test suite locally, push branch, open PR into `dev`, verify CI, and squash-merge.
+  2. Open a PR merging `dev` into `master` using the GitHub CLI:
+     ```powershell
+     gh pr create --base master --head dev --title "chore(release): release vX.Y.Z" --body "..."
+     ```
+  3. Verify all checks pass on the release PR (`Build & Test`, `CodeQL`, `Secret Scan`).
+  4. Merge into `master` using squash-and-merge with admin override if required by linear history rules (`gh pr merge --squash --admin`).
   5. Tag release semantically from `master`:
      ```powershell
+     git checkout master
+     git pull origin master
      git tag -a vX.Y.Z -m "Release vX.Y.Z - <summary>"
      git push origin vX.Y.Z
      ```
   6. This automatically triggers `.github/workflows/release.yml` to compile and publish standalone and framework-dependent `.zip` release assets with SHA256 checksums.
+  7. **Post-Release Reconcile (Mandatory)**: Synchronize `master` back into `dev` using the `ours` strategy to reconcile the squashed release commit and prevent future 3-way merge conflicts:
+     ```powershell
+     git checkout dev
+     git merge -s ours origin/master -m "chore: sync master into dev post-vX.Y.Z release"
+     git push origin dev
+     ```
+     *Why this is required*: Merging `dev` into `master` via squash creates a single new commit on `master`. Without back-merging, Git keeps the previous release as the common ancestor, leading to artificial merge conflicts on subsequent release PRs.
 
 ---
 
@@ -69,6 +84,7 @@ This document defines mandatory development workflows, branching policies, testi
 - **Compile-Time SAST**: `SecurityCodeScan.VS2019` is integrated into the build. Code changes must not introduce any security warnings (`SCSxxxx`).
 - **Dependency Auditing**: .NET 8 `<NuGetAudit>` is configured for all direct and transitive dependencies at `moderate` severity. Pulling in vulnerable packages fails the build. Run `dotnet list package --vulnerable --include-transitive` to verify.
 - **Semantic Taint Tracking**: GitHub CodeQL runs continuously in CI, tracing untrusted server payloads to system sinks.
+- **Win32 P/Invoke & CodeQL Interop**: Native Windows desktop shell and window management APIs (e.g. `SetProcessWorkingSetSize`, `SHQueryUserNotificationState`, `GetForegroundWindow`, `GetWindowRect`) have no pure managed C# BCL alternatives. Informational rules `cs/unmanaged-code` and `cs/call-to-unmanaged-code` are excluded in `.github/codeql/codeql-config.yml` to prevent false-positive PR review notes while maintaining 100% active security-extended vulnerability scanning.
 - **Cryptographic Randomness**: Never instantiate `new Random()` for jitter, tokens, or security calculations. Use `System.Security.Cryptography.RandomNumberGenerator`.
 - **Windows DPAPI**: All credentials stored on disk must use Windows DPAPI (`ProtectedData.Protect`) with salted application entropy.
 - **URL Whitelisting**: Any URL clicked from toasts or UI must be strictly validated for `http` or `https` schemes before invoking `Process.Start`.
