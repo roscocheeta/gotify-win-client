@@ -1,0 +1,12 @@
+name: "GotifyWin CodeQL Config"
+
+# Filter out false-positive informational notes for native Windows Win32 P/Invoke interop
+query-filters:
+  - exclude:
+      id: cs/unmanaged-code
+  - exclude:
+      id: cs/call-to-unmanaged-code
+
+paths-ignore:
+  - "**/obj/**"
+  - "tests/**"
