@@ -427,6 +427,6 @@ public class MainViewModel : ViewModelBase
     private void NavigateToUpdates()
     {
         SelectedTabIndex = 3;
-        Settings.IsAboutExpanded = true;
+        Settings.ScrollToAbout();
     }
 }

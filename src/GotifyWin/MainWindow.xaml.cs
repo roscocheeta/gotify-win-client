@@ -44,7 +44,7 @@ public partial class MainWindow : Window
         System.Drawing.Icon? trayIcon = null;
         try
         {
-            var streamInfo = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico"));
+            var streamInfo = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/GotifyWin;component/Assets/app.ico")) ?? System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico"));
             if (streamInfo != null)
             {
                 using var stream = streamInfo.Stream;
@@ -96,7 +96,9 @@ public partial class MainWindow : Window
         Activate();
     }
 
-    private void QuitApplication()
+    public bool IsExplicitQuit => _isExplicitQuit;
+
+    public void ExplicitQuit()
     {
         _isExplicitQuit = true;
         if (_notifyIcon != null)
@@ -105,8 +107,10 @@ public partial class MainWindow : Window
             _notifyIcon.Dispose();
             _notifyIcon = null;
         }
-        System.Windows.Application.Current.Shutdown();
+        System.Windows.Application.Current?.Shutdown();
     }
+
+    private void QuitApplication() => ExplicitQuit();
 
     private void MinimizeToTray()
     {
@@ -123,7 +127,10 @@ public partial class MainWindow : Window
         }
         else
         {
-            QuitApplication();
+            if (!_isExplicitQuit)
+            {
+                ExplicitQuit();
+            }
             base.OnClosing(e);
         }
     }

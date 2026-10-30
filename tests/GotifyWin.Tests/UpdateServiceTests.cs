@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Windows.Threading;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -296,5 +298,125 @@ b600654caa813227f154eb9191422c8276f122ce126deef3af235ce8923c00a5 *GotifyWin-v1.1
         Assert.Equal("Changelog details", vm.ReleaseNotes);
         Assert.Contains("Update v1.2.0 is available", vm.UpdateStatusMessage);
         Assert.Contains("Update Available", vm.AboutSummaryText);
+    }
+    [Fact]
+    public void SettingsViewModel_ScrollToAbout_ExpandsAboutSection_And_FiresRequestScrollToAbout()
+    {
+        var configService = new DummyConfigService();
+        var apiService = new GotifyApiService();
+        var startupManager = new DummyStartupManager();
+        var presenter = new DummyPresenter();
+
+        var vm = new SettingsViewModel(configService, apiService, startupManager, presenter);
+
+        Assert.False(vm.IsAboutExpanded);
+        bool eventFired = false;
+        vm.RequestScrollToAbout += () => eventFired = true;
+
+        vm.ScrollToAbout();
+
+        Assert.True(vm.IsAboutExpanded);
+        Assert.True(eventFired);
+    }
+
+    [Fact]
+    public void MainViewModel_NavigateToUpdates_SelectsSettingsTab_And_InvokesScrollToAbout()
+    {
+        var configService = new ConfigService();
+        var apiService = new GotifyApiService();
+        var wsService = new GotifyWebSocketService();
+        var filterEngine = new FilterEngine();
+        var dndManager = new DndManager();
+        var presenter = new DummyPresenter();
+        var startupManager = new StartupManager();
+
+        var vm = new MainViewModel(
+            configService,
+            apiService,
+            wsService,
+            filterEngine,
+            dndManager,
+            presenter,
+            startupManager
+        );
+
+        bool scrollFired = false;
+        vm.Settings.RequestScrollToAbout += () => scrollFired = true;
+
+        vm.NavigateToUpdatesCommand.Execute(null);
+
+        Assert.Equal(3, vm.SelectedTabIndex);
+        Assert.True(vm.Settings.IsAboutExpanded);
+        Assert.True(scrollFired);
+    }
+
+    [Fact]
+    public void UpdateService_ShutdownHandler_CanBeAssignedAndInvoked()
+    {
+        using var updateService = new UpdateService();
+        bool shutdownInvoked = false;
+        updateService.ShutdownHandler = () => shutdownInvoked = true;
+
+        Assert.NotNull(updateService.ShutdownHandler);
+        updateService.ShutdownHandler();
+        Assert.True(shutdownInvoked);
+    }
+
+    [Fact]
+    public void SettingsPage_WhenRequestScrollToAboutFires_ExecutesWithoutException()
+    {
+        var thread = new Thread(() =>
+        {
+            var configService = new DummyConfigService();
+            var vm = new SettingsViewModel(configService, new GotifyApiService(), new DummyStartupManager(), new DummyPresenter());
+            var page = new GotifyWin.Views.SettingsPage
+            {
+                DataContext = vm
+            };
+
+            vm.ScrollToAbout();
+
+            var frame = new DispatcherFrame();
+            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => frame.Continue = false));
+            Dispatcher.PushFrame(frame);
+
+            Assert.True(vm.IsAboutExpanded);
+
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+
+    [Fact]
+    public void MainWindow_ExplicitQuit_SetsFlag_And_AllowsCloseWhenMinimizeToTrayEnabled()
+    {
+        var thread = new Thread(() =>
+        {
+            var configService = new ConfigService();
+            configService.Config.MinimizeToTrayOnClose = true;
+            var vm = new MainViewModel(
+                configService,
+                new GotifyApiService(),
+                new GotifyWebSocketService(),
+                new FilterEngine(),
+                new DndManager(),
+                new DummyPresenter(),
+                new StartupManager()
+            );
+
+            var window = new MainWindow(vm, configService);
+            Assert.False(window.IsExplicitQuit);
+
+            window.ExplicitQuit();
+            Assert.True(window.IsExplicitQuit);
+
+            window.Close();
+            Dispatcher.CurrentDispatcher.InvokeShutdown();
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
     }
 }
