@@ -374,6 +374,7 @@ b600654caa813227f154eb9191422c8276f122ce126deef3af235ce8923c00a5 *GotifyWin-v1.1
                 DataContext = vm
             };
 
+            Assert.NotNull(page);
             vm.ScrollToAbout();
 
             var frame = new DispatcherFrame();
