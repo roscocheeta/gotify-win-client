@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- **Settings Auto-Scroll to About & Updates (#30)**:
+  - Clicking the update pill in the main window header bar switches to the Settings tab and automatically scrolls down to the 'About & Updates' card via `BringIntoView()`.
+- **Auto-Updater Clean Termination with Minimize to Tray Enabled (#31)**:
+  - Fixed auto-updater restart logic where `MinimizeToTrayOnClose` intercepted the shutdown, leaving the previous application running in the tray alongside the new instance. Added `MainWindow.ExplicitQuit()` and configurable shutdown handler ensuring clean exit.
+- **WPF Pack URI Assembly Resolution**:
+  - Standardized pack URIs in `MainWindow.xaml` and `MainWindow.xaml.cs` to include explicit component assembly names (`/GotifyWin;component/`), preventing resource lookup failures during test runner execution.
+- **Extended Test Suite**:
+  - Added 5 new automated tests verifying update navigation, scroll events, explicit shutdown flags, and tray icon disposal, bringing total suite to **217 passing tests** (100% pass rate).
+
+---
+
 ## [1.3.0] - 2026-10-29
 
 ### Added

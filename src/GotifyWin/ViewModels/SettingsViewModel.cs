@@ -661,6 +661,13 @@ public class SettingsViewModel : ViewModelBase
     public ICommand OpenProjectRepoCommand { get; }
 
     public event EventHandler? ConnectionConfigSaved;
+    public event Action? RequestScrollToAbout;
+
+    public void ScrollToAbout()
+    {
+        IsAboutExpanded = true;
+        RequestScrollToAbout?.Invoke();
+    }
 
     public SettingsViewModel(
         IConfigService configService,
