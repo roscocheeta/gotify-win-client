@@ -75,7 +75,7 @@
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
+    <ScrollViewer x:Name="SettingsScrollViewer" VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled"
                   PanningMode="VerticalOnly"
                   CanContentScroll="False"
@@ -644,7 +644,7 @@
             </Border>
 
             <!-- 7. About & Updates (Collapsible) -->
-            <Border Style="{StaticResource SectionBorder}">
+            <Border x:Name="AboutSectionBorder" Style="{StaticResource SectionBorder}">
                 <StackPanel>
                     <Grid Cursor="Hand">
                         <Grid.InputBindings>

@@ -7,6 +7,8 @@ public interface IUpdateService
     Version CurrentVersion { get; }
     string CurrentVersionString { get; }
 
+    Action? ShutdownHandler { get; set; }
+
     event Action<UpdateCheckResult>? UpdateAvailable;
 
     Task<UpdateCheckResult> CheckForUpdatesAsync(bool isManual = false, CancellationToken cancellationToken = default);

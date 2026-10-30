@@ -24,6 +24,8 @@ public class UpdateService : IUpdateService, IDisposable
     public Version CurrentVersion { get; }
     public string CurrentVersionString => $"v{CurrentVersion.Major}.{CurrentVersion.Minor}.{CurrentVersion.Build}";
 
+    public Action? ShutdownHandler { get; set; }
+
     public event Action<UpdateCheckResult>? UpdateAvailable;
 
     public UpdateService(
@@ -349,10 +351,37 @@ public class UpdateService : IUpdateService, IDisposable
                 Process.Start(startInfo);
 
                 // 6. Shutdown current app instance
-                UiDispatcher.RunOnUI(() =>
+                if (ShutdownHandler != null)
                 {
-                    System.Windows.Application.Current?.Shutdown();
-                });
+                    ShutdownHandler();
+                }
+                else
+                {
+                    UiDispatcher.RunOnUI(() =>
+                    {
+                        if (System.Windows.Application.Current?.MainWindow is MainWindow mainWin)
+                        {
+                            mainWin.ExplicitQuit();
+                        }
+                        else
+                        {
+                            System.Windows.Application.Current?.Shutdown();
+                        }
+                    });
+
+                    // Fallback process termination after brief grace period if background threads hold process open
+                    _ = Task.Delay(1500).ContinueWith(_ =>
+                    {
+                        try
+                        {
+                            Environment.Exit(0);
+                        }
+                        catch (Exception ex) when (ex is not OutOfMemoryException)
+                        {
+                            Debug.WriteLine($"[UpdateService] Fallback process exit encountered: {ex.Message}");
+                        }
+                    });
+                }
 
                 return true;
             }
