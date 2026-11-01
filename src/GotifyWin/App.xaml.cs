@@ -46,7 +46,8 @@ public partial class App : System.Windows.Application
             startupManager,
             patternAnalyzer,
             themeManager,
-            updateService
+            updateService,
+            soundService: soundService
         );
 
         _mainWindow = new MainWindow(mainViewModel, configService);

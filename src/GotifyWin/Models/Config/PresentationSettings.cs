@@ -20,6 +20,7 @@ public class PresentationSettings
     public bool AllowExternalImages { get; set; } = true;
 
     // Audio Settings
+    public AudioProfileConfig Audio { get; set; } = new();
     public bool PlaySound { get; set; } = true;
     public string? CustomSoundFilePath { get; set; } = null;
     public bool MuteSoundsDuringQuietHours { get; set; } = true;
