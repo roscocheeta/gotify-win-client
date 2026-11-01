@@ -166,7 +166,7 @@
                                         <TextBlock Text="{Binding CustomSoundFileName, Mode=OneWay, StringFormat='🔊 {0}'}"
                                                    FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"
                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   ToolTip="Custom WAV audio chime for this application"/>
+                                                   ToolTip="Custom WAV or MP3 audio chime for this application"/>
                                         <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseCustomSoundCommand}"
                                                 Style="{StaticResource ActionButton}" FontSize="10" Padding="6,2" Margin="6,0,2,0"/>
                                         <Button Grid.Column="2" Content="✕" Command="{Binding ClearCustomSoundCommand}"

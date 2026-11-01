@@ -86,7 +86,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
   * **Zero-Disk-I/O In-Memory Playback**: Audio assets are preloaded into memory streams and played in under 1 millisecond.
   * **Acoustic Rate Limiter**: 150ms debounce cooldown prevents overlapping audio popping/distortion during notification bursts while allowing high-priority alerts to supersede immediately.
   * **Chime Volume Slider & Previews**: Set custom volume (0% to 100%) with 1-click in-app audio tier previews.
-  * **Per-App & Custom Overrides**: Map custom .wav files to specific applications or custom priority tiers with built-in UNC network path rejection and RIFF/WAVE header validation.
+  * **Per-App & Custom Overrides**: Map custom `.wav` or `.mp3` audio files to specific applications or custom priority tiers with built-in UNC network path rejection, 5 MB file size ceilings, and strict audio header validation (RIFF/WAVE and ID3v2/MPEG frame sync).
 
 ### 🌙 Comprehensive Do Not Disturb (DND) Suite
 * **System Tray Quick Snooze**: Toggle DND or select timed snooze presets (*30 minutes*, *1 hour*, *4 hours*, or *Until Tomorrow 8:00 AM*).

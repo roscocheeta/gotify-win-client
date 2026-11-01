@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **MP3 Audio Format Support for Custom Profiles & App Overrides**:
+  - Extended custom sound scheme and application override support to `.mp3` files alongside uncompressed `.wav`.
+  - Security-Hardened MP3 Validator: Inspects ID3v2 container tags and MPEG-1/2 Audio Layer frame synchronization bits (`0xFF, 0xEx`), enforces 5 MB file size ceilings, and rejects UNC/SMB paths.
+  - Native UI Playback: Dispatches MP3 playback through WPF's native `System.Windows.Media.MediaPlayer` with hardware volume scaling.
+  - Interactive UI: Updated OpenFileDialog file filters, settings labels, and tooltips across `SettingsPage` and `AppsPage` to indicate `.wav, .mp3` support.
+  - Added 6 new automated tests in `CustomAudioProfilesTests.cs`, bringing total suite to **265 passing tests** (100% pass rate).
 - **Priority-Aware Custom Audio Profiles & Sound Schemes**:
   - Implemented 4 curated, high-fidelity sound schemes: **Modern Fluent** (crystalline harmonic chords), **Homelab & Tech** (crisp digital synth pulses), **Subtle Acoustic** (gentle wooden taps and marimba plucks), and **Classic Windows** (standard bell tones).
   - Dynamic Priority Tier Audio Mapping: Automatically plays distinct sound variants depending on Gotify priority (Low 1-3, Normal 4-6, High 7-8, Urgent 9-10).

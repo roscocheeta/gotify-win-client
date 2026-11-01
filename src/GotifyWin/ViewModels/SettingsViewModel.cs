@@ -445,8 +445,8 @@ public class SettingsViewModel : ViewModelBase
 
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
-            Title = $"Select WAV Audio for {tierStr} Priority",
-            Filter = "WAV Audio (*.wav)|*.wav",
+            Title = $"Select Audio File for {tierStr} Priority",
+            Filter = "Audio Files (*.wav;*.mp3)|*.wav;*.mp3|WAV Audio (*.wav)|*.wav|MP3 Audio (*.mp3)|*.mp3|All Files (*.*)|*.*",
             CheckFileExists = true
         };
 
