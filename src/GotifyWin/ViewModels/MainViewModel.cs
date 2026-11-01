@@ -162,9 +162,17 @@ public class MainViewModel : ViewModelBase, IDisposable
         {
             Microsoft.Win32.SystemEvents.SessionSwitch += OnSessionSwitch;
         }
-        catch
+        catch (PlatformNotSupportedException ex)
         {
-            // Headless / non-interactive testing environments
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch hook note: {ex.Message}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch hook note: {ex.Message}");
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch hook note: {ex.Message}");
         }
 
         UpdateDndStatus();
