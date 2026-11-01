@@ -431,6 +431,17 @@
                                 </StackPanel>
                             </StackPanel>
                         </Border>
+
+                        <!-- Card C: Missed Notifications Summary on Workstation Unlock (Issue #37) -->
+                        <Border Background="{DynamicResource ThemeCardInnerBackground}" BorderBrush="{DynamicResource ThemeCardBorder}" BorderThickness="1"
+                                CornerRadius="8" Padding="14,12" Margin="0,0,0,4">
+                            <StackPanel>
+                                <CheckBox Content="Show missed notifications summary on workstation unlock"
+                                          IsChecked="{Binding EnableMissedSummaryOnUnlock}" Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                <TextBlock Text="When returning to your PC after locking the workstation, displays a summary alert if notifications arrived while you were away."
+                                           FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="24,0,0,0"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </StackPanel>
             </Border>

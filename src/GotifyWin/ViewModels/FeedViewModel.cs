@@ -9,7 +9,7 @@ using GotifyWin.Services;
 
 namespace GotifyWin.ViewModels;
 
-public class FeedViewModel : ViewModelBase
+public class FeedViewModel : ViewModelBase, IDisposable
 {
     private readonly IGotifyApiService _apiService;
     private readonly IConfigService _configService;
@@ -17,6 +17,7 @@ public class FeedViewModel : ViewModelBase
     private readonly ObservableCollection<GotifyMessage> _messages = new();
     public ObservableCollection<GotifyMessage> Messages => _messages;
     private readonly ICollectionView _filteredView;
+    private readonly System.Windows.Threading.DispatcherTimer? _relativeTimeTimer;
 
     private string _searchText = string.Empty;
     public string SearchText
@@ -108,6 +109,23 @@ public class FeedViewModel : ViewModelBase
 
         _filteredView = CollectionViewSource.GetDefaultView(_messages);
         _filteredView.Filter = FilterMessagePredicate;
+        _filteredView.SortDescriptions.Clear();
+        _filteredView.SortDescriptions.Add(new SortDescription(nameof(GotifyMessage.Date), ListSortDirection.Descending));
+        _filteredView.SortDescriptions.Add(new SortDescription(nameof(GotifyMessage.Id), ListSortDirection.Descending));
+
+        try
+        {
+            _relativeTimeTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(30)
+            };
+            _relativeTimeTimer.Tick += (s, e) => RefreshRelativeTimes();
+            _relativeTimeTimer.Start();
+        }
+        catch
+        {
+            // Non-UI or testing environments without active Dispatcher
+        }
 
         _isCompactView = _configService.Config.UseCompactFeedView;
         _hideFilteredMessages = _configService.Config.HideFilteredInFeed;
@@ -150,7 +168,21 @@ public class FeedViewModel : ViewModelBase
     {
         UiDispatcher.RunOnUI(() =>
         {
-            _messages.Insert(0, message);
+            // Avoid duplicate entries if message already loaded
+            if (message.Id > 0 && _messages.Any(m => m.Id == message.Id))
+            {
+                return;
+            }
+
+            // Strictly preserve chronological order (newest Date and Id first)
+            int insertIndex = 0;
+            while (insertIndex < _messages.Count &&
+                   (_messages[insertIndex].Date > message.Date ||
+                   (_messages[insertIndex].Date == message.Date && _messages[insertIndex].Id > message.Id)))
+            {
+                insertIndex++;
+            }
+            _messages.Insert(insertIndex, message);
 
             // Cap message history
             var max = _configService.Config.MaxHistoryCount;
@@ -174,13 +206,25 @@ public class FeedViewModel : ViewModelBase
     {
         UiDispatcher.RunOnUI(() =>
         {
-            var msgList = messages.OrderBy(m => m.Date).ToList();
+            var msgList = messages.OrderByDescending(m => m.Date).ThenByDescending(m => m.Id).ToList();
             if (msgList.Count == 0) return;
 
             var max = _configService.Config.MaxHistoryCount;
             foreach (var m in msgList)
             {
-                _messages.Insert(0, m);
+                if (m.Id > 0 && _messages.Any(existing => existing.Id == m.Id))
+                {
+                    continue;
+                }
+
+                int insertIndex = 0;
+                while (insertIndex < _messages.Count &&
+                       (_messages[insertIndex].Date > m.Date ||
+                       (_messages[insertIndex].Date == m.Date && _messages[insertIndex].Id > m.Id)))
+                {
+                    insertIndex++;
+                }
+                _messages.Insert(insertIndex, m);
                 if (!string.IsNullOrEmpty(m.ApplicationName) && !_availableAppFilters.Contains(m.ApplicationName))
                 {
                     _availableAppFilters.Add(m.ApplicationName);
@@ -202,7 +246,7 @@ public class FeedViewModel : ViewModelBase
         UiDispatcher.RunOnUI(() =>
         {
             _messages.Clear();
-            foreach (var m in messages.OrderByDescending(x => x.Date))
+            foreach (var m in messages.OrderByDescending(x => x.Date).ThenByDescending(x => x.Id))
             {
                 _messages.Add(m);
                 if (!string.IsNullOrEmpty(m.ApplicationName) && !_availableAppFilters.Contains(m.ApplicationName))
@@ -321,6 +365,23 @@ public class FeedViewModel : ViewModelBase
             Clipboard.SetText(text);
         }
         catch { }
+    }
+
+    public void RefreshRelativeTimes()
+    {
+        UiDispatcher.RunOnUI(() =>
+        {
+            foreach (var m in _messages)
+            {
+                m.RefreshRelativeTime();
+            }
+        });
+    }
+
+    public void Dispose()
+    {
+        _relativeTimeTimer?.Stop();
+        GC.SuppressFinalize(this);
     }
 
     private void OpenUrl(string? url)
