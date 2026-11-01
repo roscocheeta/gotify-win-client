@@ -20,6 +20,7 @@ public class SettingsViewModel : ViewModelBase
     private readonly INotificationPresenter _presenter;
     private readonly IThemeManager? _themeManager;
     private readonly IUpdateService _updateService;
+    private readonly ISoundService _soundService;
 
     // Connection
     private string _serverUrl = string.Empty;
@@ -276,6 +277,217 @@ public class SettingsViewModel : ViewModelBase
                 OnPropertyChanged();
                 _configService.Save();
             }
+        }
+    }
+
+    public SoundPreset SelectedSoundPreset
+    {
+        get => _configService.Config.Presentation.Audio.Preset;
+        set
+        {
+            if (_configService.Config.Presentation.Audio.Preset != value)
+            {
+                _configService.Config.Presentation.Audio.Preset = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsCustomPresetSelected));
+                _configService.Save();
+            }
+        }
+    }
+
+    public static IReadOnlyList<SoundPreset> AvailableSoundPresets { get; } = Enum.GetValues<SoundPreset>();
+
+    public double SoundVolume
+    {
+        get => _configService.Config.Presentation.Audio.Volume * 100.0;
+        set
+        {
+            var clamped = Math.Clamp(value, 0.0, 100.0);
+            if (Math.Abs(_configService.Config.Presentation.Audio.Volume * 100.0 - clamped) > 0.01)
+            {
+                _configService.Config.Presentation.Audio.Volume = clamped / 100.0;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SoundVolumePercentageText));
+                _configService.Save();
+            }
+        }
+    }
+
+    public string SoundVolumePercentageText => $"{(int)Math.Round(SoundVolume)}%";
+
+    public bool MuteLowPriority
+    {
+        get => _configService.Config.Presentation.Audio.MuteLowPriority;
+        set
+        {
+            if (_configService.Config.Presentation.Audio.MuteLowPriority != value)
+            {
+                _configService.Config.Presentation.Audio.MuteLowPriority = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
+
+    public bool AcousticDebounceEnabled
+    {
+        get => _configService.Config.Presentation.Audio.AcousticDebounceEnabled;
+        set
+        {
+            if (_configService.Config.Presentation.Audio.AcousticDebounceEnabled != value)
+            {
+                _configService.Config.Presentation.Audio.AcousticDebounceEnabled = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
+
+    public bool IsCustomPresetSelected => SelectedSoundPreset == SoundPreset.Custom;
+
+    public string? CustomLowSoundPath
+    {
+        get => _configService.Config.Presentation.Audio.CustomLowSoundPath;
+        set
+        {
+            if (_configService.Config.Presentation.Audio.CustomLowSoundPath != value)
+            {
+                _configService.Config.Presentation.Audio.CustomLowSoundPath = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
+
+    public string? CustomNormalSoundPath
+    {
+        get => _configService.Config.Presentation.Audio.CustomNormalSoundPath;
+        set
+        {
+            if (_configService.Config.Presentation.Audio.CustomNormalSoundPath != value)
+            {
+                _configService.Config.Presentation.Audio.CustomNormalSoundPath = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
+
+    public string? CustomHighSoundPath
+    {
+        get => _configService.Config.Presentation.Audio.CustomHighSoundPath;
+        set
+        {
+            if (_configService.Config.Presentation.Audio.CustomHighSoundPath != value)
+            {
+                _configService.Config.Presentation.Audio.CustomHighSoundPath = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
+
+    public string? CustomUrgentSoundPath
+    {
+        get => _configService.Config.Presentation.Audio.CustomUrgentSoundPath;
+        set
+        {
+            if (_configService.Config.Presentation.Audio.CustomUrgentSoundPath != value)
+            {
+                _configService.Config.Presentation.Audio.CustomUrgentSoundPath = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
+
+    private string? _soundValidationMessage;
+    public string? SoundValidationMessage
+    {
+        get => _soundValidationMessage;
+        set => SetProperty(ref _soundValidationMessage, value);
+    }
+
+    public ICommand TestSoundTierCommand { get; }
+    public ICommand BrowseCustomSoundCommand { get; }
+    public ICommand ClearCustomSoundCommand { get; }
+    public ICommand TestCustomSoundCommand { get; }
+
+    private void TestSoundTier(string? tierStr)
+    {
+        if (Enum.TryParse<SoundTier>(tierStr, true, out var tier))
+        {
+            if (SelectedSoundPreset == SoundPreset.Custom)
+            {
+                var path = tier switch
+                {
+                    SoundTier.Low => CustomLowSoundPath,
+                    SoundTier.Normal => CustomNormalSoundPath,
+                    SoundTier.High => CustomHighSoundPath,
+                    SoundTier.Urgent => CustomUrgentSoundPath,
+                    _ => CustomNormalSoundPath
+                };
+
+                if (!string.IsNullOrWhiteSpace(path))
+                {
+                    _soundService.PlayCustomFilePreview(path, _configService.Config.Presentation.Audio.Volume);
+                    return;
+                }
+            }
+
+            _soundService.PlayPreview(SelectedSoundPreset, tier, _configService.Config.Presentation.Audio.Volume);
+        }
+    }
+
+    private void BrowseCustomSound(string? tierStr)
+    {
+        if (string.IsNullOrWhiteSpace(tierStr)) return;
+
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = $"Select WAV Audio for {tierStr} Priority",
+            Filter = "WAV Audio (*.wav)|*.wav",
+            CheckFileExists = true
+        };
+
+        if (dlg.ShowDialog() == true)
+        {
+            if (_soundService.ValidateSoundFile(dlg.FileName, out var err))
+            {
+                SoundValidationMessage = null;
+                switch (tierStr.ToLowerInvariant())
+                {
+                    case "low": CustomLowSoundPath = dlg.FileName; break;
+                    case "normal": CustomNormalSoundPath = dlg.FileName; break;
+                    case "high": CustomHighSoundPath = dlg.FileName; break;
+                    case "urgent": CustomUrgentSoundPath = dlg.FileName; break;
+                }
+            }
+            else
+            {
+                SoundValidationMessage = err;
+            }
+        }
+    }
+
+    private void ClearCustomSound(string? tierStr)
+    {
+        if (string.IsNullOrWhiteSpace(tierStr)) return;
+        SoundValidationMessage = null;
+        switch (tierStr.ToLowerInvariant())
+        {
+            case "low": CustomLowSoundPath = null; break;
+            case "normal": CustomNormalSoundPath = null; break;
+            case "high": CustomHighSoundPath = null; break;
+            case "urgent": CustomUrgentSoundPath = null; break;
+        }
+    }
+
+    private void TestCustomSound(string? path)
+    {
+        if (!string.IsNullOrWhiteSpace(path))
+        {
+            _soundService.PlayCustomFilePreview(path, _configService.Config.Presentation.Audio.Volume);
         }
     }
 
@@ -690,7 +902,8 @@ public class SettingsViewModel : ViewModelBase
         IStartupManager startupManager,
         INotificationPresenter presenter,
         IThemeManager? themeManager = null,
-        IUpdateService? updateService = null)
+        IUpdateService? updateService = null,
+        ISoundService? soundService = null)
     {
         _configService = configService;
         _apiService = apiService;
@@ -698,6 +911,7 @@ public class SettingsViewModel : ViewModelBase
         _presenter = presenter;
         _themeManager = themeManager;
         _updateService = updateService ?? new UpdateService();
+        _soundService = soundService ?? new SoundService();
         _updateService.UpdateAvailable += OnUpdateDiscovered;
 
         ServerUrl = _configService.Config.ServerUrl;
@@ -712,6 +926,11 @@ public class SettingsViewModel : ViewModelBase
         SaveConnectionCommand = new RelayCommand(SaveConnection);
         SendTestNotificationCommand = new RelayCommand(SendTestNotification);
         ToggleTokenVisibilityCommand = new RelayCommand(() => IsTokenRevealed = !IsTokenRevealed);
+        TestSoundTierCommand = new RelayCommand<string>(TestSoundTier);
+        BrowseCustomSoundCommand = new RelayCommand<string>(BrowseCustomSound);
+        ClearCustomSoundCommand = new RelayCommand<string>(ClearCustomSound);
+        TestCustomSoundCommand = new RelayCommand<string>(TestCustomSound);
+
         CopyTokenCommand = new RelayCommand(() =>
         {
             if (!string.IsNullOrEmpty(ClientToken))
@@ -1112,6 +1331,10 @@ public class SettingsViewModel : ViewModelBase
                     _configService.Config.Presentation.DisplayDurationSeconds = loaded.Presentation.DisplayDurationSeconds;
                     _configService.Config.Presentation.ShowCountdownBar = loaded.Presentation.ShowCountdownBar;
                     _configService.Config.Presentation.PlaySound = loaded.Presentation.PlaySound;
+                    if (loaded.Presentation.Audio != null)
+                    {
+                        _configService.Config.Presentation.Audio = loaded.Presentation.Audio;
+                    }
                     _configService.Config.Presentation.EnableDebounce = loaded.Presentation.EnableDebounce;
                     _configService.Config.Presentation.DebounceWindowSeconds = loaded.Presentation.DebounceWindowSeconds;
                     _configService.Config.Presentation.EnableMissedSummaryOnUnlock = loaded.Presentation.EnableMissedSummaryOnUnlock;
@@ -1155,6 +1378,16 @@ public class SettingsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(DisplayDurationText));
                 OnPropertyChanged(nameof(ShowCountdownBar));
                 OnPropertyChanged(nameof(PlaySound));
+                OnPropertyChanged(nameof(SelectedSoundPreset));
+                OnPropertyChanged(nameof(SoundVolume));
+                OnPropertyChanged(nameof(SoundVolumePercentageText));
+                OnPropertyChanged(nameof(MuteLowPriority));
+                OnPropertyChanged(nameof(AcousticDebounceEnabled));
+                OnPropertyChanged(nameof(IsCustomPresetSelected));
+                OnPropertyChanged(nameof(CustomLowSoundPath));
+                OnPropertyChanged(nameof(CustomNormalSoundPath));
+                OnPropertyChanged(nameof(CustomHighSoundPath));
+                OnPropertyChanged(nameof(CustomUrgentSoundPath));
                 OnPropertyChanged(nameof(SuppressOnFullscreen));
                 OnPropertyChanged(nameof(RetainGameDndOnAltTab));
                 OnPropertyChanged(nameof(GlobalMinPriority));

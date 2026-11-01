@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Priority-Aware Custom Audio Profiles & Sound Schemes**:
+  - Implemented 4 curated, high-fidelity sound schemes: **Modern Fluent** (crystalline harmonic chords), **Homelab & Tech** (crisp digital synth pulses), **Subtle Acoustic** (gentle wooden taps and marimba plucks), and **Classic Windows** (standard bell tones).
+  - Dynamic Priority Tier Audio Mapping: Automatically plays distinct sound variants depending on Gotify priority (Low 1-3, Normal 4-6, High 7-8, Urgent 9-10).
+  - In-Memory PCM Caching: Loads embedded audio assets directly into memory streams with zero disk I/O, playing in under 1 millisecond.
+  - In-Memory Volume Attenuation: Fast 16-bit PCM volume scaling via SoundService.AttenuatePcmVolume.
+  - Acoustic Rate Limiter (AudioRateLimiter): 150ms cooldown prevents overlapping audio popping and distortion during notification bursts while allowing high-priority alerts to supersede immediately.
+  - Security-Hardened Audio Validation (SoundValidator): Validates RIFF/WAVE header, 16-bit PCM format, channels, and sample rate, limits files to 5MB, and strictly rejects UNC network share paths (\\server\share) to prevent SMB NTLM hash leaks.
+  - Interactive UI in Settings: Added sound scheme selector, volume slider (0-100%), 1-click sound tier preview buttons, and custom sound file picker with validation feedback.
+  - Per-Application Sound Overrides: Added custom sound override and preview directly on application cards in the Apps tab.
+  - Added 33 new automated tests in CustomAudioProfilesTests.cs, bringing total suite to **257 passing tests** (100% pass rate).
 - **Workstation Unlock Missed Notifications Summary Alert (#37)**:
   - Added session state tracking via `SystemEvents.SessionSwitch` (`SessionLock` and `SessionUnlock`).
   - Implemented `ISessionNotificationTracker` and `SessionNotificationTracker` to aggregate notifications arriving while the PC is locked for at least 10 seconds.

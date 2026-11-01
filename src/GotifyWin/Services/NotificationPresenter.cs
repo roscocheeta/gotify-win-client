@@ -30,7 +30,13 @@ public class NotificationPresenter : INotificationPresenter, IDisposable
         // 1. Play Sound (if enabled)
         if (config.Presentation.PlaySound)
         {
-            _soundService.PlayNotification(config.Presentation.CustomSoundFilePath);
+            AppFilterSetting? appFilter = null;
+            if (config.AppFilters != null && config.AppFilters.TryGetValue(message.AppId, out var filter))
+            {
+                appFilter = filter;
+            }
+
+            _soundService.PlayNotification(message, config.Presentation.Audio, appFilter);
         }
 
         // 2. Present according to mode

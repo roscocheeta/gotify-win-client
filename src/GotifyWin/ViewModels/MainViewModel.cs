@@ -97,7 +97,8 @@ public class MainViewModel : ViewModelBase, IDisposable
         INotificationPatternAnalyzer? patternAnalyzer = null,
         IThemeManager? themeManager = null,
         IUpdateService? updateService = null,
-        ISessionNotificationTracker? sessionTracker = null)
+        ISessionNotificationTracker? sessionTracker = null,
+        ISoundService? soundService = null)
     {
         _configService = configService;
         _apiService = apiService;
@@ -109,14 +110,14 @@ public class MainViewModel : ViewModelBase, IDisposable
         _sessionTracker = sessionTracker ?? new SessionNotificationTracker();
 
         Feed = new FeedViewModel(_apiService, _configService, _presenter);
-        Apps = new AppsViewModel(_apiService, _configService);
+        Apps = new AppsViewModel(_apiService, _configService, soundService);
         Rules = new RulesViewModel(
             _configService,
             _patternAnalyzer,
             () => Feed.Messages,
             async () => await FetchRecentMessagesAsync()
         );
-        Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter, themeManager, updateService);
+        Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter, themeManager, updateService, soundService);
 
         ToggleDndCommand = new RelayCommand(ToggleDnd);
         DndIndefiniteCommand = new RelayCommand(SetDndIndefinite);

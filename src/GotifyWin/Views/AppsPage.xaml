@@ -154,6 +154,29 @@
                                     <CheckBox Content="Bypass Do Not Disturb" IsChecked="{Binding OverrideGlobalDnd}" FontSize="12"
                                               Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,5,0,0"
                                               ToolTip="Show notifications from this app even when Do Not Disturb or Quiet Hours are active."/>
+
+                                    <!-- App Audio Override -->
+                                    <Grid Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding CustomSoundFileName, Mode=OneWay, StringFormat='🔊 {0}'}"
+                                                   FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   ToolTip="Custom WAV audio chime for this application"/>
+                                        <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseCustomSoundCommand}"
+                                                Style="{StaticResource ActionButton}" FontSize="10" Padding="6,2" Margin="6,0,2,0"/>
+                                        <Button Grid.Column="2" Content="✕" Command="{Binding ClearCustomSoundCommand}"
+                                                Visibility="{Binding HasCustomSound, Converter={StaticResource BoolToVis}}"
+                                                Style="{StaticResource ActionButton}" FontSize="10" Padding="5,2" Margin="2,0,2,0"
+                                                ToolTip="Clear custom sound override"/>
+                                        <Button Grid.Column="3" Content="▶" Command="{Binding PreviewAppSoundCommand}"
+                                                Style="{StaticResource ActionButton}" FontSize="10" Padding="6,2" Margin="2,0,0,0"
+                                                ToolTip="Preview app notification chime"/>
+                                    </Grid>
                                 </StackPanel>
 
                                 <!-- Enable / Mute Toggle Switch with Explicit Label -->

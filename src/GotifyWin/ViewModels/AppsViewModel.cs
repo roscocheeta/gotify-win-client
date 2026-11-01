@@ -95,10 +95,97 @@ public class AppItemViewModel : ViewModelBase
         }
     }
 
-    public AppItemViewModel(AppFilterSetting setting, Action onChanged)
+    public SoundPreset? SoundPresetOverride
+    {
+        get => _setting.SoundPresetOverride;
+        set
+        {
+            if (_setting.SoundPresetOverride != value)
+            {
+                _setting.SoundPresetOverride = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SoundPresetOverrideText));
+                _onChanged();
+            }
+        }
+    }
+
+    public string SoundPresetOverrideText => SoundPresetOverride.HasValue
+        ? SoundPresetOverride.Value switch
+        {
+            SoundPreset.ModernFluent => "Modern Fluent",
+            SoundPreset.HomelabTech => "Homelab & Tech",
+            SoundPreset.SubtleAcoustic => "Subtle Acoustic",
+            SoundPreset.ClassicWindows => "Classic Windows",
+            SoundPreset.Custom => "Custom Scheme",
+            _ => SoundPresetOverride.Value.ToString()
+        }
+        : "Follow Global Scheme";
+
+    public string? CustomSoundPath
+    {
+        get => _setting.CustomSoundPath;
+        set
+        {
+            if (_setting.CustomSoundPath != value)
+            {
+                _setting.CustomSoundPath = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasCustomSound));
+                OnPropertyChanged(nameof(CustomSoundFileName));
+                _onChanged();
+            }
+        }
+    }
+
+    public bool HasCustomSound => !string.IsNullOrWhiteSpace(CustomSoundPath);
+    public string CustomSoundFileName => HasCustomSound ? System.IO.Path.GetFileName(CustomSoundPath!) : "Default / Global";
+
+    public ICommand BrowseCustomSoundCommand { get; }
+    public ICommand ClearCustomSoundCommand { get; }
+    public ICommand PreviewAppSoundCommand { get; }
+
+    public AppItemViewModel(AppFilterSetting setting, Action onChanged, ISoundService? soundService = null, IConfigService? configService = null)
     {
         _setting = setting;
         _onChanged = onChanged;
+
+        BrowseCustomSoundCommand = new RelayCommand(() =>
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = $"Select Sound for {Name}",
+                Filter = "WAV Audio (*.wav)|*.wav",
+                CheckFileExists = true
+            };
+            if (dlg.ShowDialog() == true)
+            {
+                if (soundService != null && !soundService.ValidateSoundFile(dlg.FileName, out _))
+                {
+                    return;
+                }
+                CustomSoundPath = dlg.FileName;
+            }
+        });
+
+        ClearCustomSoundCommand = new RelayCommand(() =>
+        {
+            CustomSoundPath = null;
+        });
+
+        PreviewAppSoundCommand = new RelayCommand(() =>
+        {
+            var vol = configService?.Config.Presentation.Audio.Volume ?? 0.8;
+            if (HasCustomSound)
+            {
+                soundService?.PlayCustomFilePreview(CustomSoundPath!, vol);
+            }
+            else
+            {
+                var preset = SoundPresetOverride ?? configService?.Config.Presentation.Audio.Preset ?? SoundPreset.ModernFluent;
+                soundService?.PlayPreview(preset, SoundTier.Normal, vol);
+            }
+        });
     }
 }
 
@@ -106,6 +193,7 @@ public class AppsViewModel : ViewModelBase
 {
     private readonly IGotifyApiService _apiService;
     private readonly IConfigService _configService;
+    private readonly ISoundService? _soundService;
     private readonly ObservableCollection<AppItemViewModel> _apps = new();
 
     private bool _isLoading;
@@ -144,10 +232,11 @@ public class AppsViewModel : ViewModelBase
     public ICommand EnableAllCommand { get; }
     public ICommand DisableAllCommand { get; }
 
-    public AppsViewModel(IGotifyApiService apiService, IConfigService configService)
+    public AppsViewModel(IGotifyApiService apiService, IConfigService configService, ISoundService? soundService = null)
     {
         _apiService = apiService;
         _configService = configService;
+        _soundService = soundService;
 
         RefreshAppsCommand = new RelayCommand(async () =>
         {
@@ -214,7 +303,7 @@ public class AppsViewModel : ViewModelBase
                         filter.AppName = app.Name; // keep sync
                     }
 
-                    var itemVm = new AppItemViewModel(filter, OnFilterChanged)
+                    var itemVm = new AppItemViewModel(filter, OnFilterChanged, _soundService, _configService)
                     {
                         Description = app.Description,
                         IconPath = app.LocalIconPath
@@ -248,9 +337,21 @@ public class AppsViewModel : ViewModelBase
                 }
             }
         }
-        catch (Exception ex)
+        catch (System.Net.Http.HttpRequestException ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = $"Network error: {ex.Message}";
+        }
+        catch (IOException ex)
+        {
+            StatusMessage = $"I/O error: {ex.Message}";
+        }
+        catch (TaskCanceledException ex)
+        {
+            StatusMessage = $"Request timed out: {ex.Message}";
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            StatusMessage = $"Data format error: {ex.Message}";
         }
         finally
         {

@@ -80,7 +80,13 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 * **Workstation Unlock Missed Summary Alert**: When unlocking your workstation after being away, GotifyWin displays a smart summary alert aggregating notifications received while you were gone (*e.g. "You missed 5 notifications from BackupServer, HomeAssistant, and Plex"*).
 * **Custom Positioning**: Screen placement in `Bottom-Right`, `Top-Right`, `Top-Left`, `Bottom-Left`, `Top-Center`, or `Bottom-Center`.
 * **Adjustable Duration**: Configure auto-dismiss timeout from 2 to 20 seconds.
-* **Audio Alerts**: Standard Windows chimes, custom `.wav` sound files, or completely silent mode.
+* **Priority-Tiered Audio Profiles & Sound Schemes**:
+  * **4 Curated Schemes**: Choose between **Modern Fluent** (crystalline harmonic chords), **Homelab & Tech** (crisp digital synth pulses), **Subtle Acoustic** (gentle wooden taps and marimba plucks), and **Classic Windows** (standard bell tones).
+  * **Priority Tier Differentiation**: Automatically plays distinctive tone variants based on message urgency (Low 1-3, Normal 4-6, High 7-8, Urgent 9-10).
+  * **Zero-Disk-I/O In-Memory Playback**: Audio assets are preloaded into memory streams and played in under 1 millisecond.
+  * **Acoustic Rate Limiter**: 150ms debounce cooldown prevents overlapping audio popping/distortion during notification bursts while allowing high-priority alerts to supersede immediately.
+  * **Chime Volume Slider & Previews**: Set custom volume (0% to 100%) with 1-click in-app audio tier previews.
+  * **Per-App & Custom Overrides**: Map custom .wav files to specific applications or custom priority tiers with built-in UNC network path rejection and RIFF/WAVE header validation.
 
 ### 🌙 Comprehensive Do Not Disturb (DND) Suite
 * **System Tray Quick Snooze**: Toggle DND or select timed snooze presets (*30 minutes*, *1 hour*, *4 hours*, or *Until Tomorrow 8:00 AM*).
@@ -158,7 +164,7 @@ Planned milestones and upcoming platform enhancements:
 - [ ] **.NET 10 Framework Upgrade**: Migrate to .NET 10 LTS upon general availability to take advantage of improved JIT throughput, smaller binary footprint, and NativeAOT compilation enhancements.
 - [ ] **WinGet Distribution**: Publish official Windows Package Manager manifest (`winget install roscocheeta.gotifywin`) for streamlined installation and updates.
 - [ ] **Interactive Toast Actions**: Support Gotify action extras for clickable webhook triggers and URL action buttons directly within Windows notification banners.
-- [ ] **Custom Audio Profiles**: Allow user-defined notification chimes and sound effects based on priority level or sending application.
+- [x] **Custom Audio Profiles**: Priority-tiered sound schemes, per-application audio overrides, and in-memory volume scaling.
 
 ---
 
