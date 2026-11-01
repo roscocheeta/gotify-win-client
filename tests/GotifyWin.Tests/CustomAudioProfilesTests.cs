@@ -37,6 +37,36 @@ public class CustomAudioProfilesTests : IDisposable
         }
     }
 
+    private string CreateValidMp3(string fileName, bool useId3 = true)
+    {
+        var filePath = Path.Join(_testTempDir, fileName);
+        using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+        using var writer = new BinaryWriter(stream);
+
+        if (useId3)
+        {
+            writer.Write(Encoding.ASCII.GetBytes("ID3"));
+            writer.Write((byte)3); // version 2.3
+            writer.Write((byte)0);
+            writer.Write((byte)0);
+            writer.Write((byte)0);
+            writer.Write((byte)0);
+            writer.Write((byte)0);
+            writer.Write((byte)0);
+        }
+
+        for (int f = 0; f < 5; f++)
+        {
+            writer.Write((byte)0xFF);
+            writer.Write((byte)0xFB); // MPEG-1 Layer 3
+            writer.Write((byte)0x90); // 128kbps, 44100Hz
+            writer.Write((byte)0x00);
+            writer.Write(new byte[100]);
+        }
+
+        return filePath;
+    }
+
     private string CreateValidWav(string fileName, short formatTag = 1, short channels = 1, int sampleRate = 44100, int sampleCount = 50)
     {
         var filePath = Path.Join(_testTempDir, fileName);
@@ -84,15 +114,15 @@ public class CustomAudioProfilesTests : IDisposable
     }
 
     [Fact]
-    public void SoundValidator_NonWavExtension_ReturnsFalse()
+    public void SoundValidator_UnsupportedExtension_ReturnsFalse()
     {
-        var txtPath = Path.Join(_testTempDir, "sound.mp3");
+        var txtPath = Path.Join(_testTempDir, "sound.txt");
         File.WriteAllText(txtPath, "fake audio");
 
         var isValid = SoundValidator.IsValidWavFile(txtPath, out var err);
 
         Assert.False(isValid);
-        Assert.Contains(".wav", err);
+        Assert.Contains(".wav or .mp3", err);
     }
 
     [Theory]
@@ -401,5 +431,71 @@ public class CustomAudioProfilesTests : IDisposable
 
         vm.SoundPresetOverride = SoundPreset.HomelabTech;
         Assert.Equal("Homelab & Tech", vm.SoundPresetOverrideText);
+    }
+
+    [Fact]
+    public void SoundValidator_ValidMp3WithId3_ReturnsTrue()
+    {
+        var mp3Path = CreateValidMp3("tagged.mp3", useId3: true);
+        var isValid = SoundValidator.IsValidAudioFile(mp3Path, out var err);
+
+        Assert.True(isValid);
+        Assert.Null(err);
+    }
+
+    [Fact]
+    public void SoundValidator_ValidMp3WithFrameSync_ReturnsTrue()
+    {
+        var mp3Path = CreateValidMp3("raw_sync.mp3", useId3: false);
+        var isValid = SoundValidator.IsValidAudioFile(mp3Path, out var err);
+
+        Assert.True(isValid);
+        Assert.Null(err);
+    }
+
+    [Fact]
+    public void SoundValidator_CorruptedMp3_ReturnsFalse()
+    {
+        var badMp3 = Path.Join(_testTempDir, "bad.mp3");
+        File.WriteAllBytes(badMp3, Encoding.ASCII.GetBytes("NOT_AN_MP3_AT_ALL_JUST_RANDOM_TEXT"));
+
+        var isValid = SoundValidator.IsValidAudioFile(badMp3, out var err);
+
+        Assert.False(isValid);
+        Assert.Contains("Invalid MP3 header", err);
+    }
+
+    [Theory]
+    [InlineData(@"\\192.168.1.1\share\alert.mp3")]
+    [InlineData(@"\\attackerserver\share\music.mp3")]
+    [InlineData("//10.0.0.1/share/alert.mp3")]
+    public void SoundValidator_UncMp3_IsRejected(string uncPath)
+    {
+        var isValid = SoundValidator.IsValidAudioFile(uncPath, out var err);
+
+        Assert.False(isValid);
+        Assert.Contains("UNC network paths are rejected", err);
+    }
+
+    [Fact]
+    public void SoundValidator_NonSupportedExtension_ReturnsFalse()
+    {
+        var oggPath = Path.Join(_testTempDir, "sound.ogg");
+        File.WriteAllText(oggPath, "fake audio");
+
+        var isValid = SoundValidator.IsValidAudioFile(oggPath, out var err);
+
+        Assert.False(isValid);
+        Assert.Contains(".wav or .mp3", err);
+    }
+
+    [Fact]
+    public void SoundService_PlayCustomFile_Mp3_DoesNotThrow()
+    {
+        var soundService = new SoundService();
+        var mp3Path = CreateValidMp3("playback.mp3", useId3: true);
+
+        var ex = Record.Exception(() => soundService.PlayCustomFilePreview(mp3Path, 0.5));
+        Assert.Null(ex);
     }
 }

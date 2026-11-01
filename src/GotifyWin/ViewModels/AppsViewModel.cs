@@ -154,8 +154,8 @@ public class AppItemViewModel : ViewModelBase
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
-                Title = $"Select Sound for {Name}",
-                Filter = "WAV Audio (*.wav)|*.wav",
+                Title = $"Select Audio for {Name}",
+                Filter = "Audio Files (*.wav;*.mp3)|*.wav;*.mp3|WAV Audio (*.wav)|*.wav|MP3 Audio (*.mp3)|*.mp3|All Files (*.*)|*.*",
                 CheckFileExists = true
             };
             if (dlg.ShowDialog() == true)

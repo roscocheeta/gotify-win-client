@@ -125,7 +125,7 @@ public class SoundPresetToStringConverter : IValueConverter
                 SoundPreset.HomelabTech => "Homelab & Tech",
                 SoundPreset.SubtleAcoustic => "Subtle Acoustic",
                 SoundPreset.ClassicWindows => "Classic Windows",
-                SoundPreset.Custom => "Custom Scheme (.wav files)",
+                SoundPreset.Custom => "Custom Scheme (.wav, .mp3)",
                 _ => preset.ToString()
             };
         }

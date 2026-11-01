@@ -12,6 +12,7 @@ public class SoundService : ISoundService
 {
     private readonly ConcurrentDictionary<string, byte[]> _audioCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly AudioRateLimiter _rateLimiter = new();
+    private static System.Windows.Media.MediaPlayer? _mediaPlayer;
 
     public void PlayNotification(string? customSoundPath = null, bool isMuted = false)
     {
@@ -19,10 +20,9 @@ public class SoundService : ISoundService
 
         try
         {
-            if (!string.IsNullOrWhiteSpace(customSoundPath) && SoundValidator.IsValidWavFile(customSoundPath, out _))
+            if (!string.IsNullOrWhiteSpace(customSoundPath) && SoundValidator.IsValidAudioFile(customSoundPath, out _))
             {
-                using var player = new SoundPlayer(customSoundPath);
-                player.Play();
+                PlayCustomFile(customSoundPath, 0.8);
                 return;
             }
 
@@ -64,9 +64,9 @@ public class SoundService : ISoundService
 
         var volume = audioConfig.Volume;
 
-        // 1. App-specific custom sound override
+        // 1. App-specific custom sound override (.wav or .mp3)
         if (!string.IsNullOrWhiteSpace(appFilter?.CustomSoundPath) &&
-            SoundValidator.IsValidWavFile(appFilter.CustomSoundPath, out _))
+            SoundValidator.IsValidAudioFile(appFilter.CustomSoundPath, out _))
         {
             PlayCustomFile(appFilter.CustomSoundPath, volume);
             return;
@@ -79,7 +79,7 @@ public class SoundService : ISoundService
             return;
         }
 
-        // 3. Global Custom scheme tier-specific paths
+        // 3. Global Custom scheme tier-specific paths (.wav or .mp3)
         if (audioConfig.Preset == SoundPreset.Custom)
         {
             var customPath = tier switch
@@ -91,7 +91,7 @@ public class SoundService : ISoundService
                 _ => audioConfig.CustomNormalSoundPath
             };
 
-            if (!string.IsNullOrWhiteSpace(customPath) && SoundValidator.IsValidWavFile(customPath, out _))
+            if (!string.IsNullOrWhiteSpace(customPath) && SoundValidator.IsValidAudioFile(customPath, out _))
             {
                 PlayCustomFile(customPath, volume);
                 return;
@@ -109,7 +109,7 @@ public class SoundService : ISoundService
 
     public void PlayCustomFilePreview(string filePath, double volume)
     {
-        if (SoundValidator.IsValidWavFile(filePath, out _))
+        if (SoundValidator.IsValidAudioFile(filePath, out _))
         {
             PlayCustomFile(filePath, volume);
         }
@@ -121,7 +121,7 @@ public class SoundService : ISoundService
 
     public bool ValidateSoundFile(string filePath, out string? errorMessage)
     {
-        return SoundValidator.IsValidWavFile(filePath, out errorMessage);
+        return SoundValidator.IsValidAudioFile(filePath, out errorMessage);
     }
 
     private void PlayPreset(SoundPreset preset, SoundTier tier, double volume)
@@ -160,6 +160,13 @@ public class SoundService : ISoundService
 
         try
         {
+            var ext = Path.GetExtension(filePath);
+            if (ext.Equals(".mp3", StringComparison.OrdinalIgnoreCase))
+            {
+                PlayMediaFile(filePath, volume);
+                return;
+            }
+
             var audioBytes = File.ReadAllBytes(filePath);
             PlayWavBytes(audioBytes, volume);
         }
@@ -175,6 +182,51 @@ public class SoundService : ISoundService
         {
             System.Diagnostics.Debug.WriteLine($"[SoundService] Custom playback invalid op note: {ex.Message}");
         }
+    }
+
+    private static void PlayMediaFile(string filePath, double volume)
+    {
+        UiDispatcher.RunOnUI(() =>
+        {
+            try
+            {
+                _mediaPlayer?.Close();
+                var player = new System.Windows.Media.MediaPlayer();
+                player.Open(new Uri(filePath, UriKind.Absolute));
+                player.Volume = Math.Clamp(volume, 0.0, 1.0);
+                player.MediaEnded += (s, e) =>
+                {
+                    try { player.Close(); }
+                    catch (InvalidOperationException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SoundService] MediaPlayer close note: {ex.Message}");
+                    }
+                };
+                player.MediaFailed += (s, e) =>
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SoundService] MediaPlayer playback note: {e.ErrorException?.Message}");
+                    try { player.Close(); }
+                    catch (InvalidOperationException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SoundService] MediaPlayer close on failure note: {ex.Message}");
+                    }
+                };
+                player.Play();
+                _mediaPlayer = player;
+            }
+            catch (InvalidOperationException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SoundService] MediaPlayer init note: {ex.Message}");
+            }
+            catch (System.Runtime.InteropServices.COMException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SoundService] MediaPlayer COM note: {ex.Message}");
+            }
+            catch (IOException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SoundService] MediaPlayer I/O note: {ex.Message}");
+            }
+        });
     }
 
     private void PlayWavBytes(byte[] rawBytes, double volume)

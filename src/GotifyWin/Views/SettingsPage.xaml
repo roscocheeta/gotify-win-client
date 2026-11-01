@@ -337,7 +337,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="🔊 Audio &amp; Sound Scheme" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                                        <TextBlock Text="Select curated sound profiles, adjust chime volume, or configure custom .wav audio files." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                                        <TextBlock Text="Select curated sound profiles, adjust chime volume, or configure custom .wav/.mp3 audio files." FontSize="11" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
                                     </StackPanel>
                                     <CheckBox Grid.Column="1" Content="Enabled" IsChecked="{Binding PlaySound}"
                                               Foreground="{DynamicResource ThemeTextPrimary}" FontSize="12" VerticalAlignment="Center"/>
@@ -413,7 +413,7 @@
                                     <!-- Custom Scheme File Pickers (Visible when Preset == Custom) -->
                                     <StackPanel Visibility="{Binding IsCustomPresetSelected, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0">
                                         <Separator Background="{DynamicResource ThemeCardBorder}" Margin="0,4,0,10"/>
-                                        <TextBlock Text="Custom Sound Files (.wav)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" Margin="0,0,0,6"/>
+                                        <TextBlock Text="Custom Audio Files (.wav, .mp3)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimary}" Margin="0,0,0,6"/>
 
                                         <!-- Validation message if any -->
                                         <TextBlock Text="{Binding SoundValidationMessage, Mode=OneWay}"
