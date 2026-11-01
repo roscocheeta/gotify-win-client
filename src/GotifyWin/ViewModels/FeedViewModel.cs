@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Net.Http;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -122,7 +124,11 @@ public class FeedViewModel : ViewModelBase, IDisposable
             _relativeTimeTimer.Tick += (s, e) => RefreshRelativeTimes();
             _relativeTimeTimer.Start();
         }
-        catch (Exception ex) when (ex is InvalidOperationException or NotSupportedException)
+        catch (InvalidOperationException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FeedVM] DispatcherTimer init note: {ex.Message}");
+        }
+        catch (NotSupportedException ex)
         {
             System.Diagnostics.Debug.WriteLine($"[FeedVM] DispatcherTimer init note: {ex.Message}");
         }
@@ -331,7 +337,18 @@ public class FeedViewModel : ViewModelBase, IDisposable
                     await _apiService.ClearAllMessagesAsync(cfg.ServerUrl, cfg.ClientToken);
                 }
             }
-            catch { }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FeedVM] ClearAll server note: {ex.Message}");
+            }
+            catch (IOException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FeedVM] ClearAll server note: {ex.Message}");
+            }
+            catch (TaskCanceledException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FeedVM] ClearAll server note: {ex.Message}");
+            }
         });
     }
 
@@ -353,7 +370,18 @@ public class FeedViewModel : ViewModelBase, IDisposable
                     await _apiService.DeleteMessageAsync(cfg.ServerUrl, cfg.ClientToken, msg.Id);
                 }
             }
-            catch { }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FeedVM] DeleteMessage server note: {ex.Message}");
+            }
+            catch (IOException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FeedVM] DeleteMessage server note: {ex.Message}");
+            }
+            catch (TaskCanceledException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FeedVM] DeleteMessage server note: {ex.Message}");
+            }
         });
     }
 
@@ -365,7 +393,10 @@ public class FeedViewModel : ViewModelBase, IDisposable
             var text = $"{msg.DisplayTitle}\n{msg.Message}";
             Clipboard.SetText(text);
         }
-        catch { }
+        catch (System.Runtime.InteropServices.ExternalException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FeedVM] Clipboard copy note: {ex.Message}");
+        }
     }
 
     public void RefreshRelativeTimes()
