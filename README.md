@@ -65,6 +65,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 * **Anti-Spam / Flap Debounce**: Deduplicates flapping monitor alerts within a configurable time window (3s–60s) with duplicate counters (`x5`).
 
 ### 🗂️ Message History Feed
+* **Chronological Sorting & Live Relative Times**: Notifications are strictly sorted newest-first by date and message ID across WebSocket streams, history fetches, and re-connections. Relative time badges (*"Just now"*, *"5m ago"*, *"2h ago"*) automatically refresh every 30 seconds.
 * **Dual Layout Modes**:
   * **Detailed View**: Rich multi-tier cards with service icons, priority tags, full markdown text, attached image thumbnails, and one-click action buttons.
   * **Compact View**: High-density 36px single-line layout displaying 4× more notifications on screen with inline action buttons.
@@ -76,6 +77,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
   * **Custom Fluent HUD Banner (Recommended)**: An ultra-clean, rounded, borderless floating window with Mica/Acrylic material. Features a visual 2px countdown progress bar that pauses on mouse hover, directional screen stacking, and quick action buttons (*Open Link*, *Dismiss*).
   * **Windows 11 Native Action Center Toasts**: Integrates into the Windows 11 notification drawer (`Win + N`) with deep history and protocol activation.
   * **Hybrid Mode**: Instant glanceable floating HUD + Action Center history.
+* **Workstation Unlock Missed Summary Alert**: When unlocking your workstation after being away, GotifyWin displays a smart summary alert aggregating notifications received while you were gone (*e.g. "You missed 5 notifications from BackupServer, HomeAssistant, and Plex"*).
 * **Custom Positioning**: Screen placement in `Bottom-Right`, `Top-Right`, `Top-Left`, `Bottom-Left`, `Top-Center`, or `Bottom-Center`.
 * **Adjustable Duration**: Configure auto-dismiss timeout from 2 to 20 seconds.
 * **Audio Alerts**: Standard Windows chimes, custom `.wav` sound files, or completely silent mode.
@@ -112,7 +114,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 git clone https://github.com/roscocheeta/gotify-win-client.git
 cd gotify-win-client
 
-# Run all 165 automated tests
+# Run all 224 automated tests
 dotnet test GotifyWin.sln
 
 # Launch the app

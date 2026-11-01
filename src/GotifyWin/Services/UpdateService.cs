@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -308,37 +309,56 @@ public class UpdateService : IUpdateService, IDisposable
                     }
                 }
 
-                // 3. Rename current running executable to .old
-                if (File.Exists(backupPath))
+                var sourceDir = Path.GetDirectoryName(newExePath)!;
+
+                // Check whether application directory requires elevated administrator permissions
+                if (!HasWriteAccess(appDir))
                 {
-                    try { File.Delete(backupPath); }
-                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                    {
-                        backupPath = currentProcessPath + $".{DateTime.UtcNow.Ticks}.old";
-                    }
+                    ApplyElevatedUpdate(sourceDir, newExePath, currentProcessPath, appDir, backupPath);
+                    TerminateCurrentProcess();
+                    return true;
                 }
 
-                File.Move(currentProcessPath, backupPath);
-
-                // 4. Copy new GotifyWin.exe into app directory
-                File.Copy(newExePath, currentProcessPath, overwrite: true);
-
-                // Copy any sibling files (e.g. pdb, dlls)
-                var sourceDir = Path.GetDirectoryName(newExePath)!;
-                foreach (var file in Directory.GetFiles(sourceDir))
+                try
                 {
-                    var fileName = Path.GetFileName(file);
-                    if (fileName.Equals("GotifyWin.exe", StringComparison.OrdinalIgnoreCase)) continue;
+                    // 3. Rename current running executable to .old
+                    if (File.Exists(backupPath))
+                    {
+                        try { File.Delete(backupPath); }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                        {
+                            backupPath = currentProcessPath + $".{DateTime.UtcNow.Ticks}.old";
+                        }
+                    }
 
-                    var dest = Path.Join(appDir, fileName);
-                    try
+                    File.Move(currentProcessPath, backupPath);
+
+                    // 4. Copy new GotifyWin.exe into app directory
+                    File.Copy(newExePath, currentProcessPath, overwrite: true);
+
+                    // Copy any sibling files (e.g. pdb, dlls)
+                    foreach (var file in Directory.GetFiles(sourceDir))
                     {
-                        File.Copy(file, dest, overwrite: true);
+                        var fileName = Path.GetFileName(file);
+                        if (fileName.Equals("GotifyWin.exe", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        var dest = Path.Join(appDir, fileName);
+                        try
+                        {
+                            File.Copy(file, dest, overwrite: true);
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                        {
+                            Debug.WriteLine($"[UpdateService] Could not overwrite sibling file {fileName}: {ex.Message}");
+                        }
                     }
-                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                    {
-                        Debug.WriteLine($"[UpdateService] Could not overwrite sibling file {fileName}: {ex.Message}");
-                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Fall back to elevated UAC prompt if access restriction encountered during copy
+                    ApplyElevatedUpdate(sourceDir, newExePath, currentProcessPath, appDir, backupPath);
+                    TerminateCurrentProcess();
+                    return true;
                 }
 
                 // 5. Spawn updated executable
@@ -351,38 +371,7 @@ public class UpdateService : IUpdateService, IDisposable
                 Process.Start(startInfo);
 
                 // 6. Shutdown current app instance
-                if (ShutdownHandler != null)
-                {
-                    ShutdownHandler();
-                }
-                else
-                {
-                    UiDispatcher.RunOnUI(() =>
-                    {
-                        if (System.Windows.Application.Current?.MainWindow is MainWindow mainWin)
-                        {
-                            mainWin.ExplicitQuit();
-                        }
-                        else
-                        {
-                            System.Windows.Application.Current?.Shutdown();
-                        }
-                    });
-
-                    // Fallback process termination after brief grace period if background threads hold process open
-                    _ = Task.Delay(1500).ContinueWith(_ =>
-                    {
-                        try
-                        {
-                            Environment.Exit(0);
-                        }
-                        catch (Exception ex) when (ex is not OutOfMemoryException)
-                        {
-                            Debug.WriteLine($"[UpdateService] Fallback process exit encountered: {ex.Message}");
-                        }
-                    });
-                }
-
+                TerminateCurrentProcess();
                 return true;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
@@ -417,6 +406,116 @@ public class UpdateService : IUpdateService, IDisposable
                 {
                     Debug.WriteLine($"[UpdateService] Temp directory cleanup failed: {ex.Message}");
                 }
+            }
+        });
+    }
+
+    public static bool HasWriteAccess(string directoryPath)
+    {
+        try
+        {
+            var testPath = Path.Join(directoryPath, $".perm_{Guid.NewGuid():N}.tmp");
+            using (var fs = new FileStream(testPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.DeleteOnClose))
+            {
+                fs.WriteByte(1);
+            }
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or PathTooLongException or NotSupportedException)
+        {
+            Debug.WriteLine($"[UpdateService] Write access check note: {ex.Message}");
+            return false;
+        }
+    }
+
+    private static void ApplyElevatedUpdate(string sourceDir, string newExePath, string currentProcessPath, string appDir, string backupPath)
+    {
+        var scriptDir = Path.Join(Path.GetTempPath(), "GotifyWin-Update");
+        if (!Directory.Exists(scriptDir))
+        {
+            Directory.CreateDirectory(scriptDir);
+        }
+        var scriptPath = Path.Join(scriptDir, $"elevate_update_{Guid.NewGuid():N}.cmd");
+
+        var currentPid = Environment.ProcessId;
+        var scriptLines = new System.Text.StringBuilder();
+        scriptLines.AppendLine("@echo off");
+        scriptLines.AppendLine("chcp 65001 >nul");
+        scriptLines.AppendLine($"powershell -NoProfile -Command \"Wait-Process -Id {currentPid} -Timeout 10 -ErrorAction SilentlyContinue\"");
+        scriptLines.AppendLine("timeout /t 1 /nobreak >nul");
+        scriptLines.AppendLine($"if exist \"{backupPath}\" del /f /q \"{backupPath}\" 2>nul");
+        scriptLines.AppendLine($"move /y \"{currentProcessPath}\" \"{backupPath}\" >nul");
+        scriptLines.AppendLine($"copy /y \"{newExePath}\" \"{currentProcessPath}\" >nul");
+        scriptLines.AppendLine($"robocopy \"{sourceDir}\" \"{appDir}\" /e /is /it /nc /ns /nfl /ndl /np >nul");
+        scriptLines.AppendLine($"start \"\" \"{currentProcessPath}\"");
+        scriptLines.AppendLine("(goto) 2>nul & del \"%~f0\"");
+
+        File.WriteAllText(scriptPath, scriptLines.ToString(), System.Text.Encoding.UTF8);
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = scriptPath,
+            UseShellExecute = true,
+            Verb = "runas",
+            WindowStyle = ProcessWindowStyle.Hidden
+        };
+
+        try
+        {
+            Process.Start(psi);
+        }
+        catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+        {
+            try
+            {
+                File.Delete(scriptPath);
+            }
+            catch (Exception delEx) when (delEx is IOException or UnauthorizedAccessException)
+            {
+                Debug.WriteLine($"[UpdateService] Script delete note: {delEx.Message}");
+            }
+            throw new UnauthorizedAccessException("Administrative elevation was declined. The update could not be applied.", ex);
+        }
+    }
+
+    private void TerminateCurrentProcess()
+    {
+        if (ShutdownHandler != null)
+        {
+            ShutdownHandler();
+            return;
+        }
+
+        UiDispatcher.RunOnUI(() =>
+        {
+            try
+            {
+                if (System.Windows.Application.Current?.MainWindow is MainWindow mainWin)
+                {
+                    mainWin.ExplicitQuit();
+                }
+                else
+                {
+                    System.Windows.Application.Current?.Shutdown();
+                }
+            }
+            catch (Exception ex) when (ex is InvalidOperationException)
+            {
+                Debug.WriteLine($"[UpdateService] Shutdown note: {ex.Message}");
+            }
+
+            Environment.Exit(0);
+        });
+
+        _ = Task.Delay(1000).ContinueWith(_ =>
+        {
+            try
+            {
+                Environment.Exit(0);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Debug.WriteLine($"[UpdateService] Exit note: {ex.Message}");
             }
         });
     }

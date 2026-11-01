@@ -104,13 +104,28 @@ public partial class MainWindow : Window
         if (_notifyIcon != null)
         {
             _notifyIcon.Visible = false;
-            _notifyIcon.Dispose();
+            var icon = _notifyIcon;
+            try
+            {
+                icon.Dispose();
+            }
+            catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException or System.ComponentModel.Win32Exception)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainWindow] NotifyIcon dispose note: {ex.Message}");
+            }
             _notifyIcon = null;
         }
         System.Windows.Application.Current?.Shutdown();
     }
 
-    private void QuitApplication() => ExplicitQuit();
+    private void QuitApplication()
+    {
+        UiDispatcher.RunOnUI(() =>
+        {
+            ExplicitQuit();
+            Environment.Exit(0);
+        });
+    }
 
     private void MinimizeToTray()
     {

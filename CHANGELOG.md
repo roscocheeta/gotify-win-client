@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Workstation Unlock Missed Notifications Summary Alert (#37)**:
+  - Added session state tracking via `SystemEvents.SessionSwitch` (`SessionLock` and `SessionUnlock`).
+  - Implemented `ISessionNotificationTracker` and `SessionNotificationTracker` to aggregate notifications arriving while the PC is locked for at least 10 seconds.
+  - Automatically displays a consolidated summary alert upon workstation unlock (e.g., *"You missed 3 notifications from HomeAssistant, BackupServer, Plex while away"*).
+  - Added `EnableMissedSummaryOnUnlock` user toggle under Settings.
+
+### Fixed
+- **Message History Feed Chronological Sorting & Live Relative Times (#36)**:
+  - Enforced strict descending order (`Date` descending, `Id` descending) on `FeedViewModel.FilteredMessages` `SortDescriptions` and internal collection insertion.
+  - Out-of-order network messages, delayed queue replays, or clock skew no longer cause older notifications to appear at the head of the feed.
+  - Normalized `GotifyMessage.Date` deserialization with unspecified `DateTimeKind` to UTC.
+  - Handled future clock skew gracefully in `RelativeTime` (returns *"Just now"*).
+  - Added a 30-second background dispatcher timer to dynamically update relative timestamps (*"Just now"*, *"5m ago"*, *"2h ago"*) across the entire feed.
+  - Implemented `INotifyPropertyChanged` on `GotifyMessage`.
+- **Auto-Updater UAC Elevation & Tray Crash Prevention (#35)**:
+  - Added `HasWriteAccess` permission inspection to detect write-restricted installation directories (e.g. `C:\Program Files`).
+  - Added UAC elevation support (`ApplyElevatedUpdate` using `Verb = "runas"`) allowing standard non-admin users to apply updates seamlessly with native Windows UAC prompting.
+  - Deferred system tray context menu quit handling via `UiDispatcher.RunOnUI` to eliminate unhandled `ObjectDisposedException` crashes when right-clicking and closing lingering or active tray icons.
+  - Explicitly bound `Application.Current.MainWindow = _mainWindow` on startup so instances started minimized or hidden to tray cleanly teardown without leaving orphaned tray icons.
+- **Extended Test Suite**:
+  - Added 7 new automated tests in `FeedSortingAndMissedSummaryTests.cs` verifying chronological feed sorting, delayed insertion, deduplication, clock skew resilience, workstation lock tracking, and write permissions, bringing the total suite to **224 passing tests** (100% pass rate).
+
+---
+
 ## [1.3.1] - 2026-10-30
 
 ### Fixed

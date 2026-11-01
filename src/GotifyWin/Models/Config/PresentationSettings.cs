@@ -27,4 +27,8 @@ public class PresentationSettings
     // Debounce / Anti-Flap
     public bool EnableDebounce { get; set; } = true;
     public int DebounceWindowSeconds { get; set; } = 10;
+
+    // Missed notification summary on workstation unlock (Issue #37)
+    public bool EnableMissedSummaryOnUnlock { get; set; } = true;
+    public int MissedSummaryMinPriority { get; set; } = 1;
 }

@@ -324,6 +324,7 @@ public class SettingsViewModel : ViewModelBase
                 _configService.Config.Presentation.DebounceWindowSeconds = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(DebounceText));
+                OnPropertyChanged(nameof(EnableMissedSummaryOnUnlock));
                 OnPropertyChanged(nameof(FilteringSummaryText));
                 _configService.Save();
             }
@@ -331,6 +332,20 @@ public class SettingsViewModel : ViewModelBase
     }
 
     public string DebounceText => $"{DebounceWindowSeconds}s window";
+
+    public bool EnableMissedSummaryOnUnlock
+    {
+        get => _configService.Config.Presentation.EnableMissedSummaryOnUnlock;
+        set
+        {
+            if (_configService.Config.Presentation.EnableMissedSummaryOnUnlock != value)
+            {
+                _configService.Config.Presentation.EnableMissedSummaryOnUnlock = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
 
     // DND
     public bool EnableEmergencyBypass
@@ -1099,6 +1114,7 @@ public class SettingsViewModel : ViewModelBase
                     _configService.Config.Presentation.PlaySound = loaded.Presentation.PlaySound;
                     _configService.Config.Presentation.EnableDebounce = loaded.Presentation.EnableDebounce;
                     _configService.Config.Presentation.DebounceWindowSeconds = loaded.Presentation.DebounceWindowSeconds;
+                    _configService.Config.Presentation.EnableMissedSummaryOnUnlock = loaded.Presentation.EnableMissedSummaryOnUnlock;
                     _configService.Config.Presentation.PauseOnHover = loaded.Presentation.PauseOnHover;
                     _configService.Config.Presentation.Width = loaded.Presentation.Width;
                     _configService.Config.Presentation.MaxBodyLines = loaded.Presentation.MaxBodyLines;
@@ -1146,6 +1162,7 @@ public class SettingsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(EnableDebounce));
                 OnPropertyChanged(nameof(DebounceWindowSeconds));
                 OnPropertyChanged(nameof(DebounceText));
+                OnPropertyChanged(nameof(EnableMissedSummaryOnUnlock));
                 OnPropertyChanged(nameof(EnableEmergencyBypass));
                 OnPropertyChanged(nameof(EmergencyBypassPriority));
                 OnPropertyChanged(nameof(BypassText));
