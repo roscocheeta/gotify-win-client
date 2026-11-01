@@ -421,7 +421,22 @@ public class UpdateService : IUpdateService, IDisposable
             }
             return true;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or PathTooLongException or NotSupportedException)
+        catch (IOException ex)
+        {
+            Debug.WriteLine($"[UpdateService] Write access check note: {ex.Message}");
+            return false;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"[UpdateService] Write access check note: {ex.Message}");
+            return false;
+        }
+        catch (ArgumentException ex)
+        {
+            Debug.WriteLine($"[UpdateService] Write access check note: {ex.Message}");
+            return false;
+        }
+        catch (NotSupportedException ex)
         {
             Debug.WriteLine($"[UpdateService] Write access check note: {ex.Message}");
             return false;
@@ -470,7 +485,11 @@ public class UpdateService : IUpdateService, IDisposable
             {
                 File.Delete(scriptPath);
             }
-            catch (Exception delEx) when (delEx is IOException or UnauthorizedAccessException)
+            catch (IOException delEx)
+            {
+                Debug.WriteLine($"[UpdateService] Script delete note: {delEx.Message}");
+            }
+            catch (UnauthorizedAccessException delEx)
             {
                 Debug.WriteLine($"[UpdateService] Script delete note: {delEx.Message}");
             }
@@ -513,7 +532,7 @@ public class UpdateService : IUpdateService, IDisposable
             {
                 Environment.Exit(0);
             }
-            catch (Exception ex) when (ex is not OutOfMemoryException)
+            catch (InvalidOperationException ex)
             {
                 Debug.WriteLine($"[UpdateService] Exit note: {ex.Message}");
             }

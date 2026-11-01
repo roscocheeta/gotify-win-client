@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.IO;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -225,10 +226,18 @@ public class MainViewModel : ViewModelBase, IDisposable
                 EnrichMessages(recent);
                 return recent;
             }
-            catch (Exception ex) when (ex is PlatformNotSupportedException or InvalidOperationException or System.ComponentModel.Win32Exception)
-        {
-            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch unhook note: {ex.Message}");
-        }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainVM] FetchRecentMessages note: {ex.Message}");
+            }
+            catch (IOException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainVM] FetchRecentMessages note: {ex.Message}");
+            }
+            catch (TaskCanceledException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainVM] FetchRecentMessages note: {ex.Message}");
+            }
         }
         return Enumerable.Empty<GotifyMessage>();
     }
@@ -467,7 +476,15 @@ public class MainViewModel : ViewModelBase, IDisposable
         {
             Microsoft.Win32.SystemEvents.SessionSwitch -= OnSessionSwitch;
         }
-        catch (Exception ex) when (ex is PlatformNotSupportedException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        catch (PlatformNotSupportedException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch unhook note: {ex.Message}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch unhook note: {ex.Message}");
+        }
+        catch (System.ComponentModel.Win32Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch unhook note: {ex.Message}");
         }
