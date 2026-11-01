@@ -14,7 +14,7 @@ public class CustomAudioProfilesTests : IDisposable
 
     public CustomAudioProfilesTests()
     {
-        _testTempDir = Path.Combine(Path.GetTempPath(), "GotifyWin_AudioTests_" + Guid.NewGuid().ToString("N"));
+        _testTempDir = Path.Join(Path.GetTempPath(), "GotifyWin_AudioTests_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_testTempDir);
     }
 
@@ -27,13 +27,19 @@ public class CustomAudioProfilesTests : IDisposable
                 Directory.Delete(_testTempDir, true);
             }
         }
-        catch (IOException) { }
-        catch (UnauthorizedAccessException) { }
+        catch (IOException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Test Cleanup] {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Test Cleanup] {ex.Message}");
+        }
     }
 
     private string CreateValidWav(string fileName, short formatTag = 1, short channels = 1, int sampleRate = 44100, int sampleCount = 50)
     {
-        var filePath = Path.Combine(_testTempDir, fileName);
+        var filePath = Path.Join(_testTempDir, fileName);
         var subchunk2Size = sampleCount * 2;
         var chunkSize = 36 + subchunk2Size;
 
@@ -80,7 +86,7 @@ public class CustomAudioProfilesTests : IDisposable
     [Fact]
     public void SoundValidator_NonWavExtension_ReturnsFalse()
     {
-        var txtPath = Path.Combine(_testTempDir, "sound.mp3");
+        var txtPath = Path.Join(_testTempDir, "sound.mp3");
         File.WriteAllText(txtPath, "fake audio");
 
         var isValid = SoundValidator.IsValidWavFile(txtPath, out var err);
@@ -104,7 +110,7 @@ public class CustomAudioProfilesTests : IDisposable
     [Fact]
     public void SoundValidator_NonExistentFile_ReturnsFalse()
     {
-        var missingPath = Path.Combine(_testTempDir, "does_not_exist.wav");
+        var missingPath = Path.Join(_testTempDir, "does_not_exist.wav");
         var isValid = SoundValidator.IsValidWavFile(missingPath, out var err);
 
         Assert.False(isValid);
@@ -114,7 +120,7 @@ public class CustomAudioProfilesTests : IDisposable
     [Fact]
     public void SoundValidator_CorruptedRiffHeader_ReturnsFalse()
     {
-        var badPath = Path.Combine(_testTempDir, "corrupted.wav");
+        var badPath = Path.Join(_testTempDir, "corrupted.wav");
         File.WriteAllBytes(badPath, Encoding.ASCII.GetBytes("NOPE" + new string('0', 50)));
 
         var isValid = SoundValidator.IsValidWavFile(badPath, out var err);
@@ -126,7 +132,7 @@ public class CustomAudioProfilesTests : IDisposable
     [Fact]
     public void SoundValidator_OversizedFile_ReturnsFalse()
     {
-        var largePath = Path.Combine(_testTempDir, "huge.wav");
+        var largePath = Path.Join(_testTempDir, "huge.wav");
         using (var fs = new FileStream(largePath, FileMode.Create, FileAccess.Write))
         {
             fs.SetLength(SoundValidator.MaxAudioSizeBytes + 1024);

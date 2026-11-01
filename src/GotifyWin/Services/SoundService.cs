@@ -250,8 +250,14 @@ public class SoundService : ISoundService
                 if (streamInfo?.Stream != null) return streamInfo.Stream;
             }
         }
-        catch (InvalidOperationException) { }
-        catch (IOException) { }
+        catch (InvalidOperationException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SoundService] Pack URI read note: {ex.Message}");
+        }
+        catch (IOException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SoundService] Pack URI read note: {ex.Message}");
+        }
 
         // 2. Direct manifest resources (.g.resources) fallback
         try
@@ -273,12 +279,22 @@ public class SoundService : ISoundService
                 }
             }
         }
-        catch (InvalidOperationException) { }
-        catch (IOException) { }
-        catch (ArgumentException) { }
+        catch (InvalidOperationException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SoundService] Resource read note: {ex.Message}");
+        }
+        catch (IOException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SoundService] Resource read note: {ex.Message}");
+        }
+        catch (ArgumentException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SoundService] Resource read note: {ex.Message}");
+        }
 
         // 3. Fallback to direct file on disk (development / test runner)
-        var diskPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Audio", fileName);
+        var safeFileName = Path.GetFileName(fileName);
+        var diskPath = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Audio", safeFileName);
         if (File.Exists(diskPath))
         {
             return File.OpenRead(diskPath);
