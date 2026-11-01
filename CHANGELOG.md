@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-01
+
 ### Added
 - **MP3 Audio Format Support for Custom Profiles & App Overrides**:
   - Extended custom sound scheme and application override support to `.mp3` files alongside uncompressed `.wav`.
