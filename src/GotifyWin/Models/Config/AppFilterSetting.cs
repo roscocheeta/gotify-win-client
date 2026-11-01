@@ -7,5 +7,6 @@ public class AppFilterSetting
     public bool Enabled { get; set; } = true;
     public int MinPriority { get; set; } = 0;
     public string? CustomSoundPath { get; set; }
+    public SoundPreset? SoundPresetOverride { get; set; }
     public bool OverrideGlobalDnd { get; set; } = false;
 }

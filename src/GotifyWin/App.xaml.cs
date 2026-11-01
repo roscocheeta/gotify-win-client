@@ -46,10 +46,12 @@ public partial class App : System.Windows.Application
             startupManager,
             patternAnalyzer,
             themeManager,
-            updateService
+            updateService,
+            soundService: soundService
         );
 
         _mainWindow = new MainWindow(mainViewModel, configService);
+        MainWindow = _mainWindow;
 
         var isShowcase = e.Args.Any(a => a.Equals("--generate-showcase", StringComparison.OrdinalIgnoreCase));
         if (isShowcase)

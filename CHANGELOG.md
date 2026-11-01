@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+## [1.4.0] - 2026-11-01
+
+### Added
+- **MP3 Audio Format Support for Custom Profiles & App Overrides**:
+  - Extended custom sound scheme and application override support to `.mp3` files alongside uncompressed `.wav`.
+  - Security-Hardened MP3 Validator: Inspects ID3v2 container tags and MPEG-1/2 Audio Layer frame synchronization bits (`0xFF, 0xEx`), enforces 5 MB file size ceilings, and rejects UNC/SMB paths.
+  - Native UI Playback: Dispatches MP3 playback through WPF's native `System.Windows.Media.MediaPlayer` with hardware volume scaling.
+  - Interactive UI: Updated OpenFileDialog file filters, settings labels, and tooltips across `SettingsPage` and `AppsPage` to indicate `.wav, .mp3` support.
+  - Added 6 new automated tests in `CustomAudioProfilesTests.cs`, bringing total suite to **265 passing tests** (100% pass rate).
+- **Priority-Aware Custom Audio Profiles & Sound Schemes**:
+  - Implemented 4 curated, high-fidelity sound schemes: **Modern Fluent** (crystalline harmonic chords), **Homelab & Tech** (crisp digital synth pulses), **Subtle Acoustic** (gentle wooden taps and marimba plucks), and **Classic Windows** (standard bell tones).
+  - Dynamic Priority Tier Audio Mapping: Automatically plays distinct sound variants depending on Gotify priority (Low 1-3, Normal 4-6, High 7-8, Urgent 9-10).
+  - In-Memory PCM Caching: Loads embedded audio assets directly into memory streams with zero disk I/O, playing in under 1 millisecond.
+  - In-Memory Volume Attenuation: Fast 16-bit PCM volume scaling via SoundService.AttenuatePcmVolume.
+  - Acoustic Rate Limiter (AudioRateLimiter): 150ms cooldown prevents overlapping audio popping and distortion during notification bursts while allowing high-priority alerts to supersede immediately.
+  - Security-Hardened Audio Validation (SoundValidator): Validates RIFF/WAVE header, 16-bit PCM format, channels, and sample rate, limits files to 5MB, and strictly rejects UNC network share paths (\\server\share) to prevent SMB NTLM hash leaks.
+  - Interactive UI in Settings: Added sound scheme selector, volume slider (0-100%), 1-click sound tier preview buttons, and custom sound file picker with validation feedback.
+  - Per-Application Sound Overrides: Added custom sound override and preview directly on application cards in the Apps tab.
+  - Added 33 new automated tests in CustomAudioProfilesTests.cs, bringing total suite to **257 passing tests** (100% pass rate).
+- **Workstation Unlock Missed Notifications Summary Alert (#37)**:
+  - Added session state tracking via `SystemEvents.SessionSwitch` (`SessionLock` and `SessionUnlock`).
+  - Implemented `ISessionNotificationTracker` and `SessionNotificationTracker` to aggregate notifications arriving while the PC is locked for at least 10 seconds.
+  - Automatically displays a consolidated summary alert upon workstation unlock (e.g., *"You missed 3 notifications from HomeAssistant, BackupServer, Plex while away"*).
+  - Added `EnableMissedSummaryOnUnlock` user toggle under Settings.
+
+### Fixed
+- **Message History Feed Chronological Sorting & Live Relative Times (#36)**:
+  - Enforced strict descending order (`Date` descending, `Id` descending) on `FeedViewModel.FilteredMessages` `SortDescriptions` and internal collection insertion.
+  - Out-of-order network messages, delayed queue replays, or clock skew no longer cause older notifications to appear at the head of the feed.
+  - Normalized `GotifyMessage.Date` deserialization with unspecified `DateTimeKind` to UTC.
+  - Handled future clock skew gracefully in `RelativeTime` (returns *"Just now"*).
+  - Added a 30-second background dispatcher timer to dynamically update relative timestamps (*"Just now"*, *"5m ago"*, *"2h ago"*) across the entire feed.
+  - Implemented `INotifyPropertyChanged` on `GotifyMessage`.
+- **Auto-Updater UAC Elevation & Tray Crash Prevention (#35)**:
+  - Added `HasWriteAccess` permission inspection to detect write-restricted installation directories (e.g. `C:\Program Files`).
+  - Added UAC elevation support (`ApplyElevatedUpdate` using `Verb = "runas"`) allowing standard non-admin users to apply updates seamlessly with native Windows UAC prompting.
+  - Deferred system tray context menu quit handling via `UiDispatcher.RunOnUI` to eliminate unhandled `ObjectDisposedException` crashes when right-clicking and closing lingering or active tray icons.
+  - Explicitly bound `Application.Current.MainWindow = _mainWindow` on startup so instances started minimized or hidden to tray cleanly teardown without leaving orphaned tray icons.
+- **Extended Test Suite**:
+  - Added 7 new automated tests in `FeedSortingAndMissedSummaryTests.cs` verifying chronological feed sorting, delayed insertion, deduplication, clock skew resilience, workstation lock tracking, and write permissions, bringing the total suite to **224 passing tests** (100% pass rate).
+
+---
+
 ## [1.3.1] - 2026-10-30
 
 ### Fixed

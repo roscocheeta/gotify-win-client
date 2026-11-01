@@ -1,10 +1,19 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace GotifyWin.Models;
 
-public class GotifyMessage
+public class GotifyMessage : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     [JsonPropertyName("id")]
     public long Id { get; set; }
 
@@ -20,8 +29,23 @@ public class GotifyMessage
     [JsonPropertyName("priority")]
     public int Priority { get; set; } = 5;
 
+    private DateTime _date = DateTime.UtcNow;
+
     [JsonPropertyName("date")]
-    public DateTime Date { get; set; } = DateTime.UtcNow;
+    public DateTime Date
+    {
+        get => _date;
+        set
+        {
+            var normalized = value.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+                : value;
+            _date = normalized;
+            OnPropertyChanged(nameof(Date));
+            OnPropertyChanged(nameof(FormattedDate));
+            OnPropertyChanged(nameof(RelativeTime));
+        }
+    }
 
     [JsonPropertyName("extras")]
     public Dictionary<string, JsonElement>? Extras { get; set; }
@@ -33,8 +57,21 @@ public class GotifyMessage
     [JsonIgnore]
     public string? ApplicationIconPath { get; set; }
 
+    private int _duplicateCount = 1;
+
     [JsonIgnore]
-    public int DuplicateCount { get; set; } = 1;
+    public int DuplicateCount
+    {
+        get => _duplicateCount;
+        set
+        {
+            if (_duplicateCount != value)
+            {
+                _duplicateCount = value;
+                OnPropertyChanged(nameof(DuplicateCount));
+            }
+        }
+    }
 
     [JsonIgnore]
     public string? FilteredByRuleName { get; set; }
@@ -185,12 +222,18 @@ public class GotifyMessage
     {
         get
         {
-            var span = DateTime.UtcNow - (Date.Kind == DateTimeKind.Utc ? Date : Date.ToUniversalTime());
+            var utcDate = Date.Kind == DateTimeKind.Utc ? Date : Date.ToUniversalTime();
+            var span = DateTime.UtcNow - utcDate;
             if (span.TotalSeconds < 45) return "Just now";
             if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m ago";
             if (span.TotalHours < 24) return $"{(int)span.TotalHours}h ago";
             if (span.TotalDays < 7) return $"{(int)span.TotalDays}d ago";
             return Date.ToLocalTime().ToString("MMM dd");
         }
+    }
+
+    public void RefreshRelativeTime()
+    {
+        OnPropertyChanged(nameof(RelativeTime));
     }
 }

@@ -65,6 +65,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 * **Anti-Spam / Flap Debounce**: Deduplicates flapping monitor alerts within a configurable time window (3s–60s) with duplicate counters (`x5`).
 
 ### 🗂️ Message History Feed
+* **Chronological Sorting & Live Relative Times**: Notifications are strictly sorted newest-first by date and message ID across WebSocket streams, history fetches, and re-connections. Relative time badges (*"Just now"*, *"5m ago"*, *"2h ago"*) automatically refresh every 30 seconds.
 * **Dual Layout Modes**:
   * **Detailed View**: Rich multi-tier cards with service icons, priority tags, full markdown text, attached image thumbnails, and one-click action buttons.
   * **Compact View**: High-density 36px single-line layout displaying 4× more notifications on screen with inline action buttons.
@@ -76,9 +77,16 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
   * **Custom Fluent HUD Banner (Recommended)**: An ultra-clean, rounded, borderless floating window with Mica/Acrylic material. Features a visual 2px countdown progress bar that pauses on mouse hover, directional screen stacking, and quick action buttons (*Open Link*, *Dismiss*).
   * **Windows 11 Native Action Center Toasts**: Integrates into the Windows 11 notification drawer (`Win + N`) with deep history and protocol activation.
   * **Hybrid Mode**: Instant glanceable floating HUD + Action Center history.
+* **Workstation Unlock Missed Summary Alert**: When unlocking your workstation after being away, GotifyWin displays a smart summary alert aggregating notifications received while you were gone (*e.g. "You missed 5 notifications from BackupServer, HomeAssistant, and Plex"*).
 * **Custom Positioning**: Screen placement in `Bottom-Right`, `Top-Right`, `Top-Left`, `Bottom-Left`, `Top-Center`, or `Bottom-Center`.
 * **Adjustable Duration**: Configure auto-dismiss timeout from 2 to 20 seconds.
-* **Audio Alerts**: Standard Windows chimes, custom `.wav` sound files, or completely silent mode.
+* **Priority-Tiered Audio Profiles & Sound Schemes**:
+  * **4 Curated Schemes**: Choose between **Modern Fluent** (crystalline harmonic chords), **Homelab & Tech** (crisp digital synth pulses), **Subtle Acoustic** (gentle wooden taps and marimba plucks), and **Classic Windows** (standard bell tones).
+  * **Priority Tier Differentiation**: Automatically plays distinctive tone variants based on message urgency (Low 1-3, Normal 4-6, High 7-8, Urgent 9-10).
+  * **Zero-Disk-I/O In-Memory Playback**: Audio assets are preloaded into memory streams and played in under 1 millisecond.
+  * **Acoustic Rate Limiter**: 150ms debounce cooldown prevents overlapping audio popping/distortion during notification bursts while allowing high-priority alerts to supersede immediately.
+  * **Chime Volume Slider & Previews**: Set custom volume (0% to 100%) with 1-click in-app audio tier previews.
+  * **Per-App & Custom Overrides**: Map custom `.wav` or `.mp3` audio files to specific applications or custom priority tiers with built-in UNC network path rejection, 5 MB file size ceilings, and strict audio header validation (RIFF/WAVE and ID3v2/MPEG frame sync).
 
 ### 🌙 Comprehensive Do Not Disturb (DND) Suite
 * **System Tray Quick Snooze**: Toggle DND or select timed snooze presets (*30 minutes*, *1 hour*, *4 hours*, or *Until Tomorrow 8:00 AM*).
@@ -112,7 +120,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 git clone https://github.com/roscocheeta/gotify-win-client.git
 cd gotify-win-client
 
-# Run all 165 automated tests
+# Run all 224 automated tests
 dotnet test GotifyWin.sln
 
 # Launch the app
@@ -156,7 +164,7 @@ Planned milestones and upcoming platform enhancements:
 - [ ] **.NET 10 Framework Upgrade**: Migrate to .NET 10 LTS upon general availability to take advantage of improved JIT throughput, smaller binary footprint, and NativeAOT compilation enhancements.
 - [ ] **WinGet Distribution**: Publish official Windows Package Manager manifest (`winget install roscocheeta.gotifywin`) for streamlined installation and updates.
 - [ ] **Interactive Toast Actions**: Support Gotify action extras for clickable webhook triggers and URL action buttons directly within Windows notification banners.
-- [ ] **Custom Audio Profiles**: Allow user-defined notification chimes and sound effects based on priority level or sending application.
+- [x] **Custom Audio Profiles**: Priority-tiered sound schemes, per-application audio overrides, and in-memory volume scaling.
 
 ---
 

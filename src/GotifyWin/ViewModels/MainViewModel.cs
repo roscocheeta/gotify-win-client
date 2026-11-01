@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.IO;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -8,7 +9,7 @@ using GotifyWin.Services;
 
 namespace GotifyWin.ViewModels;
 
-public class MainViewModel : ViewModelBase
+public class MainViewModel : ViewModelBase, IDisposable
 {
     private readonly IConfigService _configService;
     private readonly IGotifyApiService _apiService;
@@ -17,6 +18,8 @@ public class MainViewModel : ViewModelBase
     private readonly IDndManager _dndManager;
     private readonly INotificationPresenter _presenter;
     private readonly INotificationPatternAnalyzer _patternAnalyzer;
+    private readonly ISessionNotificationTracker _sessionTracker;
+    public ISessionNotificationTracker SessionTracker => _sessionTracker;
 
     private int _selectedTabIndex;
     public int SelectedTabIndex
@@ -93,7 +96,9 @@ public class MainViewModel : ViewModelBase
         IStartupManager startupManager,
         INotificationPatternAnalyzer? patternAnalyzer = null,
         IThemeManager? themeManager = null,
-        IUpdateService? updateService = null)
+        IUpdateService? updateService = null,
+        ISessionNotificationTracker? sessionTracker = null,
+        ISoundService? soundService = null)
     {
         _configService = configService;
         _apiService = apiService;
@@ -102,16 +107,17 @@ public class MainViewModel : ViewModelBase
         _dndManager = dndManager;
         _presenter = presenter;
         _patternAnalyzer = patternAnalyzer ?? new NotificationPatternAnalyzer();
+        _sessionTracker = sessionTracker ?? new SessionNotificationTracker();
 
         Feed = new FeedViewModel(_apiService, _configService, _presenter);
-        Apps = new AppsViewModel(_apiService, _configService);
+        Apps = new AppsViewModel(_apiService, _configService, soundService);
         Rules = new RulesViewModel(
             _configService,
             _patternAnalyzer,
             () => Feed.Messages,
             async () => await FetchRecentMessagesAsync()
         );
-        Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter, themeManager, updateService);
+        Settings = new SettingsViewModel(_configService, _apiService, startupManager, _presenter, themeManager, updateService, soundService);
 
         ToggleDndCommand = new RelayCommand(ToggleDnd);
         DndIndefiniteCommand = new RelayCommand(SetDndIndefinite);
@@ -151,6 +157,23 @@ public class MainViewModel : ViewModelBase
         };
         timer.Tick += (s, e) => UpdateDndStatus();
         timer.Start();
+
+        try
+        {
+            Microsoft.Win32.SystemEvents.SessionSwitch += OnSessionSwitch;
+        }
+        catch (PlatformNotSupportedException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch hook note: {ex.Message}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch hook note: {ex.Message}");
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch hook note: {ex.Message}");
+        }
 
         UpdateDndStatus();
     }
@@ -212,7 +235,18 @@ public class MainViewModel : ViewModelBase
                 EnrichMessages(recent);
                 return recent;
             }
-            catch { }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainVM] FetchRecentMessages note: {ex.Message}");
+            }
+            catch (IOException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainVM] FetchRecentMessages note: {ex.Message}");
+            }
+            catch (TaskCanceledException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainVM] FetchRecentMessages note: {ex.Message}");
+            }
         }
         return Enumerable.Empty<GotifyMessage>();
     }
@@ -260,6 +294,7 @@ public class MainViewModel : ViewModelBase
                 break;
 
             case FilterDecision.Notify:
+                _sessionTracker.RecordNotification(message, _configService.Config.Presentation.MissedSummaryMinPriority);
                 Feed.AddMessage(message);
                 _presenter.Present(message, _configService.Config);
                 break;
@@ -422,6 +457,49 @@ public class MainViewModel : ViewModelBase
         {
             DndButtonLabel = "DND: Active";
         }
+    }
+
+    private void OnSessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs e)
+    {
+        if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionLock)
+        {
+            _sessionTracker.OnSessionLocked();
+        }
+        else if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionUnlock)
+        {
+            var summary = _sessionTracker.OnSessionUnlocked(_configService.Config.Presentation);
+            if (summary != null)
+            {
+                UiDispatcher.RunOnUI(() =>
+                {
+                    Feed.AddMessage(summary);
+                    _presenter.Present(summary, _configService.Config);
+                });
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            Microsoft.Win32.SystemEvents.SessionSwitch -= OnSessionSwitch;
+        }
+        catch (PlatformNotSupportedException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch unhook note: {ex.Message}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch unhook note: {ex.Message}");
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch unhook note: {ex.Message}");
+        }
+
+        Feed.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     private void NavigateToUpdates()

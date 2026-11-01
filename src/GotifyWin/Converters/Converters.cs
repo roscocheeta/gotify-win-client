@@ -1,3 +1,4 @@
+using GotifyWin.Models.Config;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -110,4 +111,26 @@ public class DndGlyphConverter : IValueConverter
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
+public class SoundPresetToStringConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is SoundPreset preset)
+        {
+            return preset switch
+            {
+                SoundPreset.ModernFluent => "Modern Fluent (Default)",
+                SoundPreset.HomelabTech => "Homelab & Tech",
+                SoundPreset.SubtleAcoustic => "Subtle Acoustic",
+                SoundPreset.ClassicWindows => "Classic Windows",
+                SoundPreset.Custom => "Custom Scheme (.wav, .mp3)",
+                _ => preset.ToString()
+            };
+        }
+        return value?.ToString() ?? string.Empty;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }
