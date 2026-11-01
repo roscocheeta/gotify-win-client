@@ -257,7 +257,7 @@ public class FeedSortingAndMissedSummaryTests
         var tempDir = Path.GetTempPath();
         Assert.True(UpdateService.HasWriteAccess(tempDir));
 
-        var invalidDir = Path.Combine(tempDir, Guid.NewGuid().ToString("N"), "nonexistent_subfolder");
+        var invalidDir = Path.Join(tempDir, Guid.NewGuid().ToString("N"), "nonexistent_subfolder");
         Assert.False(UpdateService.HasWriteAccess(invalidDir));
     }
 }

@@ -225,7 +225,10 @@ public class MainViewModel : ViewModelBase, IDisposable
                 EnrichMessages(recent);
                 return recent;
             }
-            catch { }
+            catch (Exception ex) when (ex is PlatformNotSupportedException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch unhook note: {ex.Message}");
+        }
         }
         return Enumerable.Empty<GotifyMessage>();
     }
@@ -464,7 +467,10 @@ public class MainViewModel : ViewModelBase, IDisposable
         {
             Microsoft.Win32.SystemEvents.SessionSwitch -= OnSessionSwitch;
         }
-        catch { }
+        catch (Exception ex) when (ex is PlatformNotSupportedException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainVM] SessionSwitch unhook note: {ex.Message}");
+        }
 
         Feed.Dispose();
         GC.SuppressFinalize(this);

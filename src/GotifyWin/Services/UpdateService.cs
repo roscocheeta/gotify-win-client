@@ -414,27 +414,28 @@ public class UpdateService : IUpdateService, IDisposable
     {
         try
         {
-            var testPath = Path.Combine(directoryPath, $".perm_{Guid.NewGuid():N}.tmp");
+            var testPath = Path.Join(directoryPath, $".perm_{Guid.NewGuid():N}.tmp");
             using (var fs = new FileStream(testPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.DeleteOnClose))
             {
                 fs.WriteByte(1);
             }
             return true;
         }
-        catch
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or PathTooLongException or NotSupportedException)
         {
+            Debug.WriteLine($"[UpdateService] Write access check note: {ex.Message}");
             return false;
         }
     }
 
     private static void ApplyElevatedUpdate(string sourceDir, string newExePath, string currentProcessPath, string appDir, string backupPath)
     {
-        var scriptDir = Path.Combine(Path.GetTempPath(), "GotifyWin-Update");
+        var scriptDir = Path.Join(Path.GetTempPath(), "GotifyWin-Update");
         if (!Directory.Exists(scriptDir))
         {
             Directory.CreateDirectory(scriptDir);
         }
-        var scriptPath = Path.Combine(scriptDir, $"elevate_update_{Guid.NewGuid():N}.cmd");
+        var scriptPath = Path.Join(scriptDir, $"elevate_update_{Guid.NewGuid():N}.cmd");
 
         var currentPid = Environment.ProcessId;
         var scriptLines = new System.Text.StringBuilder();
@@ -465,7 +466,14 @@ public class UpdateService : IUpdateService, IDisposable
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
         {
-            try { File.Delete(scriptPath); } catch { }
+            try
+            {
+                File.Delete(scriptPath);
+            }
+            catch (Exception delEx) when (delEx is IOException or UnauthorizedAccessException)
+            {
+                Debug.WriteLine($"[UpdateService] Script delete note: {delEx.Message}");
+            }
             throw new UnauthorizedAccessException("Administrative elevation was declined. The update could not be applied.", ex);
         }
     }
@@ -491,7 +499,10 @@ public class UpdateService : IUpdateService, IDisposable
                     System.Windows.Application.Current?.Shutdown();
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is InvalidOperationException)
+            {
+                Debug.WriteLine($"[UpdateService] Shutdown note: {ex.Message}");
+            }
 
             Environment.Exit(0);
         });
@@ -502,7 +513,10 @@ public class UpdateService : IUpdateService, IDisposable
             {
                 Environment.Exit(0);
             }
-            catch { }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Debug.WriteLine($"[UpdateService] Exit note: {ex.Message}");
+            }
         });
     }
 

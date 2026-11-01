@@ -122,10 +122,11 @@ public class FeedViewModel : ViewModelBase, IDisposable
             _relativeTimeTimer.Tick += (s, e) => RefreshRelativeTimes();
             _relativeTimeTimer.Start();
         }
-        catch
+        catch (Exception ex) when (ex is InvalidOperationException or NotSupportedException)
         {
-            // Non-UI or testing environments without active Dispatcher
+            System.Diagnostics.Debug.WriteLine($"[FeedVM] DispatcherTimer init note: {ex.Message}");
         }
+
 
         _isCompactView = _configService.Config.UseCompactFeedView;
         _hideFilteredMessages = _configService.Config.HideFilteredInFeed;

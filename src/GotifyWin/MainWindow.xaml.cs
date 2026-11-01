@@ -109,7 +109,7 @@ public partial class MainWindow : Window
             {
                 icon.Dispose();
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException or System.ComponentModel.Win32Exception)
             {
                 System.Diagnostics.Debug.WriteLine($"[MainWindow] NotifyIcon dispose note: {ex.Message}");
             }
