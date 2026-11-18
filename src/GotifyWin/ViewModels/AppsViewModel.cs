@@ -195,6 +195,24 @@ public class AppsViewModel : ViewModelBase
     private readonly IConfigService _configService;
     private readonly ISoundService? _soundService;
     private readonly ObservableCollection<AppItemViewModel> _apps = new();
+    private readonly object _syncGate = new();
+    private Task<IReadOnlyList<AppFilterSetting>>? _inFlightLoadTask;
+
+    public DateTime LastSyncUtc { get; private set; } = DateTime.MinValue;
+
+    public bool AutoEnableNewApps
+    {
+        get => _configService.Config.AutoEnableNewApps;
+        set
+        {
+            if (_configService.Config.AutoEnableNewApps != value)
+            {
+                _configService.Config.AutoEnableNewApps = value;
+                OnPropertyChanged();
+                _configService.Save();
+            }
+        }
+    }
 
     private bool _isLoading;
     public bool IsLoading
@@ -265,13 +283,48 @@ public class AppsViewModel : ViewModelBase
         AppFilterChanged?.Invoke();
     }
 
-    public async Task LoadAppsAsync()
+    public void MuteApp(long appId) => SetAppEnabled(appId, false);
+    public void EnableApp(long appId) => SetAppEnabled(appId, true);
+
+    private void SetAppEnabled(long appId, bool enabled)
     {
+        var matchingVm = _apps.FirstOrDefault(a => a.Id == appId);
+        if (matchingVm != null)
+        {
+            matchingVm.SetEnabled(enabled, notify: true);
+            return;
+        }
+
+        if (_configService.Config.AppFilters.TryGetValue(appId, out var setting) && setting.Enabled != enabled)
+        {
+            setting.Enabled = enabled;
+            _configService.Save();
+            AppFilterChanged?.Invoke();
+        }
+    }
+
+    public Task<IReadOnlyList<AppFilterSetting>> LoadAppsAsync()
+    {
+        lock (_syncGate)
+        {
+            if (_inFlightLoadTask != null && !_inFlightLoadTask.IsCompleted)
+            {
+                return _inFlightLoadTask;
+            }
+
+            _inFlightLoadTask = LoadAppsInternalAsync();
+            return _inFlightLoadTask;
+        }
+    }
+
+    private async Task<IReadOnlyList<AppFilterSetting>> LoadAppsInternalAsync()
+    {
+        var newlyDiscovered = new List<AppFilterSetting>();
         var cfg = _configService.Config;
         if (string.IsNullOrEmpty(cfg.ServerUrl) || string.IsNullOrEmpty(cfg.ClientToken))
         {
             StatusMessage = "Configure Server URL & Token in Settings first.";
-            return;
+            return newlyDiscovered;
         }
 
         IsLoading = true;
@@ -280,8 +333,9 @@ public class AppsViewModel : ViewModelBase
         try
         {
             var apiApps = await _apiService.GetApplicationsAsync(cfg.ServerUrl, cfg.ClientToken);
+            LastSyncUtc = DateTime.UtcNow;
 
-            Application.Current?.Dispatcher?.Invoke(() =>
+            void ApplyAppsUpdate()
             {
                 _apps.Clear();
 
@@ -293,10 +347,11 @@ public class AppsViewModel : ViewModelBase
                         {
                             AppId = app.Id,
                             AppName = app.Name,
-                            Enabled = true,
+                            Enabled = cfg.AutoEnableNewApps,
                             MinPriority = 0
                         };
                         cfg.AppFilters[app.Id] = filter;
+                        newlyDiscovered.Add(filter);
                     }
                     else
                     {
@@ -315,7 +370,16 @@ public class AppsViewModel : ViewModelBase
                 _configService.Save();
                 AppFilterChanged?.Invoke();
                 StatusMessage = $"Discovered {_apps.Count} apps from Gotify.";
-            });
+            }
+
+            if (Application.Current?.Dispatcher != null)
+            {
+                Application.Current.Dispatcher.Invoke(ApplyAppsUpdate);
+            }
+            else
+            {
+                ApplyAppsUpdate();
+            }
 
             // Cache icons in background
             foreach (var app in apiApps)
@@ -328,10 +392,14 @@ public class AppsViewModel : ViewModelBase
                         var matchingVm = _apps.FirstOrDefault(a => a.Id == app.Id);
                         if (matchingVm != null)
                         {
-                            Application.Current?.Dispatcher?.Invoke(() =>
+                            if (Application.Current?.Dispatcher != null)
+                            {
+                                Application.Current.Dispatcher.Invoke(() => matchingVm.UpdateIcon(icon));
+                            }
+                            else
                             {
                                 matchingVm.UpdateIcon(icon);
-                            });
+                            }
                         }
                     }
                 }
@@ -357,6 +425,8 @@ public class AppsViewModel : ViewModelBase
         {
             IsLoading = false;
         }
+
+        return newlyDiscovered;
     }
 
     private void SetAllEnabled(bool enabled)

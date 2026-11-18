@@ -128,6 +128,164 @@ public class GotifyMessage : INotifyPropertyChanged
         : $"🔗 Open {ClickUrlHost}";
 
     [JsonIgnore]
+    public List<GotifyMessageAction> MessageActions
+    {
+        get
+        {
+            var result = new List<GotifyMessageAction>();
+            if (Extras == null) return result;
+
+            JsonElement actionsElement = default;
+            bool found = false;
+
+            if (Extras.TryGetValue("client::notification", out var clientNotif) &&
+                clientNotif.ValueKind == JsonValueKind.Object &&
+                clientNotif.TryGetProperty("actions", out var nestedActions) &&
+                nestedActions.ValueKind == JsonValueKind.Array)
+            {
+                actionsElement = nestedActions;
+                found = true;
+            }
+            else if (Extras.TryGetValue("actions", out var topActions) &&
+                     topActions.ValueKind == JsonValueKind.Array)
+            {
+                actionsElement = topActions;
+                found = true;
+            }
+
+            if (!found) return result;
+
+            foreach (var item in actionsElement.EnumerateArray())
+            {
+                if (result.Count >= 5) break;
+                if (item.ValueKind != JsonValueKind.Object) continue;
+
+                var parsed = ParseActionElement(item);
+                if (parsed != null)
+                {
+                    result.Add(parsed);
+                }
+            }
+
+            return result;
+        }
+    }
+
+    [JsonIgnore]
+    public bool HasMessageActions => MessageActions.Count > 0;
+
+    private static GotifyMessageAction? ParseActionElement(JsonElement item)
+    {
+        string? rawType = GetFirstStringProp(item, "action", "type");
+        GotifyActionType actionType;
+        if (string.Equals(rawType, "http", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(rawType, "webhook", StringComparison.OrdinalIgnoreCase))
+        {
+            actionType = GotifyActionType.Http;
+        }
+        else if (string.IsNullOrWhiteSpace(rawType) ||
+                 string.Equals(rawType, "view", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(rawType, "url", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(rawType, "open", StringComparison.OrdinalIgnoreCase))
+        {
+            actionType = GotifyActionType.View;
+        }
+        else
+        {
+            return null;
+        }
+
+        string? label = GetFirstStringProp(item, "label", "title", "text");
+        string? url = GetFirstStringProp(item, "url");
+
+        if (string.IsNullOrWhiteSpace(label) || string.IsNullOrWhiteSpace(url))
+            return null;
+
+        // SEC: Strictly enforce HTTP/HTTPS scheme on all interactive action URLs
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            return null;
+        }
+
+        var cleanLabel = label.Trim();
+        if (cleanLabel.Length > 40)
+        {
+            cleanLabel = cleanLabel[..37] + "...";
+        }
+
+        string method = "POST";
+        if (actionType == GotifyActionType.Http)
+        {
+            var rawMethod = GetFirstStringProp(item, "method");
+            if (!string.IsNullOrWhiteSpace(rawMethod))
+            {
+                var upper = rawMethod.Trim().ToUpperInvariant();
+                if (upper is "GET" or "POST" or "PUT" or "PATCH" or "DELETE")
+                {
+                    method = upper;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        Dictionary<string, string>? headers = null;
+        if (item.TryGetProperty("headers", out var headersProp) && headersProp.ValueKind == JsonValueKind.Object)
+        {
+            headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var prop in headersProp.EnumerateObject().Where(p => p.Value.ValueKind == JsonValueKind.String))
+            {
+                var val = prop.Value.GetString() ?? string.Empty;
+                if (!prop.Name.Contains('\r') && !prop.Name.Contains('\n') &&
+                    !val.Contains('\r') && !val.Contains('\n'))
+                {
+                    headers[prop.Name] = val;
+                }
+            }
+        }
+
+        string? body = null;
+        if (item.TryGetProperty("body", out var bodyProp))
+        {
+            body = bodyProp.ValueKind switch
+            {
+                JsonValueKind.String => bodyProp.GetString(),
+                JsonValueKind.Object or JsonValueKind.Array => bodyProp.GetRawText(),
+                _ => null
+            };
+        }
+
+        bool clear = item.TryGetProperty("clear", out var clearProp) &&
+                     clearProp.ValueKind == JsonValueKind.True;
+
+        return new GotifyMessageAction
+        {
+            Type = actionType,
+            Label = cleanLabel,
+            Url = url,
+            Method = method,
+            Headers = headers,
+            Body = body,
+            Clear = clear
+        };
+    }
+
+    private static string? GetFirstStringProp(JsonElement obj, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (obj.TryGetProperty(name, out var prop) && prop.ValueKind == JsonValueKind.String)
+            {
+                return prop.GetString();
+            }
+        }
+        return null;
+    }
+
+    [JsonIgnore]
     public string? ImageUrl
     {
         get

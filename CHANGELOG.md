@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-18
+
+### Added
+- **Interactive Toast Actions (`view` URLs & `http` Webhooks)**:
+  - Parses Gotify `client::notification.actions` and top-level `actions` extras (up to 5 actions per notification).
+  - Supports clickable URL buttons (`view`) and asynchronous HTTP webhook triggers (`http` with `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, custom headers, and JSON/string body) across Custom Fluent HUD banners, Windows 11 Native Toasts, and Feed history cards.
+  - Security-Hardened Execution (`ActionExecutionService`): Strictly enforces `http`/`https` schemes, whitelists HTTP methods, prevents CRLF header injection, caps request bodies at 64 KB, enforces a 10-second timeout, and uses a dedicated `HttpClient` without Gotify client tokens.
+- **Instant New-App Auto-Sync & Configurable Default Behavior (#44)**:
+  - Automatically syncs applications from Gotify (`GET /application`) whenever a WebSocket message arrives for an unknown `AppId` (debounced) and upon WebSocket reconnection.
+  - Added `AutoEnableNewApps` setting (and toggle in the **Apps** tab) allowing users to choose whether newly discovered apps are enabled automatically or muted by default (with a discovery alert).
+  - Added a 1-click **Mute App** (`🔕`) button directly in the Custom Fluent HUD header.
+- **Extended Test Suite**:
+  - Added 11 new automated tests in `InteractiveActionsAndAppDiscoveryTests.cs`, bringing total suite to **276 passing tests** (100% pass rate).
+
+### Fixed
+- **Full-Bleed Windows 11 System Tray Icon (#45)**:
+  - Added dedicated multi-resolution `Assets/tray.ico` (16×16 to 64×64) with dark tile padding removed so the Gotify emblem fills the entire tray icon slot.
+  - Updated `MainWindow.InitializeSystemTray` to load `tray.ico` at exact DPI-aware `SystemInformation.SmallIconSize` proportions for crisp, full-size rendering.
+
 ## [1.4.0] - 2026-11-01
 
 ### Added

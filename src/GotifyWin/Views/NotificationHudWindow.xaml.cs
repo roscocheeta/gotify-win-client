@@ -23,6 +23,8 @@ public partial class NotificationHudWindow : Window
     private bool _isClosing;
     private bool _isPaused;
     private Action<string>? _onUrlOpen;
+    private Func<GotifyMessageAction, Task<ActionExecutionResult>>? _onExecuteWebhook;
+    private Action<long>? _onMuteApp;
     private GotifyMessage? _message;
     private HudPosition _position = HudPosition.BottomRight;
 
@@ -251,10 +253,17 @@ public partial class NotificationHudWindow : Window
         }
     }
 
-    public void Setup(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
+    public void Setup(
+        GotifyMessage message,
+        PresentationSettings settings,
+        Action<string>? onUrlOpen,
+        Func<GotifyMessageAction, Task<ActionExecutionResult>>? onExecuteWebhook = null,
+        Action<long>? onMuteApp = null)
     {
         _message = message;
         _onUrlOpen = onUrlOpen;
+        _onExecuteWebhook = onExecuteWebhook;
+        _onMuteApp = onMuteApp;
         _position = settings.Position;
 
         AppNameTextBlock.Text = message.DisplayAppName;
@@ -322,7 +331,22 @@ public partial class NotificationHudWindow : Window
             _ = LoadNotificationImageAsync(imageUrl!);
         }
 
-        // Action Link & Dismiss Button
+        // Action Link, Interactive Extras Actions & Dismiss Button
+        DynamicActionsPanel.Children.Clear();
+        var buttonStyle = TryFindResource("HudActionButton") as Style;
+        foreach (var action in message.MessageActions)
+        {
+            var btn = new System.Windows.Controls.Button
+            {
+                Content = action.DisplayLabel,
+                ToolTip = action.ActionTooltip,
+                Margin = new Thickness(0, 4, 8, 0),
+                Style = buttonStyle
+            };
+            btn.Click += async (s, e) => await HandleInteractiveActionAsync(btn, action);
+            DynamicActionsPanel.Children.Add(btn);
+        }
+
         if (message.HasClickUrl)
         {
             OpenLinkButton.Visibility = Visibility.Visible;
@@ -333,6 +357,11 @@ public partial class NotificationHudWindow : Window
         {
             OpenLinkButton.Visibility = Visibility.Collapsed;
         }
+
+        MuteAppButton.Visibility = (_onMuteApp != null && message.AppId > 0)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
         ActionsGrid.Visibility = Visibility.Visible;
 
         // Countdown Progress Bar visibility
@@ -447,6 +476,51 @@ public partial class NotificationHudWindow : Window
             System.Diagnostics.Debug.WriteLine($"[NotificationHudWindow] OnClosed teardown error: {ex.Message}");
         }
         base.OnClosed(e);
+    }
+
+    private async Task HandleInteractiveActionAsync(System.Windows.Controls.Button btn, GotifyMessageAction action)
+    {
+        if (action.Type == GotifyActionType.View)
+        {
+            _onUrlOpen?.Invoke(action.Url);
+            if (action.Clear)
+            {
+                CloseWithAnimation();
+            }
+            return;
+        }
+
+        if (_onExecuteWebhook == null) return;
+
+        btn.IsEnabled = false;
+        btn.Content = "⏳ Sending...";
+        var result = await _onExecuteWebhook(action);
+        if (_isClosing) return;
+
+        btn.Content = result.Success ? "✓ Sent" : $"✕ {result.Message}";
+        if (result.Success && action.Clear)
+        {
+            await Task.Delay(700);
+            UiDispatcher.RunOnUI(CloseWithAnimation);
+        }
+        else
+        {
+            await Task.Delay(1800);
+            if (IsVisible)
+            {
+                btn.Content = action.DisplayLabel;
+                btn.IsEnabled = true;
+            }
+        }
+    }
+
+    private void MuteAppButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_message != null && _message.AppId > 0)
+        {
+            _onMuteApp?.Invoke(_message.AppId);
+        }
+        CloseWithAnimation();
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
