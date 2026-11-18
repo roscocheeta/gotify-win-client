@@ -19,23 +19,35 @@ This document defines mandatory development workflows, branching policies, testi
      - 100% test pass rate.
      - 0 compiler warnings from `WpfAnalyzers` and `SecurityCodeScan`.
      - 0 dependency vulnerabilities reported by `<NuGetAudit>`.
-  3. Push branch to GitHub: `git push -u origin <branch-name>`.
-  4. Open a Pull Request targeting `dev` using the GitHub CLI:
+  3. **(Optional) Local CodeRabbit CLI Review**:
+     - Run once per finished batch of non-trivial fixes (do **not** run after every small edit, after clean branch merges, or on trivial doc-only edits to conserve quota):
+       ```powershell
+       & "$env:LOCALAPPDATA\Programs\coderabbit\coderabbit.exe" auth status --agent
+       & "$env:LOCALAPPDATA\Programs\coderabbit\coderabbit.exe" review --agent --base dev
+       ```
+     - Verify `authenticated: true` first, ensure no secrets are in scope, and verify each finding against actual code before editing.
+  4. Push branch to GitHub: `git push -u origin <branch-name>`.
+  5. Open a Pull Request targeting `dev` using the GitHub CLI:
      ```powershell
      gh pr create --base dev --title "type: short summary" --body "..."
      ```
-  5. Verify PR outcomes, check-run annotations, and bot feedback:
+  6. Verify PR outcomes, check-run annotations, and bot feedback:
      - Run `gh pr checks <id>` and ensure 100% check pass rate.
-     - Inspect PR review comments from GitHub Advanced Security and automated bots:
+     - Inspect inline PR review comments from CodeRabbit (`coderabbitai`), GitHub Advanced Security, and automated bots:
        ```powershell
-       gh api repos/:owner/:repo/pulls/<id>/comments
+       gh api repos/:owner/:repo/pulls/<id>/comments --jq '.[] | {path, line, body}'
        ```
+     - Inspect PR review summaries (including CodeRabbit outside-diff comments):
+       ```powershell
+       gh pr view <id> --json reviews --jq '.reviews[].body'
+       ```
+     - Note: Because `master` is the default branch, if hosted CodeRabbit skips auto-review on a PR targeting `dev`, verify `dev` is listed under **Auto Review → Base Branches** in the CodeRabbit web dashboard (or comment `@coderabbitai review` on the PR).
      - Check CodeQL check-run annotations for warnings or notices:
        ```powershell
        gh api repos/:owner/:repo/check-runs/<run_id>/annotations
        ```
-     - Ensure zero CodeQL warnings/notes (e.g. unhandled IDisposable disposal, empty catch blocks, or overly broad exception catching).
-  6. Merge PR into `dev` using squash-and-merge (`gh pr merge --squash`).
+     - Address critical/major CodeRabbit findings and ensure zero CodeQL warnings/notes (e.g. unhandled IDisposable disposal, empty catch blocks, or overly broad exception catching).
+  7. Merge PR into `dev` using squash-and-merge (`gh pr merge --squash`).
 - **Release Protocol**:
   1. Prepare release metadata on a dedicated branch (`chore/prepare-vX.Y.Z-release`) off `dev`:
      - Bump versions in `src/GotifyWin/GotifyWin.csproj` (`<Version>`, `<AssemblyVersion>`, `<FileVersion>`, `<InformationalVersion>`) and `src/GotifyWin/app.manifest`.
