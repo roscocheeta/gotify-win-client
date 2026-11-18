@@ -35,13 +35,13 @@ This document defines mandatory development workflows, branching policies, testi
      - Run `gh pr checks <id>` and ensure 100% check pass rate.
      - Inspect inline PR review comments from CodeRabbit (`coderabbitai`), GitHub Advanced Security, and automated bots:
        ```powershell
-       gh api repos/:owner/:repo/pulls/<id>/comments --jq '.[] | {path, line, body}'
+       gh api --paginate repos/:owner/:repo/pulls/<id>/comments --jq '.[] | {path, line, body}'
        ```
      - Inspect PR review summaries (including CodeRabbit outside-diff comments):
        ```powershell
        gh pr view <id> --json reviews --jq '.reviews[].body'
        ```
-     - Note: Because `master` is the default branch, if hosted CodeRabbit skips auto-review on a PR targeting `dev`, verify `dev` is listed under **Auto Review → Base Branches** in the CodeRabbit web dashboard (or comment `@coderabbitai review` on the PR).
+     - Note: Because `master` is the default branch, if hosted CodeRabbit skips auto-review on a PR targeting `dev`, ask a maintainer to add `dev` under **Auto Review → Base Branches** in the CodeRabbit web dashboard (reserve `@coderabbitai review` for one-off reviews or when automatic reviews are paused).
      - Check CodeQL check-run annotations for warnings or notices:
        ```powershell
        gh api repos/:owner/:repo/check-runs/<run_id>/annotations
