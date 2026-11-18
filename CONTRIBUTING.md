@@ -65,16 +65,17 @@ GotifyWin follows the **Model-View-ViewModel (MVVM)** pattern with dependency in
 
 Before submitting a Pull Request, please ensure:
 
-1. **Tests Pass**: Run `dotnet test GotifyWin.sln --configuration Release` locally and verify all 165+ automated tests pass with 0 failures.
+1. **Tests Pass**: Run `dotnet test GotifyWin.sln --configuration Release` locally and verify all 276+ automated tests pass with 0 failures.
 2. **Clean Security Scan**: Ensure `dotnet build` reports 0 warnings from `SecurityCodeScan` (`SCSxxxx`) and `WpfAnalyzers` (`WPFxxxx`).
 3. **No Vulnerable Dependencies**: Ensure `dotnet list package --vulnerable --include-transitive` returns 0 vulnerable packages.
 4. **No Hardcoded Secrets**: Ensure no personal server URLs, API tokens, or test credentials are committed. PRs are automatically checked by Gitleaks.
-5. **Code Style & Security**:
+5. **Automated PR Reviews (CodeRabbit & CodeQL)**: Automated GitHub CodeRabbit and CodeQL checks run on Pull Requests—please review and address any critical or major findings before merge. *(External contributors do **not** need to install or run CodeRabbit CLI locally.)*
+6. **Code Style & Security**:
    * Follow standard C# coding conventions.
    * Prefer early returns and cancellation token propagation.
    * Never instantiate `new Random()` for tokens or security calculations; use `RandomNumberGenerator`.
    * In XAML, use explicit `Mode=OneWay` on bindings involving read-only properties or `<Run>` elements.
-6. **Describe Your Changes**: Fill out the Pull Request template detailing what was changed and why.
+7. **Describe Your Changes**: Fill out the Pull Request template detailing what was changed and why.
 
 ---
 
