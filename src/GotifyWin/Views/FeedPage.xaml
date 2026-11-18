@@ -271,26 +271,42 @@
                                             <TextBlock Grid.Row="2" Text="{Binding Message}" FontSize="13" Foreground="{DynamicResource ThemeTextSecondary}" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,8"/>
 
                                             <!-- Action Bar -->
-                                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
-                                                <Button Content="🖼 View Image" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                            <WrapPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                                                <ItemsControl ItemsSource="{Binding MessageActions, Mode=OneWay}" Visibility="{Binding HasMessageActions, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <WrapPanel Orientation="Horizontal"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Button Content="{Binding DisplayLabel, Mode=OneWay}"
+                                                                    ToolTip="{Binding ActionTooltip, Mode=OneWay}"
+                                                                    Style="{StaticResource CardActionButton}" Margin="0,0,6,4"
+                                                                    Command="{Binding DataContext.ExecuteMessageActionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding}"/>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <Button Content="🖼 View Image" Style="{StaticResource CardActionButton}" Margin="0,0,6,4"
                                                         Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}"
                                                         Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding ImageUrl}"/>
-                                                <Button Content="{Binding ClickUrlButtonText}" ToolTip="{Binding ClickUrl}" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                <Button Content="{Binding ClickUrlButtonText}" ToolTip="{Binding ClickUrl}" Style="{StaticResource CardActionButton}" Margin="0,0,6,4"
                                                         Visibility="{Binding HasClickUrl, Converter={StaticResource BoolToVis}}"
                                                         Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding ClickUrl}"/>
-                                                <Button Content="⚡ Create Rule" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                <Button Content="⚡ Create Rule" Style="{StaticResource CardActionButton}" Margin="0,0,6,4"
                                                         ToolTip="Pre-fill a new filter rule using this notification"
                                                         Command="{Binding DataContext.CreateRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"/>
-                                                <Button Content="📋 Copy" Style="{StaticResource CardActionButton}" Margin="0,0,6,0"
+                                                <Button Content="📋 Copy" Style="{StaticResource CardActionButton}" Margin="0,0,6,4"
                                                         Command="{Binding DataContext.CopyMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"/>
-                                                <Button Content="✕ Dismiss" Style="{StaticResource CardActionButton}"
+                                                <Button Content="✕ Dismiss" Style="{StaticResource CardActionButton}" Margin="0,0,0,4"
                                                         Command="{Binding DataContext.DeleteMessageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"/>
-                                            </StackPanel>
+                                            </WrapPanel>
                                         </Grid>
 
                                         <!-- Right Column: Attached Image Thumbnail -->

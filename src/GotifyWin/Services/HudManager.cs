@@ -13,6 +13,9 @@ namespace GotifyWin.Services;
 public interface IHudManager : IDisposable
 {
     void ShowNotification(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen);
+    void ShowNotification(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen,
+        Func<GotifyMessageAction, Task<ActionExecutionResult>>? onExecuteWebhook, Action<long>? onMuteApp = null)
+        => ShowNotification(message, settings, onUrlOpen);
     void DismissAll();
 }
 
@@ -28,7 +31,9 @@ public class HudManager : IHudManager
         PresentationSettings Settings,
         Action<string>? OnUrlOpen,
         DateTime EnqueuedAtUtc,
-        double DurationMs);
+        double DurationMs,
+        Func<GotifyMessageAction, Task<ActionExecutionResult>>? OnExecuteWebhook = null,
+        Action<long>? OnMuteApp = null);
 
     private readonly IDndManager _dndManager;
     private readonly List<NotificationHudWindow> _activeWindows = new();
@@ -116,7 +121,7 @@ public class HudManager : IHudManager
         while (_pendingQueue.Count > 0 && _activeWindows.Count < MaxConcurrentVisible)
         {
             var next = _pendingQueue.Dequeue();
-            SpawnHudWindow(next.Message, next.Settings, next.OnUrlOpen);
+            SpawnHudWindow(next.Message, next.Settings, next.OnUrlOpen, next.OnExecuteWebhook, next.OnMuteApp);
         }
 
         if (position.HasValue)
@@ -178,6 +183,14 @@ public class HudManager : IHudManager
     }
 
     public void ShowNotification(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
+        => ShowNotification(message, settings, onUrlOpen, null, null);
+
+    public void ShowNotification(
+        GotifyMessage message,
+        PresentationSettings settings,
+        Action<string>? onUrlOpen,
+        Func<GotifyMessageAction, Task<ActionExecutionResult>>? onExecuteWebhook,
+        Action<long>? onMuteApp = null)
     {
         UiDispatcher.RunOnUI(() =>
         {
@@ -190,31 +203,36 @@ public class HudManager : IHudManager
                 {
                     if (_pendingQueue.Count < 30)
                     {
-                        _pendingQueue.Enqueue(new PendingHudItem(message, settings, onUrlOpen, DateTime.UtcNow, durationMs));
+                        _pendingQueue.Enqueue(new PendingHudItem(message, settings, onUrlOpen, DateTime.UtcNow, durationMs, onExecuteWebhook, onMuteApp));
                     }
                     return;
                 }
 
                 if (_activeWindows.Count < MaxConcurrentVisible)
                 {
-                    SpawnHudWindow(message, settings, onUrlOpen);
+                    SpawnHudWindow(message, settings, onUrlOpen, onExecuteWebhook, onMuteApp);
                 }
                 else
                 {
                     // Queue excess notifications so active banners are not instantly destroyed
                     if (_pendingQueue.Count < 30)
                     {
-                        _pendingQueue.Enqueue(new PendingHudItem(message, settings, onUrlOpen, DateTime.UtcNow, durationMs));
+                        _pendingQueue.Enqueue(new PendingHudItem(message, settings, onUrlOpen, DateTime.UtcNow, durationMs, onExecuteWebhook, onMuteApp));
                     }
                 }
             }
         });
     }
 
-    private void SpawnHudWindow(GotifyMessage message, PresentationSettings settings, Action<string>? onUrlOpen)
+    private void SpawnHudWindow(
+        GotifyMessage message,
+        PresentationSettings settings,
+        Action<string>? onUrlOpen,
+        Func<GotifyMessageAction, Task<ActionExecutionResult>>? onExecuteWebhook = null,
+        Action<long>? onMuteApp = null)
     {
         var hud = new NotificationHudWindow();
-        hud.Setup(message, settings, onUrlOpen);
+        hud.Setup(message, settings, onUrlOpen, onExecuteWebhook, onMuteApp);
 
         // Pre-measure window height so exact size is known before placement
         double width = hud.Width > 0 ? hud.Width : 380.0;
@@ -260,7 +278,7 @@ public class HudManager : IHudManager
                         var maxAgeMs = candidate.DurationMs + 3000.0;
                         if ((DateTime.UtcNow - candidate.EnqueuedAtUtc).TotalMilliseconds < maxAgeMs)
                         {
-                            SpawnHudWindow(candidate.Message, candidate.Settings, candidate.OnUrlOpen);
+                            SpawnHudWindow(candidate.Message, candidate.Settings, candidate.OnUrlOpen, candidate.OnExecuteWebhook, candidate.OnMuteApp);
                             break;
                         }
                     }

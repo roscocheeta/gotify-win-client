@@ -52,7 +52,13 @@
 
             <StackPanel Grid.Column="0">
                 <TextBlock Text="Apps" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimary}"/>
-                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                <TextBlock Text="{Binding StatusMessage, Mode=OneWay}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondary}" Margin="0,2,0,0"/>
+                <CheckBox Content="Auto-enable newly discovered apps"
+                          IsChecked="{Binding AutoEnableNewApps, Mode=TwoWay}"
+                          Foreground="{DynamicResource ThemeTextSecondary}"
+                          FontSize="12"
+                          Margin="0,8,0,0"
+                          ToolTip="When checked, new Gotify applications are enabled automatically. Uncheck to mute newly discovered apps until you enable them."/>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
