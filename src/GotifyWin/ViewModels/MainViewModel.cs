@@ -302,9 +302,9 @@ public class MainViewModel : ViewModelBase, IDisposable
 
             if (syncTask.IsCompletedSuccessfully)
             {
-                foreach (var newApp in syncTask.Result.Where(a => !a.Enabled))
-                {
-                    var discoveryNotice = new GotifyMessage
+                foreach (var discoveryNotice in syncTask.Result
+                    .Where(a => !a.Enabled)
+                    .Select(newApp => new GotifyMessage
                     {
                         Id = -newApp.AppId,
                         AppId = 0,
@@ -313,7 +313,8 @@ public class MainViewModel : ViewModelBase, IDisposable
                         Message = $"'{newApp.AppName}' was discovered and muted by default. Open the Apps tab to enable notifications.",
                         Priority = 5,
                         Date = DateTime.UtcNow
-                    };
+                    }))
+                {
                     _presenter.Present(discoveryNotice, _configService.Config);
                 }
             }

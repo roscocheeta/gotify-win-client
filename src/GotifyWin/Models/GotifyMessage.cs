@@ -236,16 +236,13 @@ public class GotifyMessage : INotifyPropertyChanged
         if (item.TryGetProperty("headers", out var headersProp) && headersProp.ValueKind == JsonValueKind.Object)
         {
             headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var prop in headersProp.EnumerateObject())
+            foreach (var prop in headersProp.EnumerateObject().Where(p => p.Value.ValueKind == JsonValueKind.String))
             {
-                if (prop.Value.ValueKind == JsonValueKind.String)
+                var val = prop.Value.GetString() ?? string.Empty;
+                if (!prop.Name.Contains('\r') && !prop.Name.Contains('\n') &&
+                    !val.Contains('\r') && !val.Contains('\n'))
                 {
-                    var val = prop.Value.GetString() ?? string.Empty;
-                    if (!prop.Name.Contains('\r') && !prop.Name.Contains('\n') &&
-                        !val.Contains('\r') && !val.Contains('\n'))
-                    {
-                        headers[prop.Name] = val;
-                    }
+                    headers[prop.Name] = val;
                 }
             }
         }

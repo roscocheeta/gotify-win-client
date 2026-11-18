@@ -272,8 +272,8 @@ public class InteractiveActionsAndAppDiscoveryTests
         await vm.HandleIncomingMessageAsync(msg);
 
         Assert.Equal(1, api.GetAppsCallCount);
-        Assert.True(cfg.Config.AppFilters.ContainsKey(42));
-        Assert.True(cfg.Config.AppFilters[42].Enabled);
+        Assert.True(cfg.Config.AppFilters.TryGetValue(42, out var appFilter));
+        Assert.True(appFilter.Enabled);
         Assert.Single(presenter.Presented);
         Assert.Equal("Uptime Kuma", presenter.Presented[0].ApplicationName);
     }
@@ -302,8 +302,8 @@ public class InteractiveActionsAndAppDiscoveryTests
         var msg = new GotifyMessage { Id = 200, AppId = 77, Title = "Spam", Message = "Chunk uploaded", Priority = 5 };
         await vm.HandleIncomingMessageAsync(msg);
 
-        Assert.True(cfg.Config.AppFilters.ContainsKey(77));
-        Assert.False(cfg.Config.AppFilters[77].Enabled);
+        Assert.True(cfg.Config.AppFilters.TryGetValue(77, out var appFilter));
+        Assert.False(appFilter.Enabled);
         Assert.Single(presenter.Presented);
         Assert.Contains("New Gotify App: Noisy Backup", presenter.Presented[0].Title);
     }
@@ -311,7 +311,7 @@ public class InteractiveActionsAndAppDiscoveryTests
     [Fact]
     public void TrayIconAsset_ExistsAndContainsNativeSmallIconSizes()
     {
-        var trayPath = Path.GetFullPath(Path.Combine(
+        var trayPath = Path.GetFullPath(Path.Join(
             AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "GotifyWin", "Assets", "tray.ico"));
 
         Assert.True(File.Exists(trayPath), $"Expected tray.ico at {trayPath}");

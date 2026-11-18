@@ -506,7 +506,7 @@ public partial class NotificationHudWindow : Window
         else
         {
             await Task.Delay(1800);
-            if (!_isClosing)
+            if (IsVisible)
             {
                 btn.Content = action.DisplayLabel;
                 btn.IsEnabled = true;
