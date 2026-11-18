@@ -12,6 +12,7 @@ public class GotifyClientConfig
     public int MaxHistoryCount { get; set; } = 200;
 
     public int GlobalMinPriority { get; set; } = 0;
+    public bool AutoEnableNewApps { get; set; } = true;
 
     public bool UseCompactFeedView { get; set; } = false;
     public bool HideFilteredInFeed { get; set; } = false;

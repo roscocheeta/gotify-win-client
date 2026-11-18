@@ -144,6 +144,10 @@ public class MainViewModel : ViewModelBase, IDisposable
             Rules.PruneRecommendationsForDisabledApps();
         };
         Feed.UrlOpenRequested += (s, url) => _presenter.OpenUrl(url);
+        if (_presenter is NotificationPresenter np)
+        {
+            np.MuteAppRequested += (s, appId) => Apps.MuteApp(appId);
+        }
         Feed.CreateRuleRequested += (s, msg) =>
         {
             Rules.PrepareManualRuleFromNotification(msg);
@@ -275,8 +279,47 @@ public class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private void OnWebSocketMessageReceived(object? sender, GotifyMessage message)
+    private async void OnWebSocketMessageReceived(object? sender, GotifyMessage message)
     {
+        try
+        {
+            await HandleIncomingMessageAsync(message);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException or InvalidOperationException)
+        {
+            System.Diagnostics.Debug.WriteLine($"[GotifyWin] Message processing error: {ex.Message}");
+        }
+    }
+
+    internal async Task HandleIncomingMessageAsync(GotifyMessage message)
+    {
+        // Issue #44: If a message arrives for an unknown AppId, sync apps immediately before evaluating/displaying
+        if (!_configService.Config.AppFilters.ContainsKey(message.AppId) &&
+            (DateTime.UtcNow - Apps.LastSyncUtc).TotalSeconds >= 5)
+        {
+            var syncTask = Apps.LoadAppsAsync();
+            await Task.WhenAny(syncTask, Task.Delay(2500));
+
+            if (syncTask.IsCompletedSuccessfully)
+            {
+                foreach (var discoveryNotice in syncTask.Result
+                    .Where(a => !a.Enabled)
+                    .Select(newApp => new GotifyMessage
+                    {
+                        Id = -newApp.AppId,
+                        AppId = 0,
+                        ApplicationName = "GotifyWin",
+                        Title = $"New Gotify App: {newApp.AppName}",
+                        Message = $"'{newApp.AppName}' was discovered and muted by default. Open the Apps tab to enable notifications.",
+                        Priority = 5,
+                        Date = DateTime.UtcNow
+                    }))
+                {
+                    _presenter.Present(discoveryNotice, _configService.Config);
+                }
+            }
+        }
+
         EnrichMessage(message);
 
         var isDnd = _dndManager.IsDndActive(_configService.Config.Dnd);
@@ -312,6 +355,10 @@ public class MainViewModel : ViewModelBase, IDisposable
                     ConnectionStatusText = "Connected";
                     ConnectionStatusColor = "#10B981"; // Green
                     IsReconnecting = false;
+                    if ((DateTime.UtcNow - Apps.LastSyncUtc).TotalSeconds >= 15)
+                    {
+                        _ = Task.Run(() => Apps.LoadAppsAsync());
+                    }
                     break;
                 case ConnectionState.Connecting:
                     ConnectionStatusText = "Connecting...";

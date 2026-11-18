@@ -44,17 +44,19 @@ public partial class MainWindow : Window
         System.Drawing.Icon? trayIcon = null;
         try
         {
-            var streamInfo = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/GotifyWin;component/Assets/app.ico")) ?? System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico"));
+            var streamInfo = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/GotifyWin;component/Assets/tray.ico"))
+                ?? System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/tray.ico"))
+                ?? System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/GotifyWin;component/Assets/app.ico"))
+                ?? System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico"));
             if (streamInfo != null)
             {
                 using var stream = streamInfo.Stream;
-                // Windows 11 system tray renders at 24x24 or 32x32 (and up to 48x48 on high-DPI displays).
-                // Using legacy SmallIconSize (16x16) forces Windows to render a tiny 16px icon centered in a 32px slot.
-                // Using IconSize (minimum 32x32, scaling to 48x48 on high DPI) extracts the crisp, high-res frame
-                // and lets the Windows Shell display a prominent, fully visible tray icon matching other modern apps.
-                var iconSize = System.Windows.Forms.SystemInformation.IconSize;
-                var targetWidth = Math.Max(32, iconSize.Width);
-                var targetHeight = Math.Max(32, iconSize.Height);
+                // Windows 11 system tray renders at SM_CXSMICON (16px at 100% DPI, 24px at 150%, 32px at 200%).
+                // Loading the dedicated full-bleed tray.ico at exact SmallIconSize prevents GDI downscaling blur
+                // and eliminates tile padding so the icon matches native Windows 11 tray icon proportions.
+                var smallSize = System.Windows.Forms.SystemInformation.SmallIconSize;
+                var targetWidth = Math.Max(16, smallSize.Width);
+                var targetHeight = Math.Max(16, smallSize.Height);
                 trayIcon = new System.Drawing.Icon(stream, targetWidth, targetHeight);
             }
         }

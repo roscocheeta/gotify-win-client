@@ -16,6 +16,7 @@ public class FeedViewModel : ViewModelBase, IDisposable
     private readonly IGotifyApiService _apiService;
     private readonly IConfigService _configService;
     private readonly INotificationPresenter? _presenter;
+    private readonly IActionExecutionService _actionService;
     private readonly ObservableCollection<GotifyMessage> _messages = new();
     public ObservableCollection<GotifyMessage> Messages => _messages;
     private readonly ICollectionView _filteredView;
@@ -98,16 +99,18 @@ public class FeedViewModel : ViewModelBase, IDisposable
     public ICommand CopyMessageCommand { get; }
     public ICommand CreateRuleCommand { get; }
     public ICommand OpenUrlCommand { get; }
+    public ICommand ExecuteMessageActionCommand { get; }
     public ICommand TestNotificationCommand { get; }
 
     public event EventHandler<string>? UrlOpenRequested;
     public event EventHandler<GotifyMessage>? CreateRuleRequested;
 
-    public FeedViewModel(IGotifyApiService apiService, IConfigService configService, INotificationPresenter? presenter = null)
+    public FeedViewModel(IGotifyApiService apiService, IConfigService configService, INotificationPresenter? presenter = null, IActionExecutionService? actionService = null)
     {
         _apiService = apiService;
         _configService = configService;
         _presenter = presenter;
+        _actionService = actionService ?? new ActionExecutionService();
 
         _filteredView = CollectionViewSource.GetDefaultView(_messages);
         _filteredView.Filter = FilterMessagePredicate;
@@ -142,7 +145,21 @@ public class FeedViewModel : ViewModelBase, IDisposable
         CopyMessageCommand = new RelayCommand<GotifyMessage>(CopyMessage);
         CreateRuleCommand = new RelayCommand<GotifyMessage>(CreateRule);
         OpenUrlCommand = new RelayCommand<string>(OpenUrl);
+        ExecuteMessageActionCommand = new RelayCommand<GotifyMessageAction>(async action => await ExecuteMessageActionAsync(action));
         TestNotificationCommand = new RelayCommand(SendTestNotification);
+    }
+
+    private async Task ExecuteMessageActionAsync(GotifyMessageAction? action)
+    {
+        if (action == null) return;
+        if (action.Type == GotifyActionType.View)
+        {
+            OpenUrl(action.Url);
+        }
+        else if (action.Type == GotifyActionType.Http)
+        {
+            await _actionService.ExecuteWebhookAsync(action);
+        }
     }
 
     private void CreateRule(GotifyMessage? message)

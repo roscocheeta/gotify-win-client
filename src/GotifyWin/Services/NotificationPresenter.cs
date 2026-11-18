@@ -15,13 +15,20 @@ public class NotificationPresenter : INotificationPresenter, IDisposable
     private const string AppUserModelId = AumidHelper.AppUserModelId;
     private readonly ISoundService _soundService;
     private readonly IHudManager _hudManager;
+    private readonly IActionExecutionService _actionService;
 
     public event EventHandler<string>? UrlOpenRequested;
+    public event EventHandler<long>? MuteAppRequested;
 
-    public NotificationPresenter(ISoundService soundService, IHudManager? hudManager = null, IDndManager? dndManager = null)
+    public NotificationPresenter(
+        ISoundService soundService,
+        IHudManager? hudManager = null,
+        IDndManager? dndManager = null,
+        IActionExecutionService? actionService = null)
     {
         _soundService = soundService;
         _hudManager = hudManager ?? new HudManager(dndManager);
+        _actionService = actionService ?? new ActionExecutionService();
         AumidHelper.Initialize();
     }
 
@@ -55,7 +62,12 @@ public class NotificationPresenter : INotificationPresenter, IDisposable
 
     private void ShowCustomHud(GotifyMessage message, PresentationSettings settings)
     {
-        _hudManager.ShowNotification(message, settings, OpenUrl);
+        _hudManager.ShowNotification(
+            message,
+            settings,
+            OpenUrl,
+            action => _actionService.ExecuteWebhookAsync(action),
+            appId => MuteAppRequested?.Invoke(this, appId));
     }
 
     // SEC-06: Strip invalid XML 1.0 characters and escape XML entities
@@ -87,7 +99,7 @@ public class NotificationPresenter : INotificationPresenter, IDisposable
             iconXml = $"<image placement=\"appLogoOverride\" src=\"{iconUri}\" hint-crop=\"circle\"/>";
         }
 
-        var actionXml = "";
+        var actionElements = new List<string>();
         // SEC-02 & SEC-08: Strictly validate that ClickUrl is a valid HTTP/HTTPS protocol and display target host
         if (message.HasClickUrl &&
             Uri.TryCreate(message.ClickUrl, UriKind.Absolute, out var clickUri) &&
@@ -95,8 +107,28 @@ public class NotificationPresenter : INotificationPresenter, IDisposable
         {
             var safeUrl = CleanXmlString(message.ClickUrl);
             var hostLabel = string.IsNullOrWhiteSpace(clickUri.Host) ? "Open Link" : $"Open {CleanXmlString(clickUri.Host)}";
-            actionXml = $"<actions><action content=\"{hostLabel}\" arguments=\"{safeUrl}\" activationType=\"protocol\"/></actions>";
+            actionElements.Add($"<action content=\"{hostLabel}\" arguments=\"{safeUrl}\" activationType=\"protocol\"/>");
         }
+
+        var actions = message.MessageActions;
+        for (int i = 0; i < actions.Count && actionElements.Count < 5; i++)
+        {
+            var action = actions[i];
+            var safeLabel = CleanXmlString(action.Label);
+            if (action.Type == GotifyActionType.View)
+            {
+                var safeActionUrl = CleanXmlString(action.Url);
+                actionElements.Add($"<action content=\"{safeLabel}\" arguments=\"{safeActionUrl}\" activationType=\"protocol\"/>");
+            }
+            else if (action.Type == GotifyActionType.Http)
+            {
+                actionElements.Add($"<action content=\"{safeLabel}\" arguments=\"gotifywin-action:{i}\" activationType=\"foreground\"/>");
+            }
+        }
+
+        var actionXml = actionElements.Count > 0
+            ? $"<actions>{string.Join("", actionElements)}</actions>"
+            : "";
 
         return $@"
 <toast duration=""short"" scenario=""default"">
@@ -124,6 +156,19 @@ public class NotificationPresenter : INotificationPresenter, IDisposable
 
             toast.Activated += (s, e) =>
             {
+                if (e is ToastActivatedEventArgs toastArgs &&
+                    !string.IsNullOrEmpty(toastArgs.Arguments) &&
+                    toastArgs.Arguments.StartsWith("gotifywin-action:", StringComparison.Ordinal))
+                {
+                    var indexPart = toastArgs.Arguments["gotifywin-action:".Length..];
+                    if (int.TryParse(indexPart, out var idx) &&
+                        idx >= 0 && idx < message.MessageActions.Count)
+                    {
+                        _ = _actionService.ExecuteWebhookAsync(message.MessageActions[idx]);
+                    }
+                    return;
+                }
+
                 if (message.HasClickUrl)
                 {
                     OpenUrl(message.ClickUrl!);

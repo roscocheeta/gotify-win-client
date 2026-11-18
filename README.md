@@ -50,7 +50,8 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
 ## Key Features
 
 ### 📱 Selective App Management
-* **App Auto-Discovery**: Automatically syncs applications from your Gotify server (`GET /application`).
+* **App Auto-Discovery & Instant Sync**: Automatically syncs applications from your Gotify server (`GET /application`) at startup, on reconnect, and immediately when messages arrive from newly created apps—ensuring real app names and icons appear right away.
+* **Configurable New-App Default**: Choose whether newly discovered Gotify apps are auto-enabled or muted by default until you approve them, plus 1-click **Mute App** (`🔕`) directly on HUD banners.
 * **Per-App Controls**: Toggle notifications per application on/off with one click.
 * **Local Icon Caching**: Automatically downloads and caches application icons (`/application/{id}/image`) so notifications display service logos (Home Assistant, Docker, Uptime Kuma, etc.).
 * **Per-App Priority Thresholds**: Configure individual minimum priority filters per application.
@@ -78,6 +79,7 @@ You do **not** need to install the .NET SDK or any dependencies to use GotifyWin
   * **Windows 11 Native Action Center Toasts**: Integrates into the Windows 11 notification drawer (`Win + N`) with deep history and protocol activation.
   * **Hybrid Mode**: Instant glanceable floating HUD + Action Center history.
 * **Workstation Unlock Missed Summary Alert**: When unlocking your workstation after being away, GotifyWin displays a smart summary alert aggregating notifications received while you were gone (*e.g. "You missed 5 notifications from BackupServer, HomeAssistant, and Plex"*).
+* **Interactive Toast Actions**: Supports Gotify `client::notification.actions` and `actions` extras for clickable URL buttons (`view`) and HTTP webhook triggers (`http`) directly within Custom Fluent HUD banners, Windows 11 Native Toasts, and the Message Feed—with strict `http`/`https` scheme validation, method whitelisting, and token-isolated execution.
 * **Custom Positioning**: Screen placement in `Bottom-Right`, `Top-Right`, `Top-Left`, `Bottom-Left`, `Top-Center`, or `Bottom-Center`.
 * **Adjustable Duration**: Configure auto-dismiss timeout from 2 to 20 seconds.
 * **Priority-Tiered Audio Profiles & Sound Schemes**:
@@ -163,7 +165,7 @@ Planned milestones and upcoming platform enhancements:
 
 - [ ] **.NET 10 Framework Upgrade**: Migrate to .NET 10 LTS upon general availability to take advantage of improved JIT throughput, smaller binary footprint, and NativeAOT compilation enhancements.
 - [ ] **WinGet Distribution**: Publish official Windows Package Manager manifest (`winget install roscocheeta.gotifywin`) for streamlined installation and updates.
-- [ ] **Interactive Toast Actions**: Support Gotify action extras for clickable webhook triggers and URL action buttons directly within Windows notification banners.
+- [x] **Interactive Toast Actions**: Support Gotify action extras for clickable webhook triggers and URL action buttons directly within Windows notification banners.
 - [x] **Custom Audio Profiles**: Priority-tiered sound schemes, per-application audio overrides, and in-memory volume scaling.
 
 ---
