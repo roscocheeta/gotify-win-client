@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-18
+
 ### Added
 - **Interactive Toast Actions (`view` URLs & `http` Webhooks)**:
   - Parses Gotify `client::notification.actions` and top-level `actions` extras (up to 5 actions per notification).
