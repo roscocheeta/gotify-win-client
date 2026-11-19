@@ -56,6 +56,7 @@ public static class ImageSafety
 public static class SecureImageLoader
 {
     private const int MaxCacheEntries = 64;
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5399:HttpClients should check for certificate revocation list", Justification = "Homelab media/notification images may be served over private-CA HTTPS without CRL/OCSP endpoints; OS X.509 chain trust remains enforced.")]
     private static readonly HttpClient Http = new(new HttpClientHandler { AllowAutoRedirect = true })
     {
         Timeout = TimeSpan.FromSeconds(8),

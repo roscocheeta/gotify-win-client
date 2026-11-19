@@ -17,7 +17,7 @@ This document defines mandatory development workflows, branching policies, testi
   1. Complete code changes on the dedicated branch.
   2. Run `dotnet test GotifyWin.sln --configuration Release` locally and ensure:
      - 100% test pass rate.
-     - 0 compiler warnings from `WpfAnalyzers` and `SecurityCodeScan`.
+     - 0 compiler warnings from `WpfAnalyzers` and `.NET 10` security analyzers (`CAxxxx`).
      - 0 dependency vulnerabilities reported by `<NuGetAudit>`.
   3. **(Optional) Local CodeRabbit CLI Review**:
      - Run once per finished batch of non-trivial fixes (do **not** run after every small edit, after clean branch merges, or on trivial doc-only edits to conserve quota):
@@ -93,8 +93,8 @@ This document defines mandatory development workflows, branching policies, testi
 
 - **Zero Secrets**: Never commit personal Gotify server URLs, API tokens, or homelab credentials.
 - **Automated Secret Scanning**: Gitleaks runs in CI and should be run on staged commits locally (`gitleaks protect --staged`).
-- **Compile-Time SAST**: `SecurityCodeScan.VS2019` is integrated into the build. Code changes must not introduce any security warnings (`SCSxxxx`).
-- **Dependency Auditing**: .NET 8 `<NuGetAudit>` is configured for all direct and transitive dependencies at `moderate` severity. Pulling in vulnerable packages fails the build. Run `dotnet list package --vulnerable --include-transitive` to verify.
+- **Compile-Time SAST**: `.NET 10` built-in analyzers (`<EnableNETAnalyzers>true</EnableNETAnalyzers>`, `<AnalysisModeSecurity>All</AnalysisModeSecurity>`) are integrated into the build. Code changes must not introduce any security warnings (`CAxxxx`).
+- **Dependency Auditing**: .NET 10 `<NuGetAudit>` is configured for all direct and transitive dependencies at `moderate` severity. Pulling in vulnerable packages fails the build. Run `dotnet list package --vulnerable --include-transitive` to verify.
 - **Semantic Taint Tracking**: GitHub CodeQL runs continuously in CI, tracing untrusted server payloads to system sinks.
 - **Win32 P/Invoke & CodeQL Interop**: Native Windows desktop shell and window management APIs (e.g. `SetProcessWorkingSetSize`, `SHQueryUserNotificationState`, `GetForegroundWindow`, `GetWindowRect`) have no pure managed C# BCL alternatives. Informational rules `cs/unmanaged-code` and `cs/call-to-unmanaged-code` are excluded in `.github/codeql/codeql-config.yml` to prevent false-positive PR review notes while maintaining 100% active security-extended vulnerability scanning.
 - **Cryptographic Randomness**: Never instantiate `new Random()` for jitter, tokens, or security calculations. Use `System.Security.Cryptography.RandomNumberGenerator`.

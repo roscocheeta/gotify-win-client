@@ -12,6 +12,7 @@ public class GotifyApiService : IGotifyApiService
     private readonly HttpClient _httpClient;
     private readonly string _cacheDirectory;
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5399:HttpClients should check for certificate revocation list", Justification = "Homelab Gotify servers commonly use private-CA certificates without CRL/OCSP endpoints; OS X.509 chain trust remains enforced.")]
     public GotifyApiService(HttpClient? httpClient = null, string? cacheDirectory = null)
     {
         // SEC: Never follow redirects automatically; .NET forwards custom headers (X-Gotify-Key) across hosts,

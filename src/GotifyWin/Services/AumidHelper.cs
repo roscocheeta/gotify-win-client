@@ -17,6 +17,7 @@ public static class AumidHelper
     public const string ShortcutFileName = "Gotify Desktop.lnk";
 
     [DllImport("shell32.dll", SetLastError = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     private static extern int SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string AppID);
 
     public static void Initialize()

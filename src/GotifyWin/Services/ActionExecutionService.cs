@@ -22,6 +22,7 @@ public class ActionExecutionService : IActionExecutionService
     };
 
     // Dedicated HttpClient without Gotify client tokens so webhooks never leak credentials
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5399:HttpClients should check for certificate revocation list", Justification = "Internal homelab webhooks commonly use private-CA certificates without CRL/OCSP endpoints; OS X.509 chain trust remains enforced.")]
     private static readonly HttpClient SharedHttpClient = new(new HttpClientHandler
     {
         AllowAutoRedirect = false
