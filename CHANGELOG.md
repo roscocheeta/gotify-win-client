@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-19
+
 ### Changed
 - **Upgraded Target Framework to .NET 10 LTS (`net10.0-windows10.0.19041.0`)**:
   - Migrated `GotifyWin` and `GotifyWin.Tests` from .NET 8 (EOL November 10, 2026) to **.NET 10 LTS** (supported through November 2028).
