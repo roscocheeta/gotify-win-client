@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-19
+
+### Changed
+- **Upgraded Target Framework to .NET 10 LTS (`net10.0-windows10.0.19041.0`)**:
+  - Migrated `GotifyWin` and `GotifyWin.Tests` from .NET 8 (EOL November 10, 2026) to **.NET 10 LTS** (supported through November 2028).
+  - **⚠️ Breaking Change for `light` (Framework-Dependent) Users**: `GotifyWin-*-win-x64-light.zip` now requires the **.NET 10 Desktop Runtime (x64)** instead of .NET 8. (`GotifyWin-*-win-x64-standalone.zip` bundles .NET 10 and upgrades seamlessly without prerequisites.)
+  - Replaced legacy `SecurityCodeScan.VS2019` with `.NET 10` built-in security analyzers (`<AnalysisModeSecurity>All</AnalysisModeSecurity>`) and removed redundant `System.Security.Cryptography.ProtectedData` package reference.
+  - Upgraded test suite dependencies (`xunit` `2.9.3`, `xunit.runner.visualstudio` `2.8.2`, `Microsoft.NET.Test.Sdk` `17.14.1`, `coverlet.collector` `6.0.4`).
+  - Upgraded GitHub Actions CI/CodeQL/Release workflows to `actions/checkout@v5`, `actions/setup-dotnet@v5`, `github/codeql-action/*@v4`, and `dotnet-version: '10.0.x'`.
+
+### Security
+- **P/Invoke DLL Search Path Hardening (`CA5392`)**: Added `[DefaultDllImportSearchPaths(DllImportSearchPath.System32)]` to all Win32 P/Invoke declarations in `AumidHelper` and `DndManager` to prevent DLL search-order hijacking.
+
 ## [1.5.0] - 2026-11-18
 
 ### Added
